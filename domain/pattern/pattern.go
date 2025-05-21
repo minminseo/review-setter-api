@@ -124,17 +124,17 @@ func validateSteps(steps []*PatternStep) error {
 	// ステップ数が2つ以上の場合は昇順チェック
 	prev := steps[0]
 	for _, curr := range steps[1:] {
-		if curr.stepNumber < prev.stepNumber {
-			return errors.New("順序番号は昇順で指定してください")
-		}
-		if curr.intervalDays < prev.intervalDays {
-			return errors.New("復習日間隔数は昇順で指定してください")
-		}
 		if curr.stepNumber == prev.stepNumber {
 			return errors.New("順序番号は重複してはいけません")
 		}
 		if curr.intervalDays == prev.intervalDays {
 			return errors.New("復習日間隔数は重複してはいけません")
+		}
+		if curr.stepNumber < prev.stepNumber {
+			return errors.New("順序番号は昇順で指定してください")
+		}
+		if curr.intervalDays < prev.intervalDays {
+			return errors.New("復習日間隔数は昇順で指定してください")
 		}
 
 		// stepNumberが必ず前の値から+1（公差1の等差数列）になっているかチェック
