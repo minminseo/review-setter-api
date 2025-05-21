@@ -96,15 +96,15 @@ func (ps *PatternStep) Validate() error {
 	return validation.ValidateStruct(ps,
 		validation.Field(
 			&ps.stepNumber,
-			validation.Required.Error("ステップ番号は必須です"),
-			validation.Min(1).Error("ステップ番号の値が不正です"),
-			validation.Max(32767).Error("ステップは32768回以上は指定できません"),
+			validation.Required.Error("順序番号は必須です"),
+			validation.Min(1).Error("順序番号の値が不正です"),
+			validation.Max(32767).Error("順序番号は32768回以上は指定できません"),
 		),
 		validation.Field(
 			&ps.intervalDays,
-			validation.Required.Error("間隔日数は必須です"), //　名前が微妙
-			validation.Min(1).Error("間隔日数は1以上で指定してください"),
-			validation.Max(32767).Error("間隔日数は32768日後以上は指定できません"),
+			validation.Required.Error("復習日間隔数は必須です"),
+			validation.Min(1).Error("復習日間隔数は1以上で指定してください"),
+			validation.Max(32767).Error("復習日間隔数は32768日後以上は指定できません"),
 		),
 	)
 }
