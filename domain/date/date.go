@@ -1,8 +1,8 @@
-package schedule
+package date
 
 import validation "github.com/go-ozzo/ozzo-validation/v4"
 
-type Schedule struct {
+type Reviewdate struct {
 	id            string
 	itemID        string
 	stepNumber    int
@@ -10,14 +10,14 @@ type Schedule struct {
 	isCompleted   bool
 }
 
-func NewSchedule(
+func NewReviewdate(
 	id string,
 	itemID string,
 	stepNumber int,
 	scheduledDate string,
 	isCompleted bool,
-) (*Schedule, error) {
-	s := &Schedule{
+) (*Reviewdate, error) {
+	s := &Reviewdate{
 		id:            id,
 		itemID:        itemID,
 		stepNumber:    stepNumber,
@@ -30,7 +30,7 @@ func NewSchedule(
 	return s, nil
 }
 
-func (s *Schedule) Validate() error {
+func (s *Reviewdate) Validate() error {
 	return validation.ValidateStruct(s,
 		validation.Field(
 			&s.stepNumber,
