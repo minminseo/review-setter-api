@@ -19,15 +19,24 @@ INSERT INTO
 --name: FindUserByEmail: one
 SELECT
     id,
-    email,
     password,
-    timezone,
     theme_color,
     language,
 FROM
     users
 WHERE
     email = sqlc.arg(email);
+
+--name: GetUserSettingByID: one
+SELECT
+    email,
+    timezone,
+    theme_color,
+    language
+FROM
+    users
+WHERE
+    id = sqlc.arg(id);
 
 --name: UpdateUser: exec
 UPDATE
