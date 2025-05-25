@@ -5,119 +5,200 @@ import (
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
+	"golang.org/x/crypto/bcrypt"
 )
 
-type timeZoneName string
-type themeColorName string
-type languageName string
-
 type User struct {
-	id         string
-	email      string
-	password   string
-	timezone   timeZoneName
-	themeColor themeColorName
-	language   languageName
+	ID                string
+	Email             string
+	EncryptedPassword string
+	Timezone          string
+	ThemeColor        string
+	Language          string
 }
 
 func NewUser(
 	id string, // ID生成はユースケースに任せる
 	email string,
 	password string,
-	timezone timeZoneName,
-	themeColor themeColorName,
-	language languageName,
+	timezone string,
+	themeColor string,
+	language string,
+) (*User, error) {
+
+	if err := validateEmail(email); err != nil {
+		return nil, err
+	}
+	if err := validatePassword(password); err != nil {
+		return nil, err
+	}
+	if err := validateTimezone(timezone); err != nil {
+		return nil, err
+	}
+	if err := validateThemeColor(themeColor); err != nil {
+		return nil, err
+	}
+	if err := validateLanguage(language); err != nil {
+		return nil, err
+	}
+
+	encryptedPassword := encrypt(password)
+
+	u := &User{
+		ID:                id,
+		Email:             email,
+		EncryptedPassword: encryptedPassword,
+		Timezone:          timezone,
+		ThemeColor:        themeColor,
+		Language:          language,
+	}
+
+	return u, nil
+}
+
+func ReconstructUser(
+	id string,
+	email string,
+	encryptedPassword string,
+	timezone string,
+	themeColor string,
+	language string,
 ) (*User, error) {
 	u := &User{
-		id:         id,
-		email:      email,
-		password:   password,
-		timezone:   timezone,
-		themeColor: themeColor,
-		language:   language,
-	}
-	if err := u.Validate(); err != nil {
-		return nil, err
+		ID:                id,
+		Email:             email,
+		EncryptedPassword: encryptedPassword,
+		Timezone:          timezone,
+		ThemeColor:        themeColor,
+		Language:          language,
 	}
 	return u, nil
 }
 
+func (u *User) Set(email string, timezone string, themeColor string, language string) error {
+	if err := validateEmail(email); err != nil {
+		return err
+	}
+	if err := validateTimezone(timezone); err != nil {
+		return err
+	}
+	if err := validateThemeColor(themeColor); err != nil {
+		return err
+	}
+	if err := validateLanguage(language); err != nil {
+		return err
+	}
+
+	u.Email = email
+	u.Timezone = timezone
+	u.ThemeColor = themeColor
+	u.Language = language
+
+	return nil
+}
+
 const (
 	// タイムゾーン
-	TimeZoneTokyo timeZoneName = "Asia/Tokyo"
+	TimeZoneTokyo string = "Asia/Tokyo"
 	// TimeZoneLondon TimeZoneName = "Europe/London"
 
 	// テーマカラー
-	ThemeColorDark  themeColorName = "dark"
-	ThemeColorLight themeColorName = "light"
+	ThemeColorDark  string = "dark"
+	ThemeColorLight string = "light"
 
 	// 言語
-	LanguageJa languageName = "ja"
+	LanguageJa string = "ja"
 	// LanguageEn languageName = "en"
 )
 
-var allowedTimeZones = map[timeZoneName]struct{}{
+var allowedTimeZones = map[string]struct{}{
 	TimeZoneTokyo: {},
 	// TimeZoneLondon: {},
 }
-var allowedThemeColors = map[themeColorName]struct{}{
+var allowedThemeColors = map[string]struct{}{
 	ThemeColorDark:  {},
 	ThemeColorLight: {},
 }
-var allowedLanguages = map[languageName]struct{}{
+var allowedLanguages = map[string]struct{}{
 	LanguageJa: {},
 	// LanguageEn: {},
 }
 
-func (u *User) Validate() error {
-	return validation.ValidateStruct(u,
-		validation.Field(
-			&u.email,
-			validation.Required.Error("メールアドレスは必須です"),
-			validation.RuneLength(1, 255).Error("メールアドレスは1〜255文字です"),
-			is.Email.Error("メールアドレスを入力して下さい"),
-		),
-		validation.Field(
-			&u.password,
-			validation.Required.Error("パスワードは必須です"),
-			validation.RuneLength(6, 0).Error("パスワードは6文字以上です"),
-		),
-		validation.Field(
-			&u.timezone,
-			validation.Required.Error("タイムゾーンは必須です"),
-			validation.RuneLength(1, 64).Error("65文字以上のタイムゾーンは対応していません"),
-			validation.By(func(value interface{}) error {
-				tz, _ := value.(timeZoneName)
-				if _, ok := allowedTimeZones[tz]; !ok {
-					return errors.New("タイムゾーンの値が不正です")
-				}
-				return nil
-			}),
-		),
-		// テーマカラー
-		validation.Field(
-			&u.themeColor,
-			validation.Required.Error("テーマカラーは必須です"),
-			validation.By(func(value interface{}) error {
-				thmclr, _ := value.(themeColorName)
-				if _, ok := allowedThemeColors[thmclr]; !ok {
-					return errors.New("テーマカラーは'dark'または'light'で指定してください")
-				}
-				return nil
-			}),
-		),
-		// 言語
-		validation.Field(
-			&u.language,
-			validation.Required.Error("言語は必須です"),
-			validation.RuneLength(1, 5).Error("5文字以上の言語は対応していません"),
-			validation.By(func(value interface{}) error {
-				lng, _ := value.(languageName)
-				if _, ok := allowedLanguages[lng]; !ok {
-					return errors.New("言語タグの値が不正です")
-				}
-				return nil
-			}),
-		),
+// パスワードハッシュ化
+func encrypt(plainText string) string {
+	hash, err := bcrypt.GenerateFromPassword([]byte(plainText), bcrypt.DefaultCost)
+	if err != nil {
+		panic(err)
+	}
+	return string(hash)
+}
+
+// パスワード検証
+func (user *User) IsValidPassword(password string) error {
+	err := bcrypt.CompareHashAndPassword([]byte(user.EncryptedPassword), []byte(password))
+	if err != nil {
+		return errors.New("パスワードが一致しません")
+	}
+	return nil
+}
+
+func validateEmail(email string) error {
+	return validation.Validate(
+		email,
+		validation.Required.Error("メールアドレスは必須です"),
+		validation.RuneLength(7, 254).Error("メールアドレスは1〜254文字です"),
+		is.Email.Error("メールアドレスを入力して下さい"),
+	)
+}
+
+func validatePassword(password string) error {
+	return validation.Validate(
+		password,
+		validation.Required.Error("パスワードは必須です"),
+		validation.RuneLength(6, 0).Error("パスワードは6文字以上です"),
+	)
+}
+
+func validateTimezone(timezone string) error {
+	return validation.Validate(
+		timezone,
+		validation.Required.Error("タイムゾーンは必須です"),
+		validation.RuneLength(1, 64).Error("65文字以上のタイムゾーンは対応していません"),
+		validation.By(func(value interface{}) error {
+			tz, _ := value.(string)
+			if _, ok := allowedTimeZones[tz]; !ok {
+				return errors.New("タイムゾーンの値が不正です")
+			}
+			return nil
+		}),
+	)
+}
+
+func validateThemeColor(themeColor string) error {
+	return validation.Validate(
+		themeColor,
+		validation.Required.Error("テーマカラーは必須です"),
+		validation.By(func(value interface{}) error {
+			thmclr, _ := value.(string)
+			if _, ok := allowedThemeColors[thmclr]; !ok {
+				return errors.New("テーマカラーは'dark'または'light'で指定してください")
+			}
+			return nil
+		}),
+	)
+}
+
+func validateLanguage(language string) error {
+	return validation.Validate(
+		language,
+		validation.Required.Error("言語は必須です"),
+		validation.RuneLength(1, 5).Error("5文字以上の言語は対応していません"),
+		validation.By(func(value interface{}) error {
+			lng, _ := value.(string)
+			if _, ok := allowedLanguages[lng]; !ok {
+				return errors.New("言語タグの値が不正です")
+			}
+			return nil
+		}),
 	)
 }
