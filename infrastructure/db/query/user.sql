@@ -16,18 +16,18 @@ INSERT INTO
         sqlc.arg(language)
     );
 
---name: FindUserByEmail: one
+-- name: FindUserByEmail :one
 SELECT
     id,
     password,
     theme_color,
-    language,
+    language
 FROM
     users
 WHERE
     email = sqlc.arg(email);
 
---name: GetUserSettingByID: one
+-- name: GetUserSettingByID :one
 SELECT
     email,
     timezone,
@@ -38,7 +38,7 @@ FROM
 WHERE
     id = sqlc.arg(id);
 
---name: UpdateUser: exec
+-- name: UpdateUser :exec
 UPDATE
     users
 SET
@@ -46,6 +46,14 @@ SET
     password = sqlc.arg(password),
     timezone = sqlc.arg(timezone),
     theme_color = sqlc.arg(theme_color),
-    language = sqlc.arg(language),
+    language = sqlc.arg(language)
+WHERE
+    id = sqlc.arg(id);
+
+-- name: UpdateUserPassword :exec
+UPDATE
+    users
+SET
+    password = sqlc.arg(password)
 WHERE
     id = sqlc.arg(id);
