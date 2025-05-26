@@ -5,4 +5,5 @@ type UserRepository interface {
 	FindByEmail(email string) (*User, error)
 	GetSettingByID(userID string) (*User, error)
 	Update(user *User) error
+	UpdatePassword(userID, password string) error
 }
