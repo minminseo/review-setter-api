@@ -97,6 +97,17 @@ func (u *User) Set(email string, timezone string, themeColor string, language st
 	return nil
 }
 
+func (u *User) SetPassword(password string) error {
+	if err := validatePassword(password); err != nil {
+		return err
+	}
+
+	encryptedPassword := encrypt(password)
+	u.EncryptedPassword = encryptedPassword
+
+	return nil
+}
+
 const (
 	// タイムゾーン
 	TimeZoneTokyo string = "Asia/Tokyo"

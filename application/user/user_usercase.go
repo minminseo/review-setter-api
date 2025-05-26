@@ -1,4 +1,4 @@
-package usecase
+package user
 
 import (
 	"os"
@@ -17,30 +17,30 @@ type CreateUserInput struct {
 	Language   string
 }
 
-type createUserOutput struct {
+type CreateUserOutput struct {
 	ID    string
 	Email string
 }
 
-type loginUserInput struct {
+type LoginUserInput struct {
 	Email    string
 	Password string
 }
 
-type loginUserOutput struct {
+type LoginUserOutput struct {
 	Token      string
 	ThemeColor string
 	Language   string
 }
 
-type getUserOutput struct {
+type GetUserOutput struct {
 	Email      string
 	Timezone   string
 	ThemeColor string
 	Language   string
 }
 
-type updateUserInput struct {
+type UpdateUserInput struct {
 	ID         string
 	Email      string
 	Timezone   string
@@ -48,7 +48,7 @@ type updateUserInput struct {
 	Language   string
 }
 
-type updateUserOutput struct {
+type UpdateUserOutput struct {
 	Email      string
 	Timezone   string
 	ThemeColor string
@@ -63,7 +63,7 @@ func NewUserUsecase(userRepo userDomain.UserRepository) IUserUsecase {
 	return &userUsecase{userRepo: userRepo}
 }
 
-func (uu *userUsecase) SignUp(dto CreateUserInput) (*createUserOutput, error) {
+func (uu *userUsecase) SignUp(dto CreateUserInput) (*CreateUserOutput, error) {
 	id := uuid.NewString()
 
 	newUser, err := userDomain.NewUser(id, dto.Email, dto.Password, dto.Timezone, dto.ThemeColor, dto.Language)
@@ -76,7 +76,7 @@ func (uu *userUsecase) SignUp(dto CreateUserInput) (*createUserOutput, error) {
 		return nil, err
 	}
 
-	resUser := &createUserOutput{
+	resUser := &CreateUserOutput{
 		ID:    newUser.ID,
 		Email: newUser.Email,
 	}
@@ -84,7 +84,7 @@ func (uu *userUsecase) SignUp(dto CreateUserInput) (*createUserOutput, error) {
 	return resUser, nil
 }
 
-func (uu *userUsecase) Login(dto loginUserInput) (*loginUserOutput, error) {
+func (uu *userUsecase) LogIn(dto LoginUserInput) (*LoginUserOutput, error) {
 	user, err := uu.userRepo.FindByEmail(dto.Email)
 	if err != nil {
 		return nil, err
@@ -105,7 +105,7 @@ func (uu *userUsecase) Login(dto loginUserInput) (*loginUserOutput, error) {
 		return nil, err
 	}
 
-	resUser := &loginUserOutput{
+	resUser := &LoginUserOutput{
 		Token:      tokenString,
 		ThemeColor: user.ThemeColor,
 		Language:   user.Language,
@@ -113,12 +113,12 @@ func (uu *userUsecase) Login(dto loginUserInput) (*loginUserOutput, error) {
 	return resUser, nil
 }
 
-func (uu *userUsecase) GetUserSetting(userID string) (*getUserOutput, error) {
+func (uu *userUsecase) GetUserSetting(userID string) (*GetUserOutput, error) {
 	user, err := uu.userRepo.GetSettingByID(userID)
 	if err != nil {
 		return nil, err
 	}
-	resUser := &getUserOutput{
+	resUser := &GetUserOutput{
 		Email:      user.Email,
 		Timezone:   user.Timezone,
 		ThemeColor: user.ThemeColor,
@@ -127,7 +127,7 @@ func (uu *userUsecase) GetUserSetting(userID string) (*getUserOutput, error) {
 	return resUser, nil
 }
 
-func (uu *userUsecase) UpdateSetting(user updateUserInput) (*updateUserOutput, error) {
+func (uu *userUsecase) UpdateSetting(user UpdateUserInput) (*UpdateUserOutput, error) {
 	targetUser, err := uu.userRepo.GetSettingByID(user.ID)
 	if err != nil {
 		return nil, err
@@ -143,7 +143,7 @@ func (uu *userUsecase) UpdateSetting(user updateUserInput) (*updateUserOutput, e
 		return nil, err
 	}
 
-	resUser := &updateUserOutput{
+	resUser := &UpdateUserOutput{
 		Email:      targetUser.Email,
 		Timezone:   targetUser.Timezone,
 		ThemeColor: targetUser.ThemeColor,
@@ -151,4 +151,20 @@ func (uu *userUsecase) UpdateSetting(user updateUserInput) (*updateUserOutput, e
 	}
 
 	return resUser, nil
+}
+
+func (uu *userUsecase) UpdatePassword(userID, password string) error {
+	user, err := uu.userRepo.GetSettingByID(userID)
+	if err != nil {
+		return err
+	}
+	err = user.SetPassword(password)
+	if err != nil {
+		return err
+	}
+	err = uu.userRepo.UpdatePassword(userID, user.EncryptedPassword)
+	if err != nil {
+		return err
+	}
+	return nil
 }
