@@ -118,17 +118,15 @@ UPDATE
     users
 SET
     email = $1,
-    password = $2,
-    timezone = $3,
-    theme_color = $4,
-    language = $5
+    timezone = $2,
+    theme_color = $3,
+    language = $4
 WHERE
-    id = $6
+    id = $5
 `
 
 type UpdateUserParams struct {
 	Email      string         `json:"email"`
-	Password   string         `json:"password"`
 	Timezone   string         `json:"timezone"`
 	ThemeColor ThemeColorEnum `json:"theme_color"`
 	Language   string         `json:"language"`
@@ -138,7 +136,6 @@ type UpdateUserParams struct {
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 	_, err := q.db.Exec(ctx, updateUser,
 		arg.Email,
-		arg.Password,
 		arg.Timezone,
 		arg.ThemeColor,
 		arg.Language,

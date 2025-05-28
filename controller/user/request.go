@@ -1,6 +1,6 @@
 package user
 
-type sighInUserRequest struct {
+type sighUpUserRequest struct {
 	Email      string `json:"email"`
 	Password   string `json:"password"`
 	Timezone   string `json:"timezone"`
