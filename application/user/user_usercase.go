@@ -4,7 +4,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	userDomain "github.com/minminseo/recall-setter/domain/user"
 )
