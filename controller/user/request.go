@@ -14,7 +14,6 @@ type logInUserRequest struct {
 }
 
 type updateUserRequest struct {
-	ID         string `json:"id"`
 	Email      string `json:"email"`
 	Timezone   string `json:"timezone"`
 	ThemeColor string `json:"theme_color"`

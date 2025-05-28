@@ -11,9 +11,14 @@ import (
 )
 
 type Querier interface {
+	CreateCategory(ctx context.Context, arg CreateCategoryParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
+	DeleteCategory(ctx context.Context, arg DeleteCategoryParams) error
 	FindUserByEmail(ctx context.Context, email string) (FindUserByEmailRow, error)
+	GetAllCategoriesByUserID(ctx context.Context, userID pgtype.UUID) ([]GetAllCategoriesByUserIDRow, error)
+	GetCategoryByID(ctx context.Context, arg GetCategoryByIDParams) (string, error)
 	GetUserSettingByID(ctx context.Context, id pgtype.UUID) (GetUserSettingByIDRow, error)
+	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) error
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 }

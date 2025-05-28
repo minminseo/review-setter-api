@@ -7,7 +7,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
-	userUsecase "github.com/minminseo/recall-setter/application/user"
+	userUsecase "github.com/minminseo/recall-setter/usecase/user"
 )
 
 type userController struct {
@@ -109,19 +109,22 @@ func (uc *userController) GetUserSetting(c echo.Context) error {
 func (uc *userController) UpdateSetting(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
-	userID := claims["user_id"]
+	rawID, ok := claims["user_id"]
+	if !ok || rawID == nil {
+		return c.JSON(http.StatusUnauthorized, echo.Map{"error": "User ID not found in token"})
+	}
+	userID, ok := rawID.(string)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, echo.Map{"error": "Invalid user ID in token"})
+	}
+
 	var request updateUserRequest
 	if err := c.Bind(&request); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	if userID == nil {
-		return c.JSON(http.StatusUnauthorized, "User ID not found in token")
-	}
-	request.ID = userID.(string)
-
 	input := userUsecase.UpdateUserInput{
-		ID:         request.ID,
+		ID:         userID,
 		Email:      request.Email,
 		Timezone:   request.Timezone,
 		ThemeColor: request.ThemeColor,

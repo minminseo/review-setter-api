@@ -11,17 +11,17 @@ import (
 	"github.com/minminseo/recall-setter/infrastructure/db/dbgen"
 )
 
-type repository struct {
+type userRepository struct {
 	q *dbgen.Queries
 }
 
 func NewUserRepository(db dbgen.DBTX) userDomain.UserRepository {
-	return &repository{
+	return &userRepository{
 		q: dbgen.New(db),
 	}
 }
 
-func (r *repository) Create(u *userDomain.User) error {
+func (r *userRepository) Create(u *userDomain.User) error {
 	ctx := context.Background()
 
 	// string型のidをバイナリ形式のUUIDに変換
@@ -45,7 +45,7 @@ func (r *repository) Create(u *userDomain.User) error {
 	return r.q.CreateUser(ctx, params)
 }
 
-func (r *repository) FindByEmail(email string) (*userDomain.User, error) {
+func (r *userRepository) FindByEmail(email string) (*userDomain.User, error) {
 	ctx := context.Background()
 
 	row, err := r.q.FindUserByEmail(ctx, email)
@@ -67,7 +67,7 @@ func (r *repository) FindByEmail(email string) (*userDomain.User, error) {
 	}, nil
 }
 
-func (r *repository) GetSettingByID(userID string) (*userDomain.User, error) {
+func (r *userRepository) GetSettingByID(userID string) (*userDomain.User, error) {
 	ctx := context.Background()
 
 	parsed, err := uuid.Parse(userID)
@@ -81,16 +81,20 @@ func (r *repository) GetSettingByID(userID string) (*userDomain.User, error) {
 		return nil, err
 	}
 
-	return &userDomain.User{
-		ID:         userID,
-		Email:      row.Email,
-		Timezone:   row.Timezone,
-		ThemeColor: string(row.ThemeColor),
-		Language:   row.Language,
-	}, nil
+	ud, err := userDomain.ReconstructUser(
+		userID,
+		row.Email,
+		row.Timezone,
+		string(row.ThemeColor),
+		row.Language,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return ud, nil
 }
 
-func (r *repository) Update(u *userDomain.User) error {
+func (r *userRepository) Update(u *userDomain.User) error {
 	ctx := context.Background()
 
 	parsed, err := uuid.Parse(u.ID)
@@ -110,7 +114,7 @@ func (r *repository) Update(u *userDomain.User) error {
 	return r.q.UpdateUser(ctx, params)
 }
 
-func (r *repository) UpdatePassword(userID, password string) error {
+func (r *userRepository) UpdatePassword(userID, password string) error {
 	ctx := context.Background()
 
 	parsed, err := uuid.Parse(userID)

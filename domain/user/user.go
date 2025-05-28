@@ -59,18 +59,16 @@ func NewUser(
 func ReconstructUser(
 	id string,
 	email string,
-	encryptedPassword string,
 	timezone string,
 	themeColor string,
 	language string,
 ) (*User, error) {
 	u := &User{
-		ID:                id,
-		Email:             email,
-		EncryptedPassword: encryptedPassword,
-		Timezone:          timezone,
-		ThemeColor:        themeColor,
-		Language:          language,
+		ID:         id,
+		Email:      email,
+		Timezone:   timezone,
+		ThemeColor: themeColor,
+		Language:   language,
 	}
 	return u, nil
 }
