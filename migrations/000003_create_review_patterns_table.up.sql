@@ -7,4 +7,4 @@ CREATE TABLE review_patterns (
     target_weight target_weight_enum NOT NULL DEFAULT 'unset',
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-)
+);
