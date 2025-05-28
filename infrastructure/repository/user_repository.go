@@ -101,7 +101,6 @@ func (r *repository) Update(u *userDomain.User) error {
 
 	params := dbgen.UpdateUserParams{
 		Email:      u.Email,
-		Password:   u.EncryptedPassword,
 		Timezone:   u.Timezone,
 		ThemeColor: dbgen.ThemeColorEnum(u.ThemeColor),
 		Language:   u.Language,
