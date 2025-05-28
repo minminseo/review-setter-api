@@ -7,10 +7,11 @@ import (
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	categoryController "github.com/minminseo/recall-setter/controller/category"
 	userController "github.com/minminseo/recall-setter/controller/user"
 )
 
-func NewRouter(uc userController.IUserController) *echo.Echo {
+func NewRouter(uc userController.IUserController, cc categoryController.ICategoryController) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
@@ -47,9 +48,22 @@ func NewRouter(uc userController.IUserController) *echo.Echo {
 		ContextKey:  "user",
 	}))
 
-	u.GET("/", uc.GetUserSetting)
-	u.PUT("/", uc.UpdateSetting)
+	u.GET("", uc.GetUserSetting)
+	u.PUT("", uc.UpdateSetting)
 	u.PUT("/password", uc.UpdatePassword)
+
+	catGroup := e.Group("/categories")
+	catGroup.Use(echojwt.WithConfig(echojwt.Config{
+		SigningKey:  []byte(os.Getenv("SECRET")),
+		TokenLookup: "cookie:token",
+		ContextKey:  "user",
+	}))
+
+	catGroup.POST("", cc.CreateCategory)
+	catGroup.GET("", cc.GetCategories)
+	catGroup.PUT("/:id", cc.UpdateCategory)
+	catGroup.DELETE("/:id", cc.DeleteCategory)
+
 	return e
 
 }
