@@ -43,7 +43,6 @@ UPDATE
     users
 SET
     email = sqlc.arg(email),
-    password = sqlc.arg(password),
     timezone = sqlc.arg(timezone),
     theme_color = sqlc.arg(theme_color),
     language = sqlc.arg(language)
