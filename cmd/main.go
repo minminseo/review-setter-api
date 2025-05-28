@@ -7,6 +7,10 @@ import (
 
 	userUsecase "github.com/minminseo/recall-setter/application/user"
 	userController "github.com/minminseo/recall-setter/controller/user"
+
+	categoryUsecase "github.com/minminseo/recall-setter/application/category"
+	categoryController "github.com/minminseo/recall-setter/controller/category"
+
 	"github.com/minminseo/recall-setter/infrastructure/db"
 	"github.com/minminseo/recall-setter/infrastructure/repository"
 	"github.com/minminseo/recall-setter/router"
@@ -25,6 +29,11 @@ func main() {
 	userRepository := repository.NewUserRepository(pool)
 	userUsecase := userUsecase.NewUserUsecase(userRepository)
 	userController := userController.NewUserController(userUsecase)
-	e := router.NewRouter(userController)
+
+	categoryRepository := repository.NewCategoryRepository(pool)
+	categoryUsecase := categoryUsecase.NewCategoryUsecase(categoryRepository)
+	categoryController := categoryController.NewCategoryController(categoryUsecase)
+
+	e := router.NewRouter(userController, categoryController)
 	e.Logger.Fatal(e.Start(":8080"))
 }
