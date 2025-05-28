@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	userUsecase "github.com/minminseo/recall-setter/application/user"
 )
@@ -19,7 +19,7 @@ func NewUserController(uu userUsecase.IUserUsecase) IUserController {
 }
 
 func (uc *userController) SignUp(c echo.Context) error {
-	var request sighInUserRequest
+	var request sighUpUserRequest
 	if err := c.Bind(&request); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -60,7 +60,7 @@ func (uc *userController) LogIn(c echo.Context) error {
 	cookie.Expires = time.Now().Add(24 * time.Hour)
 	cookie.Path = "/"
 	cookie.Domain = os.Getenv("API_DOMAIN")
-	cookie.Secure = false // Postmanで動作確認する時はFalseにする
+	// cookie.Secure = true // Postmanで動作確認する時はFalseにする
 	cookie.HttpOnly = true
 	cookie.SameSite = http.SameSiteNoneMode
 	c.SetCookie(cookie)
@@ -77,7 +77,7 @@ func (uc *userController) LogOut(c echo.Context) error {
 	cookie.Expires = time.Now()
 	cookie.Path = "/"
 	cookie.Domain = os.Getenv("API_DOMAIN")
-	cookie.Secure = false // Postmanで動作確認する時はFalseにする
+	// cookie.Secure = true // Postmanで動作確認する時はFalseにする
 	cookie.HttpOnly = true
 	cookie.SameSite = http.SameSiteNoneMode
 	c.SetCookie(cookie)
@@ -107,13 +107,14 @@ func (uc *userController) GetUserSetting(c echo.Context) error {
 }
 
 func (uc *userController) UpdateSetting(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	userID := claims["user_id"]
 	var request updateUserRequest
 	if err := c.Bind(&request); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	userID := claims["user_id"]
+
 	if userID == nil {
 		return c.JSON(http.StatusUnauthorized, "User ID not found in token")
 	}
