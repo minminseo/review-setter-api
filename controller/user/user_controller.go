@@ -7,7 +7,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
-	userUsecase "github.com/minminseo/recall-setter/application/user"
+	userUsecase "github.com/minminseo/recall-setter/usecase/user"
 )
 
 type userController struct {
