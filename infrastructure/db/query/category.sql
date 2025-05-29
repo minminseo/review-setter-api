@@ -3,28 +3,36 @@ INSERT INTO
     categories (
         id,
         user_id,
-        name
+        name,
+        registered_at,
+        edited_at
     ) VALUES (
         sqlc.arg(id),
         sqlc.arg(user_id),
-        sqlc.arg(name)
+        sqlc.arg(name),
+        sqlc.arg(registered_at),
+        sqlc.arg(edited_at)
     );
 
 -- name: GetAllCategoriesByUserID :many
 SELECT
     id,
     user_id,
-    name
+    name,
+    registered_at,
+    edited_at
 FROM
     categories
 WHERE
     user_id = sqlc.arg(user_id)
 ORDER BY
-    created_at;
+    registered_at;
 
 -- name: GetCategoryByID :one
 SELECT
-    name
+    name,
+    registered_at,
+    edited_at
 FROM
     categories
 WHERE
@@ -34,12 +42,14 @@ WHERE
 UPDATE
     categories
 SET
-    name = sqlc.arg(name)
+    name = sqlc.arg(name),
+    edited_at = sqlc.arg(edited_at)
 WHERE
     id = sqlc.arg(id) AND user_id = sqlc.arg(user_id);
 
 -- name: DeleteCategory :exec
-DELETE FROM
+DELETE 
+FROM
     categories
 WHERE
     id = sqlc.arg(id) AND user_id = sqlc.arg(user_id);
