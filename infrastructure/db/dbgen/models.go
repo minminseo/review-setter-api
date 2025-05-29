@@ -98,11 +98,13 @@ func (ns NullThemeColorEnum) Value() (driver.Value, error) {
 }
 
 type Category struct {
-	ID        pgtype.UUID        `json:"id"`
-	UserID    pgtype.UUID        `json:"user_id"`
-	Name      string             `json:"name"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	ID           pgtype.UUID        `json:"id"`
+	UserID       pgtype.UUID        `json:"user_id"`
+	Name         string             `json:"name"`
+	RegisteredAt pgtype.Timestamptz `json:"registered_at"`
+	EditedAt     pgtype.Timestamptz `json:"edited_at"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
 }
 
 type PatternStep struct {
@@ -115,27 +117,31 @@ type PatternStep struct {
 }
 
 type ReviewBox struct {
-	ID         pgtype.UUID        `json:"id"`
-	UserID     pgtype.UUID        `json:"user_id"`
-	CategoryID pgtype.UUID        `json:"category_id"`
-	PatternID  pgtype.UUID        `json:"pattern_id"`
-	Name       string             `json:"name"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	ID           pgtype.UUID        `json:"id"`
+	UserID       pgtype.UUID        `json:"user_id"`
+	CategoryID   pgtype.UUID        `json:"category_id"`
+	PatternID    pgtype.UUID        `json:"pattern_id"`
+	Name         string             `json:"name"`
+	RegisteredAt pgtype.Timestamptz `json:"registered_at"`
+	EditedAt     pgtype.Timestamptz `json:"edited_at"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
 }
 
 type ReviewItem struct {
-	ID          pgtype.UUID        `json:"id"`
-	UserID      pgtype.UUID        `json:"user_id"`
-	CategoryID  pgtype.UUID        `json:"category_id"`
-	BoxID       pgtype.UUID        `json:"box_id"`
-	PatternID   pgtype.UUID        `json:"pattern_id"`
-	Name        string             `json:"name"`
-	Detail      pgtype.Text        `json:"detail"`
-	LearnedDate pgtype.Date        `json:"learned_date"`
-	IsCompleted bool               `json:"is_completed"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	ID           pgtype.UUID        `json:"id"`
+	UserID       pgtype.UUID        `json:"user_id"`
+	CategoryID   pgtype.UUID        `json:"category_id"`
+	BoxID        pgtype.UUID        `json:"box_id"`
+	PatternID    pgtype.UUID        `json:"pattern_id"`
+	Name         string             `json:"name"`
+	Detail       pgtype.Text        `json:"detail"`
+	LearnedDate  pgtype.Date        `json:"learned_date"`
+	IsCompleted  bool               `json:"is_completed"`
+	RegisteredAt pgtype.Timestamptz `json:"registered_at"`
+	EditedAt     pgtype.Timestamptz `json:"edited_at"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
 }
 
 type ReviewPattern struct {
@@ -143,6 +149,8 @@ type ReviewPattern struct {
 	UserID       pgtype.UUID        `json:"user_id"`
 	Name         string             `json:"name"`
 	TargetWeight TargetWeightEnum   `json:"target_weight"`
+	RegisteredAt pgtype.Timestamptz `json:"registered_at"`
+	EditedAt     pgtype.Timestamptz `json:"edited_at"`
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
 }
