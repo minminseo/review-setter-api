@@ -16,27 +16,40 @@ INSERT INTO
     categories (
         id,
         user_id,
-        name
+        name,
+        registered_at,
+        edited_at
     ) VALUES (
         $1,
         $2,
-        $3
+        $3,
+        $4,
+        $5
     )
 `
 
 type CreateCategoryParams struct {
-	ID     pgtype.UUID `json:"id"`
-	UserID pgtype.UUID `json:"user_id"`
-	Name   string      `json:"name"`
+	ID           pgtype.UUID        `json:"id"`
+	UserID       pgtype.UUID        `json:"user_id"`
+	Name         string             `json:"name"`
+	RegisteredAt pgtype.Timestamptz `json:"registered_at"`
+	EditedAt     pgtype.Timestamptz `json:"edited_at"`
 }
 
 func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) error {
-	_, err := q.db.Exec(ctx, createCategory, arg.ID, arg.UserID, arg.Name)
+	_, err := q.db.Exec(ctx, createCategory,
+		arg.ID,
+		arg.UserID,
+		arg.Name,
+		arg.RegisteredAt,
+		arg.EditedAt,
+	)
 	return err
 }
 
 const deleteCategory = `-- name: DeleteCategory :exec
-DELETE FROM
+DELETE 
+FROM
     categories
 WHERE
     id = $1 AND user_id = $2
@@ -56,19 +69,23 @@ const getAllCategoriesByUserID = `-- name: GetAllCategoriesByUserID :many
 SELECT
     id,
     user_id,
-    name
+    name,
+    registered_at,
+    edited_at
 FROM
     categories
 WHERE
     user_id = $1
 ORDER BY
-    created_at
+    registered_at
 `
 
 type GetAllCategoriesByUserIDRow struct {
-	ID     pgtype.UUID `json:"id"`
-	UserID pgtype.UUID `json:"user_id"`
-	Name   string      `json:"name"`
+	ID           pgtype.UUID        `json:"id"`
+	UserID       pgtype.UUID        `json:"user_id"`
+	Name         string             `json:"name"`
+	RegisteredAt pgtype.Timestamptz `json:"registered_at"`
+	EditedAt     pgtype.Timestamptz `json:"edited_at"`
 }
 
 func (q *Queries) GetAllCategoriesByUserID(ctx context.Context, userID pgtype.UUID) ([]GetAllCategoriesByUserIDRow, error) {
@@ -80,7 +97,13 @@ func (q *Queries) GetAllCategoriesByUserID(ctx context.Context, userID pgtype.UU
 	items := []GetAllCategoriesByUserIDRow{}
 	for rows.Next() {
 		var i GetAllCategoriesByUserIDRow
-		if err := rows.Scan(&i.ID, &i.UserID, &i.Name); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Name,
+			&i.RegisteredAt,
+			&i.EditedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -93,7 +116,9 @@ func (q *Queries) GetAllCategoriesByUserID(ctx context.Context, userID pgtype.UU
 
 const getCategoryByID = `-- name: GetCategoryByID :one
 SELECT
-    name
+    name,
+    registered_at,
+    edited_at
 FROM
     categories
 WHERE
@@ -105,29 +130,42 @@ type GetCategoryByIDParams struct {
 	UserID pgtype.UUID `json:"user_id"`
 }
 
-func (q *Queries) GetCategoryByID(ctx context.Context, arg GetCategoryByIDParams) (string, error) {
+type GetCategoryByIDRow struct {
+	Name         string             `json:"name"`
+	RegisteredAt pgtype.Timestamptz `json:"registered_at"`
+	EditedAt     pgtype.Timestamptz `json:"edited_at"`
+}
+
+func (q *Queries) GetCategoryByID(ctx context.Context, arg GetCategoryByIDParams) (GetCategoryByIDRow, error) {
 	row := q.db.QueryRow(ctx, getCategoryByID, arg.ID, arg.UserID)
-	var name string
-	err := row.Scan(&name)
-	return name, err
+	var i GetCategoryByIDRow
+	err := row.Scan(&i.Name, &i.RegisteredAt, &i.EditedAt)
+	return i, err
 }
 
 const updateCategory = `-- name: UpdateCategory :exec
 UPDATE
     categories
 SET
-    name = $1
+    name = $1,
+    edited_at = $2
 WHERE
-    id = $2 AND user_id = $3
+    id = $3 AND user_id = $4
 `
 
 type UpdateCategoryParams struct {
-	Name   string      `json:"name"`
-	ID     pgtype.UUID `json:"id"`
-	UserID pgtype.UUID `json:"user_id"`
+	Name     string             `json:"name"`
+	EditedAt pgtype.Timestamptz `json:"edited_at"`
+	ID       pgtype.UUID        `json:"id"`
+	UserID   pgtype.UUID        `json:"user_id"`
 }
 
 func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) error {
-	_, err := q.db.Exec(ctx, updateCategory, arg.Name, arg.ID, arg.UserID)
+	_, err := q.db.Exec(ctx, updateCategory,
+		arg.Name,
+		arg.EditedAt,
+		arg.ID,
+		arg.UserID,
+	)
 	return err
 }

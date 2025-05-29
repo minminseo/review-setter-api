@@ -1,6 +1,8 @@
 package category
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	categoryDomain "github.com/minminseo/recall-setter/domain/category"
 )
@@ -11,15 +13,19 @@ type CreateCategoryInput struct {
 }
 
 type CreateCategoryOutput struct {
-	ID     string
-	UserID string
-	Name   string
+	ID           string
+	UserID       string
+	Name         string
+	RegisteredAt time.Time
+	EditedAt     time.Time
 }
 
 type GetCategoryOutput struct {
-	ID     string
-	UserID string
-	Name   string
+	ID           string
+	UserID       string
+	Name         string
+	RegisteredAt time.Time
+	EditedAt     time.Time
 }
 
 type UpdateCategoryInput struct {
@@ -29,9 +35,10 @@ type UpdateCategoryInput struct {
 }
 
 type UpdateCategoryOutput struct {
-	ID     string
-	UserID string
-	Name   string
+	ID       string
+	UserID   string
+	Name     string
+	EditedAt time.Time
 }
 
 type categoryUsecase struct {
@@ -44,8 +51,10 @@ func NewCategoryUsecase(categoryRepo categoryDomain.CategoryRepository) ICategor
 
 func (cu *categoryUsecase) CreateCategory(input CreateCategoryInput) (*CreateCategoryOutput, error) {
 	id := uuid.NewString()
+	registeredAt := time.Now().UTC()
+	editedAt := registeredAt
 
-	newCategory, err := categoryDomain.NewCategory(id, input.UserID, input.Name)
+	newCategory, err := categoryDomain.NewCategory(id, input.UserID, input.Name, registeredAt, editedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -56,9 +65,11 @@ func (cu *categoryUsecase) CreateCategory(input CreateCategoryInput) (*CreateCat
 	}
 
 	resCategory := &CreateCategoryOutput{
-		ID:     newCategory.ID,
-		UserID: newCategory.UserID,
-		Name:   newCategory.Name,
+		ID:           newCategory.ID,
+		UserID:       newCategory.UserID,
+		Name:         newCategory.Name,
+		RegisteredAt: newCategory.RegisteredAt,
+		EditedAt:     newCategory.EditedAt,
 	}
 	return resCategory, nil
 }
@@ -70,11 +81,13 @@ func (cu *categoryUsecase) GetCategoriesByUserID(userID string) ([]*GetCategoryO
 	}
 
 	var outputCategories []*GetCategoryOutput
-	for _, cat := range categories {
+	for _, c := range categories {
 		outputCategories = append(outputCategories, &GetCategoryOutput{
-			ID:     cat.ID,
-			UserID: cat.UserID,
-			Name:   cat.Name,
+			ID:           c.ID,
+			UserID:       c.UserID,
+			Name:         c.Name,
+			RegisteredAt: c.RegisteredAt,
+			EditedAt:     c.EditedAt,
 		})
 	}
 	return outputCategories, nil
@@ -86,7 +99,9 @@ func (cu *categoryUsecase) UpdateCategory(input UpdateCategoryInput) (*UpdateCat
 		return nil, err
 	}
 
-	err = targetCategory.Set(input.Name)
+	EditedAt := time.Now().UTC()
+
+	err = targetCategory.Set(input.Name, EditedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -97,9 +112,10 @@ func (cu *categoryUsecase) UpdateCategory(input UpdateCategoryInput) (*UpdateCat
 	}
 
 	resCategory := &UpdateCategoryOutput{
-		ID:     targetCategory.ID,
-		UserID: targetCategory.UserID,
-		Name:   targetCategory.Name,
+		ID:       targetCategory.ID,
+		UserID:   targetCategory.UserID,
+		Name:     targetCategory.Name,
+		EditedAt: targetCategory.EditedAt,
 	}
 	return resCategory, nil
 }

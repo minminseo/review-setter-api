@@ -8,6 +8,8 @@ CREATE TABLE review_items (
     detail TEXT,
     learned_date DATE NOT NULL,
     is_completed BOOLEAN NOT NULL DEFAULT FALSE,
+    registered_at TIMESTAMPTZ NOT NULL,
+    edited_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-)
+);

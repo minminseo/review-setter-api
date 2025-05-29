@@ -35,10 +35,16 @@ func (r *categoryRepository) Create(category *categoryDomain.Category) error {
 	}
 	pgUserID := pgtype.UUID{Bytes: parsedUserID, Valid: true}
 
+	// 登録日時と更新日時をマッピング
+	pgRegisteredAt := pgtype.Timestamptz{Time: category.RegisteredAt, Valid: true}
+	pgEditedAt := pgtype.Timestamptz{Time: category.EditedAt, Valid: true}
+
 	params := dbgen.CreateCategoryParams{
-		ID:     pgID,
-		UserID: pgUserID,
-		Name:   category.Name,
+		ID:           pgID,
+		UserID:       pgUserID,
+		Name:         category.Name,
+		RegisteredAt: pgRegisteredAt,
+		EditedAt:     pgEditedAt,
 	}
 
 	return r.q.CreateCategory(ctx, params)
@@ -63,7 +69,13 @@ func (r *categoryRepository) GetAllByUserID(userID string) ([]*categoryDomain.Ca
 		catID := uuid.UUID(row.ID.Bytes).String()
 		catUserID := uuid.UUID(row.UserID.Bytes).String()
 
-		cat, err := categoryDomain.NewCategory(catID, catUserID, row.Name)
+		cat, err := categoryDomain.ReconstructCategory(
+			catID,
+			catUserID,
+			row.Name,
+			row.RegisteredAt.Time,
+			row.EditedAt.Time,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -95,7 +107,9 @@ func (r *categoryRepository) GetByID(categoryID string, userID string) (*categor
 	cd, err := categoryDomain.ReconstructCategory(
 		categoryID,
 		userID,
-		row, // 中身はname
+		row.Name,
+		row.RegisteredAt.Time,
+		row.EditedAt.Time,
 	)
 	if err != nil {
 		return nil, err
@@ -118,10 +132,14 @@ func (r *categoryRepository) Update(c *categoryDomain.Category) error {
 	}
 	pgUserID := pgtype.UUID{Bytes: parsedUserID, Valid: true}
 
+	// EditedAt をマッピング
+	pgEditedAt := pgtype.Timestamptz{Time: c.EditedAt, Valid: true}
+
 	params := dbgen.UpdateCategoryParams{
-		Name:   c.Name,
-		ID:     pgID,
-		UserID: pgUserID,
+		Name:     c.Name,
+		EditedAt: pgEditedAt,
+		ID:       pgID,
+		UserID:   pgUserID,
 	}
 
 	return r.q.UpdateCategory(ctx, params)
