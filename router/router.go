@@ -7,11 +7,12 @@ import (
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	boxController "github.com/minminseo/recall-setter/controller/box"
 	categoryController "github.com/minminseo/recall-setter/controller/category"
 	userController "github.com/minminseo/recall-setter/controller/user"
 )
 
-func NewRouter(uc userController.IUserController, cc categoryController.ICategoryController) *echo.Echo {
+func NewRouter(uc userController.IUserController, cc categoryController.ICategoryController, bc boxController.IBoxController) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
@@ -63,6 +64,17 @@ func NewRouter(uc userController.IUserController, cc categoryController.ICategor
 	catGroup.GET("", cc.GetCategories)
 	catGroup.PUT("/:id", cc.UpdateCategory)
 	catGroup.DELETE("/:id", cc.DeleteCategory)
+
+	boxGroup := e.Group("/categories/:category_id/boxes")
+	boxGroup.Use(echojwt.WithConfig(echojwt.Config{
+		SigningKey:  []byte(os.Getenv("SECRET")),
+		TokenLookup: "cookie:token",
+		ContextKey:  "user",
+	}))
+	boxGroup.POST("", bc.CreateBox)
+	boxGroup.GET("", bc.GetBoxes)
+	boxGroup.PUT("/:id", bc.UpdateBox)
+	boxGroup.DELETE("/:id", bc.DeleteBox)
 
 	return e
 
