@@ -4,6 +4,8 @@ CREATE TABLE review_boxes (
     category_id UUID NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
     pattern_id UUID REFERENCES review_patterns(id) ON DELETE SET NULL,
     name TEXT NOT NULL,
+    registered_at TIMESTAMPTZ NOT NULL,
+    edited_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
