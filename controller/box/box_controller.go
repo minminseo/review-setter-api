@@ -17,6 +17,8 @@ func NewBoxController(bu boxUsecase.IBoxUsecase) IBoxController {
 }
 
 func (bc *boxController) CreateBox(c echo.Context) error {
+	ctx := c.Request().Context()
+
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	rawID, ok := claims["user_id"]
@@ -41,7 +43,7 @@ func (bc *boxController) CreateBox(c echo.Context) error {
 		PatternID:  request.PatternID,
 		Name:       request.Name,
 	}
-	boxRes, err := bc.bu.CreateBox(input)
+	boxRes, err := bc.bu.CreateBox(ctx, input)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "ボックスの作成に失敗しました: " + err.Error()})
 	}
@@ -49,6 +51,8 @@ func (bc *boxController) CreateBox(c echo.Context) error {
 }
 
 func (bc *boxController) GetBoxes(c echo.Context) error {
+	ctx := c.Request().Context()
+
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 
@@ -62,7 +66,7 @@ func (bc *boxController) GetBoxes(c echo.Context) error {
 	}
 
 	categoryIDParam := c.Param("category_id")
-	boxesRes, err := bc.bu.GetBoxesByCategoryID(categoryIDParam, userID)
+	boxesRes, err := bc.bu.GetBoxesByCategoryID(ctx, categoryIDParam, userID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "ボックス一覧の取得に失敗しました: " + err.Error()})
 	}
@@ -70,6 +74,8 @@ func (bc *boxController) GetBoxes(c echo.Context) error {
 }
 
 func (bc *boxController) UpdateBox(c echo.Context) error {
+	ctx := c.Request().Context()
+
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 
@@ -97,7 +103,7 @@ func (bc *boxController) UpdateBox(c echo.Context) error {
 		PatternID:  req.PatternID,
 		Name:       req.Name,
 	}
-	res, err := bc.bu.UpdateBox(input)
+	res, err := bc.bu.UpdateBox(ctx, input)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "ボックスの更新に失敗しました: " + err.Error()})
 	}
@@ -105,6 +111,8 @@ func (bc *boxController) UpdateBox(c echo.Context) error {
 }
 
 func (bc *boxController) DeleteBox(c echo.Context) error {
+	ctx := c.Request().Context()
+
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 
@@ -120,7 +128,7 @@ func (bc *boxController) DeleteBox(c echo.Context) error {
 	categoryIDParam := c.Param("category_id")
 	boxID := c.Param("id")
 
-	err := bc.bu.DeleteBox(boxID, categoryIDParam, userID)
+	err := bc.bu.DeleteBox(ctx, boxID, categoryIDParam, userID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "ボックスの削除に失敗しました: " + err.Error()})
 	}

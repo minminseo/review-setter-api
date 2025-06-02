@@ -9,10 +9,11 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	boxController "github.com/minminseo/recall-setter/controller/box"
 	categoryController "github.com/minminseo/recall-setter/controller/category"
+	patternController "github.com/minminseo/recall-setter/controller/pattern"
 	userController "github.com/minminseo/recall-setter/controller/user"
 )
 
-func NewRouter(uc userController.IUserController, cc categoryController.ICategoryController, bc boxController.IBoxController) *echo.Echo {
+func NewRouter(uc userController.IUserController, cc categoryController.ICategoryController, bc boxController.IBoxController, pc patternController.IPatternController) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
@@ -75,6 +76,17 @@ func NewRouter(uc userController.IUserController, cc categoryController.ICategor
 	boxGroup.GET("", bc.GetBoxes)
 	boxGroup.PUT("/:id", bc.UpdateBox)
 	boxGroup.DELETE("/:id", bc.DeleteBox)
+
+	patternGroup := e.Group("/patterns")
+	patternGroup.Use(echojwt.WithConfig(echojwt.Config{
+		SigningKey:  []byte(os.Getenv("SECRET")),
+		TokenLookup: "cookie:token",
+	}))
+
+	patternGroup.POST("", pc.CreatePattern)
+	patternGroup.GET("", pc.GetPatterns)
+	patternGroup.PUT("/:id", pc.UpdatePattern)
+	patternGroup.DELETE("/:id", pc.DeletePattern)
 
 	return e
 

@@ -9,10 +9,10 @@ func TestValidateSteps(t *testing.T) {
 		t.Skip("スキップさせる")
 	}
 
-	s1 := &PatternStep{id: "1", patternID: "p1", stepNumber: 1, intervalDays: 1}
-	s2 := &PatternStep{id: "2", patternID: "p1", stepNumber: 2, intervalDays: 2}
-	s3 := &PatternStep{id: "3", patternID: "p1", stepNumber: 1, intervalDays: 3} // duplicate step number
-	s4 := &PatternStep{id: "4", patternID: "p1", stepNumber: 3, intervalDays: 2} // duplicate intervalDays
+	s1 := &PatternStep{PatternStepID: "1", UserID: "u1", PatternID: "p1", StepNumber: 1, IntervalDays: 1}
+	s2 := &PatternStep{PatternStepID: "2", UserID: "u1", PatternID: "p1", StepNumber: 2, IntervalDays: 2}
+	s3 := &PatternStep{PatternStepID: "3", UserID: "u1", PatternID: "p1", StepNumber: 1, IntervalDays: 3} // StepNumber 重複
+	s4 := &PatternStep{PatternStepID: "4", UserID: "u1", PatternID: "p1", StepNumber: 3, IntervalDays: 2} // IntervalDays 重複
 
 	tests := []struct {
 		name    string
@@ -85,7 +85,7 @@ func TestValidateSteps(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateSteps(tt.args)
+			err := ValidateSteps(tt.args)
 			if tt.wantErr {
 				if err == nil {
 					t.Fatalf("err==nilのため、%qのテストが失敗しました", tt.name)

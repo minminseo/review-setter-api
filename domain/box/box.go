@@ -71,7 +71,11 @@ func validateName(name string) error {
 	)
 }
 
-func (b *Box) Set(patternID string, name string, editedAt time.Time) (bool, error) {
+func (b *Box) Set(
+	patternID string,
+	name string,
+	editedAt time.Time,
+) (bool, error) {
 	var isSamePattern bool
 	if b.PatternID == patternID {
 		isSamePattern = true
