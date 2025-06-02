@@ -1,4 +1,3 @@
-// infrastructure/repository/transaction_manager.go
 package repository
 
 import (
