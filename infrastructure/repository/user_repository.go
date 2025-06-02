@@ -8,29 +8,23 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	userDomain "github.com/minminseo/recall-setter/domain/user"
+	"github.com/minminseo/recall-setter/infrastructure/db"
 	"github.com/minminseo/recall-setter/infrastructure/db/dbgen"
 )
 
-type userRepository struct {
-	q *dbgen.Queries
+type userRepository struct{}
+
+func NewUserRepository() userDomain.UserRepository {
+	return &userRepository{}
 }
 
-func NewUserRepository(db dbgen.DBTX) userDomain.UserRepository {
-	return &userRepository{
-		q: dbgen.New(db),
-	}
-}
+func (r *userRepository) Create(ctx context.Context, u *userDomain.User) error {
+	q := db.GetQuery(ctx)
 
-func (r *userRepository) Create(u *userDomain.User) error {
-	ctx := context.Background()
-
-	// string型のidをバイナリ形式のUUIDに変換
 	parsed, err := uuid.Parse(u.ID)
 	if err != nil {
 		return err
 	}
-
-	// pgtype.UUID に変換
 	pgID := pgtype.UUID{Bytes: parsed, Valid: true}
 
 	params := dbgen.CreateUserParams{
@@ -38,23 +32,24 @@ func (r *userRepository) Create(u *userDomain.User) error {
 		Email:      u.Email,
 		Password:   u.EncryptedPassword,
 		Timezone:   u.Timezone,
-		ThemeColor: dbgen.ThemeColorEnum(u.ThemeColor), // dbgenで定義している列挙型に変換
+		ThemeColor: dbgen.ThemeColorEnum(u.ThemeColor),
 		Language:   u.Language,
 	}
 
-	return r.q.CreateUser(ctx, params)
+	return q.CreateUser(ctx, params)
 }
 
-func (r *userRepository) FindByEmail(email string) (*userDomain.User, error) {
-	ctx := context.Background()
+func (r *userRepository) FindByEmail(ctx context.Context, email string) (*userDomain.User, error) {
+	q := db.GetQuery(ctx)
 
-	row, err := r.q.FindUserByEmail(ctx, email)
+	row, err := q.FindUserByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
 
 	if !row.ID.Valid {
 		return nil, errors.New("invalid UUID from DB")
+
 	}
 	id := uuid.UUID(row.ID.Bytes).String()
 
@@ -67,8 +62,8 @@ func (r *userRepository) FindByEmail(email string) (*userDomain.User, error) {
 	}, nil
 }
 
-func (r *userRepository) GetSettingByID(userID string) (*userDomain.User, error) {
-	ctx := context.Background()
+func (r *userRepository) GetSettingByID(ctx context.Context, userID string) (*userDomain.User, error) {
+	q := db.GetQuery(ctx)
 
 	parsed, err := uuid.Parse(userID)
 	if err != nil {
@@ -76,7 +71,7 @@ func (r *userRepository) GetSettingByID(userID string) (*userDomain.User, error)
 	}
 	pgID := pgtype.UUID{Bytes: parsed, Valid: true}
 
-	row, err := r.q.GetUserSettingByID(ctx, pgID)
+	row, err := q.GetUserSettingByID(ctx, pgID)
 	if err != nil {
 		return nil, err
 	}
@@ -94,8 +89,8 @@ func (r *userRepository) GetSettingByID(userID string) (*userDomain.User, error)
 	return ud, nil
 }
 
-func (r *userRepository) Update(u *userDomain.User) error {
-	ctx := context.Background()
+func (r *userRepository) Update(ctx context.Context, u *userDomain.User) error {
+	q := db.GetQuery(ctx)
 
 	parsed, err := uuid.Parse(u.ID)
 	if err != nil {
@@ -111,11 +106,11 @@ func (r *userRepository) Update(u *userDomain.User) error {
 		ID:         pgID,
 	}
 
-	return r.q.UpdateUser(ctx, params)
+	return q.UpdateUser(ctx, params)
 }
 
-func (r *userRepository) UpdatePassword(userID, password string) error {
-	ctx := context.Background()
+func (r *userRepository) UpdatePassword(ctx context.Context, userID, password string) error {
+	q := db.GetQuery(ctx)
 
 	parsed, err := uuid.Parse(userID)
 	if err != nil {
@@ -128,5 +123,5 @@ func (r *userRepository) UpdatePassword(userID, password string) error {
 		ID:       pgID,
 	}
 
-	return r.q.UpdateUserPassword(ctx, params)
+	return q.UpdateUserPassword(ctx, params)
 }
