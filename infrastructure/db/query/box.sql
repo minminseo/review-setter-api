@@ -30,7 +30,9 @@ SELECT
 FROM
     review_boxes
 WHERE
-    category_id = sqlc.arg(category_id) AND user_id = sqlc.arg(user_id)
+    category_id = sqlc.arg(category_id)
+AND
+    user_id = sqlc.arg(user_id)
 ORDER BY
     registered_at;
 
@@ -46,7 +48,11 @@ SELECT
 FROM
     review_boxes
 WHERE
-    id = sqlc.arg(id) AND category_id = sqlc.arg(category_id) AND user_id = sqlc.arg(user_id);
+    id = sqlc.arg(id)
+AND
+    category_id = sqlc.arg(category_id)
+AND
+    user_id = sqlc.arg(user_id);
 
 -- name: UpdateBox :exec
 UPDATE
@@ -55,7 +61,11 @@ SET
     name = sqlc.arg(name),
     edited_at = sqlc.arg(edited_at)
 WHERE
-    id = sqlc.arg(id) AND category_id = sqlc.arg(category_id) AND user_id = sqlc.arg(user_id);
+    id = sqlc.arg(id)
+AND
+    category_id = sqlc.arg(category_id)
+AND
+    user_id = sqlc.arg(user_id);
 
 -- name: UpdateBoxIfNoReviewItems :execrows
 UPDATE
