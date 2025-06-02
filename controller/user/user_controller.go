@@ -19,6 +19,7 @@ func NewUserController(uu userUsecase.IUserUsecase) IUserController {
 }
 
 func (uc *userController) SignUp(c echo.Context) error {
+	ctx := c.Request().Context()
 	var request sighUpUserRequest
 	if err := c.Bind(&request); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
@@ -32,7 +33,7 @@ func (uc *userController) SignUp(c echo.Context) error {
 		Language:   request.Language,
 	}
 
-	userRes, err := uc.uu.SignUp(input)
+	userRes, err := uc.uu.SignUp(ctx, input)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -40,6 +41,8 @@ func (uc *userController) SignUp(c echo.Context) error {
 }
 
 func (uc *userController) LogIn(c echo.Context) error {
+	ctx := c.Request().Context()
+
 	var request logInUserRequest
 	if err := c.Bind(&request); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
@@ -50,7 +53,7 @@ func (uc *userController) LogIn(c echo.Context) error {
 		Password: request.Password,
 	}
 
-	userRes, err := uc.uu.LogIn(input)
+	userRes, err := uc.uu.LogIn(ctx, input)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -93,13 +96,15 @@ func (uc *userController) CsrfToken(c echo.Context) error {
 }
 
 func (uc *userController) GetUserSetting(c echo.Context) error {
+	ctx := c.Request().Context()
+
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	userID := claims["user_id"]
 	if userID == nil {
 		return c.JSON(http.StatusUnauthorized, "User ID not found in token")
 	}
-	userRes, err := uc.uu.GetUserSetting(userID.(string))
+	userRes, err := uc.uu.GetUserSetting(ctx, userID.(string))
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -107,6 +112,7 @@ func (uc *userController) GetUserSetting(c echo.Context) error {
 }
 
 func (uc *userController) UpdateSetting(c echo.Context) error {
+	ctx := c.Request().Context()
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	rawID, ok := claims["user_id"]
@@ -131,7 +137,7 @@ func (uc *userController) UpdateSetting(c echo.Context) error {
 		Language:   request.Language,
 	}
 
-	userRes, err := uc.uu.UpdateSetting(input)
+	userRes, err := uc.uu.UpdateSetting(ctx, input)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -139,6 +145,7 @@ func (uc *userController) UpdateSetting(c echo.Context) error {
 }
 
 func (uc *userController) UpdatePassword(c echo.Context) error {
+	ctx := c.Request().Context()
 	var request updatePasswordRequest
 	if err := c.Bind(&request); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
@@ -151,7 +158,7 @@ func (uc *userController) UpdatePassword(c echo.Context) error {
 	}
 	request.ID = userID.(string)
 
-	err := uc.uu.UpdatePassword(request.ID, request.Password)
+	err := uc.uu.UpdatePassword(ctx, request.ID, request.Password)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}

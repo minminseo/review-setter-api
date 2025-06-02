@@ -17,6 +17,8 @@ func NewCategoryController(cu categoryUsecase.ICategoryUsecase) ICategoryControl
 }
 
 func (cc *categoryController) CreateCategory(c echo.Context) error {
+	ctx := c.Request().Context()
+
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	rawID, ok := claims["user_id"]
@@ -38,7 +40,7 @@ func (cc *categoryController) CreateCategory(c echo.Context) error {
 		Name:   request.Name,
 	}
 
-	categoryRes, err := cc.cu.CreateCategory(input)
+	categoryRes, err := cc.cu.CreateCategory(ctx, input)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "カテゴリの作成に失敗しました: " + err.Error()})
 	}
@@ -46,6 +48,8 @@ func (cc *categoryController) CreateCategory(c echo.Context) error {
 }
 
 func (cc *categoryController) GetCategories(c echo.Context) error {
+	ctx := c.Request().Context()
+
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	rawID, ok := claims["user_id"]
@@ -57,7 +61,7 @@ func (cc *categoryController) GetCategories(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, echo.Map{"error": "トークン内のユーザーIDが無効です"})
 	}
 
-	categoriesRes, err := cc.cu.GetCategoriesByUserID(userID)
+	categoriesRes, err := cc.cu.GetCategoriesByUserID(ctx, userID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "カテゴリの取得に失敗しました: " + err.Error()})
 	}
@@ -65,6 +69,8 @@ func (cc *categoryController) GetCategories(c echo.Context) error {
 }
 
 func (cc *categoryController) UpdateCategory(c echo.Context) error {
+	ctx := c.Request().Context()
+
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	rawID, ok := claims["user_id"]
@@ -92,7 +98,7 @@ func (cc *categoryController) UpdateCategory(c echo.Context) error {
 		Name:   request.Name,
 	}
 
-	categoryRes, err := cc.cu.UpdateCategory(input)
+	categoryRes, err := cc.cu.UpdateCategory(ctx, input)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "カテゴリの更新に失敗しました: " + err.Error()})
 	}
@@ -100,6 +106,8 @@ func (cc *categoryController) UpdateCategory(c echo.Context) error {
 }
 
 func (cc *categoryController) DeleteCategory(c echo.Context) error {
+	ctx := c.Request().Context()
+
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	rawID, ok := claims["user_id"]
@@ -115,7 +123,7 @@ func (cc *categoryController) DeleteCategory(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "パスにカテゴリIDが必要です"})
 	}
 
-	err := cc.cu.DeleteCategory(categoryIDParam, userID)
+	err := cc.cu.DeleteCategory(ctx, categoryIDParam, userID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "カテゴリの削除に失敗しました: " + err.Error()})
 	}
