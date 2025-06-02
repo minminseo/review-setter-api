@@ -1,6 +1,7 @@
 package box
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -52,14 +53,22 @@ type UpdateBoxOutput struct {
 }
 
 type boxUsecase struct {
-	boxRepo boxDomain.BoxRepository
+	boxRepo boxDomain.IBoxRepository
+	// transactionManager transaction.ITransactionManager
 }
 
-func NewBoxUsecase(boxRepo boxDomain.BoxRepository) IBoxUsecase {
-	return &boxUsecase{boxRepo: boxRepo}
+// NewBoxUsecase はコンストラクタ
+func NewBoxUsecase(
+	boxRepo boxDomain.IBoxRepository,
+	// transactionManager transaction.ITransactionManager,
+) IBoxUsecase {
+	return &boxUsecase{
+		boxRepo: boxRepo,
+		// transactionManager: transactionManager,
+	}
 }
 
-func (bu *boxUsecase) CreateBox(input CreateBoxInput) (*CreateBoxOutput, error) {
+func (bu *boxUsecase) CreateBox(ctx context.Context, input CreateBoxInput) (*CreateBoxOutput, error) {
 	id := uuid.NewString()
 	registeredAt := time.Now().UTC()
 	editedAt := registeredAt
@@ -77,7 +86,7 @@ func (bu *boxUsecase) CreateBox(input CreateBoxInput) (*CreateBoxOutput, error) 
 		return nil, err
 	}
 
-	err = bu.boxRepo.Create(newBox)
+	err = bu.boxRepo.Create(ctx, newBox)
 	if err != nil {
 		return nil, err
 	}
@@ -93,8 +102,8 @@ func (bu *boxUsecase) CreateBox(input CreateBoxInput) (*CreateBoxOutput, error) 
 	}, nil
 }
 
-func (bu *boxUsecase) GetBoxesByCategoryID(categoryID, userID string) ([]*GetBoxOutput, error) {
-	boxes, err := bu.boxRepo.GetAllByCategoryID(categoryID, userID)
+func (bu *boxUsecase) GetBoxesByCategoryID(ctx context.Context, categoryID, userID string) ([]*GetBoxOutput, error) {
+	boxes, err := bu.boxRepo.GetAllByCategoryID(ctx, categoryID, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -113,8 +122,8 @@ func (bu *boxUsecase) GetBoxesByCategoryID(categoryID, userID string) ([]*GetBox
 	return outputs, nil
 }
 
-func (bu *boxUsecase) UpdateBox(input UpdateBoxInput) (*UpdateBoxOutput, error) {
-	targetBox, err := bu.boxRepo.GetByID(input.ID, input.CategoryID, input.UserID)
+func (bu *boxUsecase) UpdateBox(ctx context.Context, input UpdateBoxInput) (*UpdateBoxOutput, error) {
+	targetBox, err := bu.boxRepo.GetByID(ctx, input.ID, input.CategoryID, input.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -128,12 +137,12 @@ func (bu *boxUsecase) UpdateBox(input UpdateBoxInput) (*UpdateBoxOutput, error) 
 	}
 
 	if isSamePattern {
-		err = bu.boxRepo.Update(targetBox)
+		err = bu.boxRepo.Update(ctx, targetBox)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		affected, err := bu.boxRepo.UpdateWithPatternID(targetBox)
+		affected, err := bu.boxRepo.UpdateWithPatternID(ctx, targetBox)
 		if err != nil {
 			return nil, err
 		}
@@ -153,6 +162,6 @@ func (bu *boxUsecase) UpdateBox(input UpdateBoxInput) (*UpdateBoxOutput, error) 
 	return resBox, nil
 }
 
-func (uc *boxUsecase) DeleteBox(boxID string, categoryID string, userID string) error {
-	return uc.boxRepo.Delete(boxID, categoryID, userID)
+func (uc *boxUsecase) DeleteBox(ctx context.Context, boxID string, categoryID string, userID string) error {
+	return uc.boxRepo.Delete(ctx, boxID, categoryID, userID)
 }

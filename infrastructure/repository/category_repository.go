@@ -7,21 +7,18 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	categoryDomain "github.com/minminseo/recall-setter/domain/category"
+	"github.com/minminseo/recall-setter/infrastructure/db"
 	"github.com/minminseo/recall-setter/infrastructure/db/dbgen"
 )
 
-type categoryRepository struct {
-	q *dbgen.Queries
+type categoryRepository struct{}
+
+func NewCategoryRepository() categoryDomain.ICategoryRepository {
+	return &categoryRepository{}
 }
 
-func NewCategoryRepository(db dbgen.DBTX) categoryDomain.CategoryRepository {
-	return &categoryRepository{
-		q: dbgen.New(db),
-	}
-}
-
-func (r *categoryRepository) Create(category *categoryDomain.Category) error {
-	ctx := context.Background()
+func (r *categoryRepository) Create(ctx context.Context, category *categoryDomain.Category) error {
+	q := db.GetQuery(ctx)
 
 	parsedID, err := uuid.Parse(category.ID)
 	if err != nil {
@@ -35,7 +32,6 @@ func (r *categoryRepository) Create(category *categoryDomain.Category) error {
 	}
 	pgUserID := pgtype.UUID{Bytes: parsedUserID, Valid: true}
 
-	// 登録日時と更新日時をマッピング
 	pgRegisteredAt := pgtype.Timestamptz{Time: category.RegisteredAt, Valid: true}
 	pgEditedAt := pgtype.Timestamptz{Time: category.EditedAt, Valid: true}
 
@@ -47,11 +43,11 @@ func (r *categoryRepository) Create(category *categoryDomain.Category) error {
 		EditedAt:     pgEditedAt,
 	}
 
-	return r.q.CreateCategory(ctx, params)
+	return q.CreateCategory(ctx, params)
 }
 
-func (r *categoryRepository) GetAllByUserID(userID string) ([]*categoryDomain.Category, error) {
-	ctx := context.Background()
+func (r *categoryRepository) GetAllByUserID(ctx context.Context, userID string) ([]*categoryDomain.Category, error) {
+	q := db.GetQuery(ctx)
 
 	parsedUserID, err := uuid.Parse(userID)
 	if err != nil {
@@ -59,7 +55,7 @@ func (r *categoryRepository) GetAllByUserID(userID string) ([]*categoryDomain.Ca
 	}
 	pgUserID := pgtype.UUID{Bytes: parsedUserID, Valid: true}
 
-	rows, err := r.q.GetAllCategoriesByUserID(ctx, pgUserID)
+	rows, err := q.GetAllCategoriesByUserID(ctx, pgUserID)
 	if err != nil {
 		return nil, err
 	}
@@ -84,26 +80,30 @@ func (r *categoryRepository) GetAllByUserID(userID string) ([]*categoryDomain.Ca
 	return categories, nil
 }
 
-func (r *categoryRepository) GetByID(categoryID string, userID string) (*categoryDomain.Category, error) {
-	ctx := context.Background()
+func (r *categoryRepository) GetByID(ctx context.Context, categoryID string, userID string) (*categoryDomain.Category, error) {
+	q := db.GetQuery(ctx)
+
 	parsedID, err := uuid.Parse(categoryID)
 	if err != nil {
 		return nil, err
 	}
 	pgID := pgtype.UUID{Bytes: parsedID, Valid: true}
+
 	parsedUserID, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, err
 	}
 	pgUserID := pgtype.UUID{Bytes: parsedUserID, Valid: true}
+
 	params := dbgen.GetCategoryByIDParams{
 		ID:     pgID,
 		UserID: pgUserID,
 	}
-	row, err := r.q.GetCategoryByID(ctx, params)
+	row, err := q.GetCategoryByID(ctx, params)
 	if err != nil {
 		return nil, err
 	}
+
 	cd, err := categoryDomain.ReconstructCategory(
 		categoryID,
 		userID,
@@ -117,36 +117,34 @@ func (r *categoryRepository) GetByID(categoryID string, userID string) (*categor
 	return cd, nil
 }
 
-func (r *categoryRepository) Update(c *categoryDomain.Category) error {
-	ctx := context.Background()
+func (r *categoryRepository) Update(ctx context.Context, category *categoryDomain.Category) error {
+	q := db.GetQuery(ctx)
 
-	parsedID, err := uuid.Parse(c.ID)
+	parsedID, err := uuid.Parse(category.ID)
 	if err != nil {
 		return err
 	}
 	pgID := pgtype.UUID{Bytes: parsedID, Valid: true}
 
-	parsedUserID, err := uuid.Parse(c.UserID)
+	parsedUserID, err := uuid.Parse(category.UserID)
 	if err != nil {
 		return err
 	}
 	pgUserID := pgtype.UUID{Bytes: parsedUserID, Valid: true}
 
-	// EditedAt をマッピング
-	pgEditedAt := pgtype.Timestamptz{Time: c.EditedAt, Valid: true}
+	pgEditedAt := pgtype.Timestamptz{Time: category.EditedAt, Valid: true}
 
 	params := dbgen.UpdateCategoryParams{
-		Name:     c.Name,
+		Name:     category.Name,
 		EditedAt: pgEditedAt,
 		ID:       pgID,
 		UserID:   pgUserID,
 	}
-
-	return r.q.UpdateCategory(ctx, params)
+	return q.UpdateCategory(ctx, params)
 }
 
-func (r *categoryRepository) Delete(categoryID string, userID string) error {
-	ctx := context.Background()
+func (r *categoryRepository) Delete(ctx context.Context, categoryID string, userID string) error {
+	q := db.GetQuery(ctx)
 
 	parsedID, err := uuid.Parse(categoryID)
 	if err != nil {
@@ -164,5 +162,5 @@ func (r *categoryRepository) Delete(categoryID string, userID string) error {
 		ID:     pgID,
 		UserID: pgUserID,
 	}
-	return r.q.DeleteCategory(ctx, params)
+	return q.DeleteCategory(ctx, params)
 }

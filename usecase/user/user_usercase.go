@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"os"
 	"time"
 
@@ -57,13 +58,20 @@ type UpdateUserOutput struct {
 
 type userUsecase struct {
 	userRepo userDomain.UserRepository
+	// transactionManager transaction.ITransactionManager
 }
 
-func NewUserUsecase(userRepo userDomain.UserRepository) IUserUsecase {
-	return &userUsecase{userRepo: userRepo}
+func NewUserUsecase(
+	userRepo userDomain.UserRepository,
+	// transactionManager transaction.ITransactionManager,
+) IUserUsecase {
+	return &userUsecase{
+		userRepo: userRepo,
+		// transactionManager: transactionManager,
+	}
 }
 
-func (uu *userUsecase) SignUp(dto CreateUserInput) (*CreateUserOutput, error) {
+func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*CreateUserOutput, error) {
 	id := uuid.NewString()
 
 	newUser, err := userDomain.NewUser(id, dto.Email, dto.Password, dto.Timezone, dto.ThemeColor, dto.Language)
@@ -71,7 +79,7 @@ func (uu *userUsecase) SignUp(dto CreateUserInput) (*CreateUserOutput, error) {
 		return nil, err
 	}
 
-	err = uu.userRepo.Create(newUser)
+	err = uu.userRepo.Create(ctx, newUser)
 	if err != nil {
 		return nil, err
 	}
@@ -84,8 +92,8 @@ func (uu *userUsecase) SignUp(dto CreateUserInput) (*CreateUserOutput, error) {
 	return resUser, nil
 }
 
-func (uu *userUsecase) LogIn(dto LoginUserInput) (*LoginUserOutput, error) {
-	user, err := uu.userRepo.FindByEmail(dto.Email)
+func (uu *userUsecase) LogIn(ctx context.Context, dto LoginUserInput) (*LoginUserOutput, error) {
+	user, err := uu.userRepo.FindByEmail(ctx, dto.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -113,8 +121,8 @@ func (uu *userUsecase) LogIn(dto LoginUserInput) (*LoginUserOutput, error) {
 	return resUser, nil
 }
 
-func (uu *userUsecase) GetUserSetting(userID string) (*GetUserOutput, error) {
-	user, err := uu.userRepo.GetSettingByID(userID)
+func (uu *userUsecase) GetUserSetting(ctx context.Context, userID string) (*GetUserOutput, error) {
+	user, err := uu.userRepo.GetSettingByID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -127,8 +135,8 @@ func (uu *userUsecase) GetUserSetting(userID string) (*GetUserOutput, error) {
 	return resUser, nil
 }
 
-func (uu *userUsecase) UpdateSetting(user UpdateUserInput) (*UpdateUserOutput, error) {
-	targetUser, err := uu.userRepo.GetSettingByID(user.ID)
+func (uu *userUsecase) UpdateSetting(ctx context.Context, user UpdateUserInput) (*UpdateUserOutput, error) {
+	targetUser, err := uu.userRepo.GetSettingByID(ctx, user.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +146,7 @@ func (uu *userUsecase) UpdateSetting(user UpdateUserInput) (*UpdateUserOutput, e
 		return nil, err
 	}
 
-	err = uu.userRepo.Update(targetUser)
+	err = uu.userRepo.Update(ctx, targetUser)
 	if err != nil {
 		return nil, err
 	}
@@ -153,8 +161,8 @@ func (uu *userUsecase) UpdateSetting(user UpdateUserInput) (*UpdateUserOutput, e
 	return resUser, nil
 }
 
-func (uu *userUsecase) UpdatePassword(userID, password string) error {
-	user, err := uu.userRepo.GetSettingByID(userID)
+func (uu *userUsecase) UpdatePassword(ctx context.Context, userID, password string) error {
+	user, err := uu.userRepo.GetSettingByID(ctx, userID)
 	if err != nil {
 		return err
 	}
@@ -162,7 +170,7 @@ func (uu *userUsecase) UpdatePassword(userID, password string) error {
 	if err != nil {
 		return err
 	}
-	err = uu.userRepo.UpdatePassword(userID, user.EncryptedPassword)
+	err = uu.userRepo.UpdatePassword(ctx, userID, user.EncryptedPassword)
 	if err != nil {
 		return err
 	}

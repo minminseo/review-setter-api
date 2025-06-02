@@ -7,23 +7,19 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	boxDomain "github.com/minminseo/recall-setter/domain/box"
+	"github.com/minminseo/recall-setter/infrastructure/db"
 	"github.com/minminseo/recall-setter/infrastructure/db/dbgen"
 )
 
-type boxRepository struct {
-	q *dbgen.Queries
+type boxRepository struct{}
+
+func NewBoxRepository() boxDomain.IBoxRepository {
+	return &boxRepository{}
 }
 
-func NewBoxRepository(db dbgen.DBTX) boxDomain.BoxRepository {
-	return &boxRepository{
-		q: dbgen.New(db),
-	}
-}
+func (r *boxRepository) Create(ctx context.Context, box *boxDomain.Box) error {
+	q := db.GetQuery(ctx)
 
-func (r *boxRepository) Create(box *boxDomain.Box) error {
-	ctx := context.Background()
-
-	// UUID パース
 	parsedID, err := uuid.Parse(box.ID)
 	if err != nil {
 		return err
@@ -60,11 +56,11 @@ func (r *boxRepository) Create(box *boxDomain.Box) error {
 		RegisteredAt: pgRegisteredAt,
 		EditedAt:     pgEditedAt,
 	}
-	return r.q.CreateBox(ctx, params)
+	return q.CreateBox(ctx, params)
 }
 
-func (r *boxRepository) GetAllByCategoryID(categoryID, userID string) ([]*boxDomain.Box, error) {
-	ctx := context.Background()
+func (r *boxRepository) GetAllByCategoryID(ctx context.Context, categoryID, userID string) ([]*boxDomain.Box, error) {
+	q := db.GetQuery(ctx)
 
 	parsedCategoryID, err := uuid.Parse(categoryID)
 	if err != nil {
@@ -78,7 +74,7 @@ func (r *boxRepository) GetAllByCategoryID(categoryID, userID string) ([]*boxDom
 	}
 	pgUserID := pgtype.UUID{Bytes: parsedUserID, Valid: true}
 
-	rows, err := r.q.GetAllBoxesByCategoryID(ctx, dbgen.GetAllBoxesByCategoryIDParams{
+	rows, err := q.GetAllBoxesByCategoryID(ctx, dbgen.GetAllBoxesByCategoryIDParams{
 		CategoryID: pgCategoryID,
 		UserID:     pgUserID,
 	})
@@ -110,8 +106,8 @@ func (r *boxRepository) GetAllByCategoryID(categoryID, userID string) ([]*boxDom
 	return boxes, nil
 }
 
-func (r *boxRepository) GetByID(boxID string, categoryID string, userID string) (*boxDomain.Box, error) {
-	ctx := context.Background()
+func (r *boxRepository) GetByID(ctx context.Context, boxID string, categoryID string, userID string) (*boxDomain.Box, error) {
+	q := db.GetQuery(ctx)
 
 	parsedID, err := uuid.Parse(boxID)
 	if err != nil {
@@ -136,12 +132,10 @@ func (r *boxRepository) GetByID(boxID string, categoryID string, userID string) 
 		CategoryID: pgCategoryID,
 		UserID:     pgUserID,
 	}
-
-	row, err := r.q.GetBoxByID(ctx, params)
+	row, err := q.GetBoxByID(ctx, params)
 	if err != nil {
 		return nil, err
 	}
-
 	b, err := boxDomain.ReconstructBox(
 		boxID,
 		userID,
@@ -158,8 +152,8 @@ func (r *boxRepository) GetByID(boxID string, categoryID string, userID string) 
 }
 
 // メモ：復習物ボックス内に復習物が存在しない場合のみにPatternIDの変更を許可する形式にする
-func (r *boxRepository) Update(box *boxDomain.Box) error {
-	ctx := context.Background()
+func (r *boxRepository) Update(ctx context.Context, box *boxDomain.Box) error {
+	q := db.GetQuery(ctx)
 
 	parsedID, err := uuid.Parse(box.ID)
 	if err != nil {
@@ -181,11 +175,11 @@ func (r *boxRepository) Update(box *boxDomain.Box) error {
 		ID:       pgID,
 		UserID:   pgUserID,
 	}
-	return r.q.UpdateBox(ctx, params)
+	return q.UpdateBox(ctx, params)
 }
 
-func (r *boxRepository) UpdateWithPatternID(box *boxDomain.Box) (int64, error) {
-	ctx := context.Background()
+func (r *boxRepository) UpdateWithPatternID(ctx context.Context, box *boxDomain.Box) (int64, error) {
+	q := db.GetQuery(ctx)
 
 	parsedID, err := uuid.Parse(box.ID)
 	if err != nil {
@@ -193,11 +187,11 @@ func (r *boxRepository) UpdateWithPatternID(box *boxDomain.Box) (int64, error) {
 	}
 	pgID := pgtype.UUID{Bytes: parsedID, Valid: true}
 
-	parsedIDCategoryID, err := uuid.Parse(box.CategoryID)
+	parsedCategoryID, err := uuid.Parse(box.CategoryID)
 	if err != nil {
 		return 0, err
 	}
-	pgCategoryID := pgtype.UUID{Bytes: parsedIDCategoryID, Valid: true}
+	pgCategoryID := pgtype.UUID{Bytes: parsedCategoryID, Valid: true}
 
 	parsedUserID, err := uuid.Parse(box.UserID)
 	if err != nil {
@@ -222,11 +216,11 @@ func (r *boxRepository) UpdateWithPatternID(box *boxDomain.Box) (int64, error) {
 		UserID:     pgUserID,
 		BoxID:      pgID,
 	}
-	return r.q.UpdateBoxIfNoReviewItems(ctx, params)
+	return q.UpdateBoxIfNoReviewItems(ctx, params)
 }
 
-func (r *boxRepository) Delete(boxID string, categoryID string, userID string) error {
-	ctx := context.Background()
+func (r *boxRepository) Delete(ctx context.Context, boxID string, categoryID string, userID string) error {
+	q := db.GetQuery(ctx)
 
 	parsedID, err := uuid.Parse(boxID)
 	if err != nil {
@@ -239,9 +233,10 @@ func (r *boxRepository) Delete(boxID string, categoryID string, userID string) e
 		return err
 	}
 	pgUserID := pgtype.UUID{Bytes: parsedUserID, Valid: true}
+
 	params := dbgen.DeleteBoxParams{
 		ID:     pgID,
 		UserID: pgUserID,
 	}
-	return r.q.DeleteBox(ctx, params)
+	return q.DeleteBox(ctx, params)
 }

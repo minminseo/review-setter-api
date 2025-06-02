@@ -1,8 +1,10 @@
 package box
 
+import "context"
+
 type IBoxUsecase interface {
-	CreateBox(box CreateBoxInput) (*CreateBoxOutput, error)
-	GetBoxesByCategoryID(categoryID string, userID string) ([]*GetBoxOutput, error)
-	UpdateBox(box UpdateBoxInput) (*UpdateBoxOutput, error)
-	DeleteBox(boxID string, categoryID string, userID string) error
+	CreateBox(ctx context.Context, box CreateBoxInput) (*CreateBoxOutput, error)
+	GetBoxesByCategoryID(ctx context.Context, categoryID string, userID string) ([]*GetBoxOutput, error)
+	UpdateBox(ctx context.Context, box UpdateBoxInput) (*UpdateBoxOutput, error)
+	DeleteBox(ctx context.Context, boxID string, categoryID string, userID string) error
 }

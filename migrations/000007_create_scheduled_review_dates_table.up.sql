@@ -1,5 +1,6 @@
 CREATE TABLE scheduled_review_dates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     item_id UUID NOT NULL REFERENCES review_items(id) ON DELETE CASCADE,
     step_number SMALLINT NOT NULL,
     scheduled_date DATE NOT NULL,
