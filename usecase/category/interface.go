@@ -1,8 +1,10 @@
 package category
 
+import "context"
+
 type ICategoryUsecase interface {
-	CreateCategory(category CreateCategoryInput) (*CreateCategoryOutput, error)
-	GetCategoriesByUserID(userID string) ([]*GetCategoryOutput, error)
-	UpdateCategory(category UpdateCategoryInput) (*UpdateCategoryOutput, error)
-	DeleteCategory(categoryID string, userID string) error
+	CreateCategory(ctx context.Context, category CreateCategoryInput) (*CreateCategoryOutput, error)
+	GetCategoriesByUserID(ctx context.Context, userID string) ([]*GetCategoryOutput, error)
+	UpdateCategory(ctx context.Context, category UpdateCategoryInput) (*UpdateCategoryOutput, error)
+	DeleteCategory(ctx context.Context, categoryID string, userID string) error
 }

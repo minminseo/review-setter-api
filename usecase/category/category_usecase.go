@@ -1,6 +1,7 @@
 package category
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -42,14 +43,21 @@ type UpdateCategoryOutput struct {
 }
 
 type categoryUsecase struct {
-	categoryRepo categoryDomain.CategoryRepository
+	categoryRepo categoryDomain.ICategoryRepository
+	// transactionManager transaction.ITransactionManager
 }
 
-func NewCategoryUsecase(categoryRepo categoryDomain.CategoryRepository) ICategoryUsecase {
-	return &categoryUsecase{categoryRepo: categoryRepo}
+func NewCategoryUsecase(
+	categoryRepo categoryDomain.ICategoryRepository,
+	// transactionManager transaction.ITransactionManager,
+) ICategoryUsecase {
+	return &categoryUsecase{
+		categoryRepo: categoryRepo,
+		// transactionManager: transactionManager,
+	}
 }
 
-func (cu *categoryUsecase) CreateCategory(input CreateCategoryInput) (*CreateCategoryOutput, error) {
+func (cu *categoryUsecase) CreateCategory(ctx context.Context, input CreateCategoryInput) (*CreateCategoryOutput, error) {
 	id := uuid.NewString()
 	registeredAt := time.Now().UTC()
 	editedAt := registeredAt
@@ -59,7 +67,7 @@ func (cu *categoryUsecase) CreateCategory(input CreateCategoryInput) (*CreateCat
 		return nil, err
 	}
 
-	err = cu.categoryRepo.Create(newCategory)
+	err = cu.categoryRepo.Create(ctx, newCategory)
 	if err != nil {
 		return nil, err
 	}
@@ -74,8 +82,8 @@ func (cu *categoryUsecase) CreateCategory(input CreateCategoryInput) (*CreateCat
 	return resCategory, nil
 }
 
-func (cu *categoryUsecase) GetCategoriesByUserID(userID string) ([]*GetCategoryOutput, error) {
-	categories, err := cu.categoryRepo.GetAllByUserID(userID)
+func (cu *categoryUsecase) GetCategoriesByUserID(ctx context.Context, userID string) ([]*GetCategoryOutput, error) {
+	categories, err := cu.categoryRepo.GetAllByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -93,8 +101,8 @@ func (cu *categoryUsecase) GetCategoriesByUserID(userID string) ([]*GetCategoryO
 	return outputCategories, nil
 }
 
-func (cu *categoryUsecase) UpdateCategory(input UpdateCategoryInput) (*UpdateCategoryOutput, error) {
-	targetCategory, err := cu.categoryRepo.GetByID(input.ID, input.UserID)
+func (cu *categoryUsecase) UpdateCategory(ctx context.Context, input UpdateCategoryInput) (*UpdateCategoryOutput, error) {
+	targetCategory, err := cu.categoryRepo.GetByID(ctx, input.ID, input.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +114,7 @@ func (cu *categoryUsecase) UpdateCategory(input UpdateCategoryInput) (*UpdateCat
 		return nil, err
 	}
 
-	err = cu.categoryRepo.Update(targetCategory)
+	err = cu.categoryRepo.Update(ctx, targetCategory)
 	if err != nil {
 		return nil, err
 	}
@@ -120,6 +128,6 @@ func (cu *categoryUsecase) UpdateCategory(input UpdateCategoryInput) (*UpdateCat
 	return resCategory, nil
 }
 
-func (cu *categoryUsecase) DeleteCategory(categoryID string, userID string) error {
-	return cu.categoryRepo.Delete(categoryID, userID)
+func (cu *categoryUsecase) DeleteCategory(ctx context.Context, categoryID string, userID string) error {
+	return cu.categoryRepo.Delete(ctx, categoryID, userID)
 }
