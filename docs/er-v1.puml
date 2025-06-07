@@ -68,7 +68,7 @@ entity pattern_steps {
     updated_at: TIMESTAMPTZ
 }
 
-entity scheduled_review_dates {
+entity review_dates {
     id: UUID <<PK>>
     --
     item_id: UUID <<FK>>
@@ -93,6 +93,6 @@ review_patterns ||--o{ pattern_steps : pattern_id
 
 review_boxes }o--o{ review_items : box_id
 
-review_items ||--o{ scheduled_review_dates : item_id
+review_items ||--o{ review_dates : item_id
 
 @enduml
