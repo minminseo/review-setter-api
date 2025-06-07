@@ -129,6 +129,20 @@ type ReviewBox struct {
 	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
 }
 
+type ReviewDate struct {
+	ID                   pgtype.UUID        `json:"id"`
+	UserID               pgtype.UUID        `json:"user_id"`
+	CategoryID           pgtype.UUID        `json:"category_id"`
+	BoxID                pgtype.UUID        `json:"box_id"`
+	ItemID               pgtype.UUID        `json:"item_id"`
+	StepNumber           int16              `json:"step_number"`
+	InitialScheduledDate pgtype.Date        `json:"initial_scheduled_date"`
+	ScheduledDate        pgtype.Date        `json:"scheduled_date"`
+	IsCompleted          bool               `json:"is_completed"`
+	CreatedAt            pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt            pgtype.Timestamptz `json:"updated_at"`
+}
+
 type ReviewItem struct {
 	ID           pgtype.UUID        `json:"id"`
 	UserID       pgtype.UUID        `json:"user_id"`
@@ -138,7 +152,7 @@ type ReviewItem struct {
 	Name         string             `json:"name"`
 	Detail       pgtype.Text        `json:"detail"`
 	LearnedDate  pgtype.Date        `json:"learned_date"`
-	IsCompleted  bool               `json:"is_completed"`
+	IsFinished   bool               `json:"is_finished"`
 	RegisteredAt pgtype.Timestamptz `json:"registered_at"`
 	EditedAt     pgtype.Timestamptz `json:"edited_at"`
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
@@ -154,17 +168,6 @@ type ReviewPattern struct {
 	EditedAt     pgtype.Timestamptz `json:"edited_at"`
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
-}
-
-type ScheduledReviewDate struct {
-	ID            pgtype.UUID        `json:"id"`
-	UserID        pgtype.UUID        `json:"user_id"`
-	ItemID        pgtype.UUID        `json:"item_id"`
-	StepNumber    int16              `json:"step_number"`
-	ScheduledDate pgtype.Date        `json:"scheduled_date"`
-	IsCompleted   bool               `json:"is_completed"`
-	CreatedAt     pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
 }
 
 type User struct {
