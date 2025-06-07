@@ -95,7 +95,7 @@ type DeletePatternStepsParams struct {
 	UserID    pgtype.UUID `json:"user_id"`
 }
 
-// 親の復習パターンが削除された場合or復習ステップが更新対象に含まれた場合に発行する一括削除用のクエリ
+// 復習ステップが更新対象に含まれた場合に発行する一括削除用のクエリ
 func (q *Queries) DeletePatternSteps(ctx context.Context, arg DeletePatternStepsParams) error {
 	_, err := q.db.Exec(ctx, deletePatternSteps, arg.PatternID, arg.UserID)
 	return err
