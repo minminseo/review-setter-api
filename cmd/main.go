@@ -17,6 +17,9 @@ import (
 	patternController "github.com/minminseo/recall-setter/controller/pattern"
 	patternUsecase "github.com/minminseo/recall-setter/usecase/pattern"
 
+	itemController "github.com/minminseo/recall-setter/controller/item"
+	itemUsecase "github.com/minminseo/recall-setter/usecase/item"
+
 	"github.com/minminseo/recall-setter/infrastructure/db"
 	"github.com/minminseo/recall-setter/infrastructure/repository"
 	"github.com/minminseo/recall-setter/router"
@@ -34,22 +37,27 @@ func main() {
 
 	transactionManager := repository.NewTransactionManager(pool)
 
+	// リポジトリ
 	userRepository := repository.NewUserRepository()
-	userUsecase := userUsecase.NewUserUsecase(userRepository)
-	userController := userController.NewUserController(userUsecase)
-
 	categoryRepository := repository.NewCategoryRepository()
-	categoryUsecase := categoryUsecase.NewCategoryUsecase(categoryRepository)
-	categoryController := categoryController.NewCategoryController(categoryUsecase)
-
 	boxRepository := repository.NewBoxRepository()
-	boxUsecase := boxUsecase.NewBoxUsecase(boxRepository)
-	boxController := boxController.NewBoxController(boxUsecase)
-
 	patternRepository := repository.NewPatternRepository()
-	patternUsecase := patternUsecase.NewPatternUsecase(patternRepository, transactionManager)
-	patternController := patternController.NewPatternController(patternUsecase)
+	itemRepository := repository.NewItemRepository()
 
-	e := router.NewRouter(userController, categoryController, boxController, patternController)
+	// ユースケース
+	userUsecase := userUsecase.NewUserUsecase(userRepository)
+	categoryUsecase := categoryUsecase.NewCategoryUsecase(categoryRepository)
+	boxUsecase := boxUsecase.NewBoxUsecase(boxRepository)
+	patternUsecase := patternUsecase.NewPatternUsecase(patternRepository, itemRepository, transactionManager)
+	itemUsecase := itemUsecase.NewItemUsecase(itemRepository, patternRepository, transactionManager)
+
+	// コントローラー
+	userController := userController.NewUserController(userUsecase)
+	categoryController := categoryController.NewCategoryController(categoryUsecase)
+	boxController := boxController.NewBoxController(boxUsecase)
+	patternController := patternController.NewPatternController(patternUsecase)
+	itemController := itemController.NewItemController(itemUsecase)
+
+	e := router.NewRouter(userController, categoryController, boxController, patternController, itemController)
 	e.Logger.Fatal(e.Start(":8080"))
 }
