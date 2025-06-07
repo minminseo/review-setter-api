@@ -7,7 +7,7 @@ CREATE TABLE review_items (
     name TEXT NOT NULL,
     detail TEXT,
     learned_date DATE NOT NULL,
-    is_completed BOOLEAN NOT NULL DEFAULT FALSE,
+    is_Finished BOOLEAN NOT NULL DEFAULT FALSE,
     registered_at TIMESTAMPTZ NOT NULL,
     edited_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
