@@ -5,101 +5,26 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	itemDomain "github.com/minminseo/recall-setter/domain/item"
 	patternDomain "github.com/minminseo/recall-setter/domain/pattern"
 	"github.com/minminseo/recall-setter/usecase/transaction"
 )
 
-type CreatePatternStepInput struct {
-	StepNumber   int
-	IntervalDays int
-}
-
-type CreatePatternInput struct {
-	UserID       string
-	Name         string
-	TargetWeight string
-	Steps        []CreatePatternStepInput
-}
-
-type CreatePatternStepOutput struct {
-	PatternStepID string
-	UserID        string
-	PatternID     string
-	StepNumber    int
-	IntervalDays  int
-}
-
-type CreatePatternOutput struct {
-	ID           string
-	UserID       string
-	Name         string
-	TargetWeight string
-	RegisteredAt time.Time
-	EditedAt     time.Time
-	Steps        []CreatePatternStepOutput
-}
-
-type GetPatternStepOutput struct {
-	PatternStepID string
-	PatternID     string
-	StepNumber    int
-	IntervalDays  int
-}
-
-type GetPatternOutput struct {
-	PatternID    string
-	UserID       string
-	Name         string
-	TargetWeight string
-	RegisteredAt time.Time
-	EditedAt     time.Time
-	Steps        []GetPatternStepOutput
-}
-
-type UpdatePatternStepInput struct {
-	StepID       string
-	PatternID    string
-	StepNumber   int
-	IntervalDays int
-}
-
-type UpdatePatternInput struct {
-	PatternID    string
-	UserID       string
-	Name         string
-	TargetWeight string
-	Steps        []UpdatePatternStepInput
-}
-
-type UpdatePatternStepOutput struct {
-	PatternStepID string
-	UserID        string
-	PatternID     string
-	StepNumber    int
-	IntervalDays  int
-}
-
-type UpdatePatternOutput struct {
-	PatternID    string
-	UserID       string
-	Name         string
-	TargetWeight string
-	RegisteredAt time.Time
-	EditedAt     time.Time
-	Steps        []UpdatePatternStepOutput
-}
-
 type patternUsecase struct {
-	patternRepo        patternDomain.IPatternRepository
+	patternRepo patternDomain.IPatternRepository
+	itemRepo    itemDomain.IItemRepository
+	// ここでtransactionManagerを使うのは、patternとpatternStepを同一トランザクションで永続化するため。
 	transactionManeger transaction.ITransactionManager
 }
 
 func NewPatternUsecase(
 	patternRepo patternDomain.IPatternRepository,
+	itemRepo itemDomain.IItemRepository,
 	transactionManeger transaction.ITransactionManager,
 ) IPatternUsecase {
 	return &patternUsecase{
 		patternRepo:        patternRepo,
+		itemRepo:           itemRepo,
 		transactionManeger: transactionManeger,
 	}
 }
@@ -334,21 +259,18 @@ func (pu *patternUsecase) UpdatePattern(ctx context.Context, input UpdatePattern
 }
 
 func (pu *patternUsecase) DeletePattern(ctx context.Context, patternID, userID string) error {
-
-	err := pu.transactionManeger.RunInTransaction(ctx, func(ctx context.Context) error {
-		// パターンを削除
-		err := pu.patternRepo.DeletePattern(ctx, patternID, userID)
-		if err != nil {
-			return err
-		}
-
-		// パターンに紐づくステップを削除
-		err = pu.patternRepo.DeletePatternSteps(ctx, patternID, userID)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	// パターンに紐づく復習物が存在するか確認。
+	// TODO: どの復習物に紐づいているのかを返す機能もあってもいいかも
+	var isItemRelated bool
+	isItemRelated, err := pu.itemRepo.IsPatternRelatedToItemByPatternID(ctx, patternID, userID)
+	if err != nil {
+		return err
+	}
+	if isItemRelated {
+		return patternDomain.ErrPatternRelatedToItem
+	}
+	// パターンを削除
+	err = pu.patternRepo.DeletePattern(ctx, patternID, userID)
 	if err != nil {
 		return err
 	}
