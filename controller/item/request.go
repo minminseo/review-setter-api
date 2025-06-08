@@ -34,7 +34,6 @@ type UpdateReviewDatesRequest struct {
 	StepNumber               int                     `json:"step_number"`
 	CategoryID               *string                 `json:"category_id"`
 	BoxID                    *string                 `json:"box_id"`
-	EditedAt                 string                  `json:"edited_at"`
 }
 
 type PatternStepForRequest struct {
@@ -46,11 +45,9 @@ type PatternStepForRequest struct {
 }
 
 type UpdateReviewDateAsCompletedRequest struct {
-	StepNumber int    `json:"step_number"`
-	EditedAt   string `json:"edited_at"`
+	StepNumber int `json:"step_number"`
 }
 
 type UpdateReviewDateAsInCompletedRequest struct {
-	StepNumber int    `json:"step_number"`
-	EditedAt   string `json:"edited_at"`
+	StepNumber int `json:"step_number"`
 }
