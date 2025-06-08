@@ -62,7 +62,7 @@ type Querier interface {
 	// 復習ステップが更新対象かどうか判定するために使う
 	GetPatternStepsByPatternID(ctx context.Context, arg GetPatternStepsByPatternIDParams) ([]GetPatternStepsByPatternIDRow, error)
 	// 復習日Upate処理用。ReviewDateIDを使い回すために使う
-	GetReviewDateIDsAndInitialByItemID(ctx context.Context, arg GetReviewDateIDsAndInitialByItemIDParams) ([]GetReviewDateIDsAndInitialByItemIDRow, error)
+	GetReviewDateIDsByItemID(ctx context.Context, arg GetReviewDateIDsByItemIDParams) ([]pgtype.UUID, error)
 	GetReviewDatesByItemID(ctx context.Context, arg GetReviewDatesByItemIDParams) ([]GetReviewDatesByItemIDRow, error)
 	GetUserSettingByID(ctx context.Context, id pgtype.UUID) (GetUserSettingByIDRow, error)
 	// 完了済みの復習日がないか判別するためのクエリ
