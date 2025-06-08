@@ -350,7 +350,7 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 	if (isCurrentPatternStepsChangedWithoutLengthChange) ||
 		(!isCurrentPatternStepsLengthChanged && !isCurrentPatternStepsChangedWithoutLengthChange && isLearnedDateChanged) ||
 		(!isPatternChanged && isLearnedDateChanged) {
-		reviewDateIDsAndInitial, err := iu.itemRepo.GetReviewDateIDsAndInitialByItemID(ctx, input.ItemID, input.UserID)
+		reviewDateIDs, err := iu.itemRepo.GetReviewDateIDsByItemID(ctx, input.ItemID, input.UserID)
 		if err != nil {
 			return nil, err
 		}
@@ -358,7 +358,7 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 		if input.IsMarkOverdueAsCompleted {
 			reviewdatesResult, isFinished, err = FormatWithOverdueMarkedCompletedWithIDs(
 				targetPatternSteps,
-				reviewDateIDsAndInitial,
+				reviewDateIDs,
 				input.UserID,
 				input.CategoryID,
 				input.BoxID,
@@ -376,7 +376,7 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 		} else {
 			reviewdatesResult, err = FormatWithOverdueMarkedInCompletedWithIDs(
 				targetPatternSteps,
-				reviewDateIDsAndInitial,
+				reviewDateIDs,
 				input.UserID,
 				input.CategoryID,
 				input.BoxID,
@@ -491,7 +491,7 @@ func (iu *ItemUsecase) UpdateReviewDates(ctx context.Context, input UpdateBackRe
 
 	var newReviewdates []*ItemDomain.Reviewdate
 
-	reviewDateIDsAndInitial, err := iu.itemRepo.GetReviewDateIDsAndInitialByItemID(ctx, input.ItemID, input.UserID)
+	reviewDateIDs, err := iu.itemRepo.GetReviewDateIDsByItemID(ctx, input.ItemID, input.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -499,7 +499,7 @@ func (iu *ItemUsecase) UpdateReviewDates(ctx context.Context, input UpdateBackRe
 	if input.IsMarkOverdueAsCompleted {
 		newReviewdates, isFinished, err = FormatWithOverdueMarkedCompletedWithIDs(
 			targetPatternSteps,
-			reviewDateIDsAndInitial,
+			reviewDateIDs,
 			input.UserID,
 			input.CategoryID,
 			input.BoxID,
@@ -514,7 +514,7 @@ func (iu *ItemUsecase) UpdateReviewDates(ctx context.Context, input UpdateBackRe
 	} else {
 		newReviewdates, err = FormatWithOverdueMarkedInCompletedWithIDs(
 			targetPatternSteps,
-			reviewDateIDsAndInitial,
+			reviewDateIDs,
 			input.UserID,
 			input.CategoryID,
 			input.BoxID,
