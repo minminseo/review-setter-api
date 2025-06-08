@@ -900,10 +900,9 @@ func (q *Queries) GetItemByID(ctx context.Context, arg GetItemByIDParams) (GetIt
 	return i, err
 }
 
-const getReviewDateIDsAndInitialByItemID = `-- name: GetReviewDateIDsAndInitialByItemID :many
+const getReviewDateIDsByItemID = `-- name: GetReviewDateIDsByItemID :many
 SELECT
-    id,
-    initial_scheduled_date
+    id
 FROM
     review_dates
 WHERE
@@ -914,30 +913,25 @@ ORDER BY
     step_number
 `
 
-type GetReviewDateIDsAndInitialByItemIDParams struct {
+type GetReviewDateIDsByItemIDParams struct {
 	ItemID pgtype.UUID `json:"item_id"`
 	UserID pgtype.UUID `json:"user_id"`
 }
 
-type GetReviewDateIDsAndInitialByItemIDRow struct {
-	ID                   pgtype.UUID `json:"id"`
-	InitialScheduledDate pgtype.Date `json:"initial_scheduled_date"`
-}
-
 // 復習日Upate処理用。ReviewDateIDを使い回すために使う
-func (q *Queries) GetReviewDateIDsAndInitialByItemID(ctx context.Context, arg GetReviewDateIDsAndInitialByItemIDParams) ([]GetReviewDateIDsAndInitialByItemIDRow, error) {
-	rows, err := q.db.Query(ctx, getReviewDateIDsAndInitialByItemID, arg.ItemID, arg.UserID)
+func (q *Queries) GetReviewDateIDsByItemID(ctx context.Context, arg GetReviewDateIDsByItemIDParams) ([]pgtype.UUID, error) {
+	rows, err := q.db.Query(ctx, getReviewDateIDsByItemID, arg.ItemID, arg.UserID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetReviewDateIDsAndInitialByItemIDRow{}
+	items := []pgtype.UUID{}
 	for rows.Next() {
-		var i GetReviewDateIDsAndInitialByItemIDRow
-		if err := rows.Scan(&i.ID, &i.InitialScheduledDate); err != nil {
+		var id pgtype.UUID
+		if err := rows.Scan(&id); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
