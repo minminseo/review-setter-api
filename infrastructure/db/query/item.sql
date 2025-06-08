@@ -89,10 +89,9 @@ SELECT EXISTS (
         is_completed = TRUE);
 
 -- 復習日Upate処理用。ReviewDateIDを使い回すために使う
--- name: GetReviewDateIDsAndInitialByItemID :many
+-- name: GetReviewDateIDsByItemID :many
 SELECT
-    id,
-    initial_scheduled_date
+    id
 FROM
     review_dates
 WHERE

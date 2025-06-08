@@ -26,11 +26,6 @@ type UnclassifiedDailyDatesCountGroupedByCategory struct {
 	Count      int
 }
 
-type IDAndInitial struct {
-	ReviewDateID     string
-	InitialScheduled time.Time
-}
-
 type IItemRepository interface {
 	CreateItem(ctx context.Context, item *Item) error
 	CreateReviewdates(ctx context.Context, reviewdates []*Reviewdate) (int64, error)
@@ -41,7 +36,7 @@ type IItemRepository interface {
 	// 復習物が持つ復習日を取得して、完了済みの復習日がないか判別するためのメソッド
 	HasCompletedReviewDateByItemID(ctx context.Context, itemID string, userID string) (bool, error)
 
-	GetReviewDateIDsAndInitialByItemID(ctx context.Context, itemID string, userID string) ([]*IDAndInitial, error)
+	GetReviewDateIDsByItemID(ctx context.Context, itemID string, userID string) ([]string, error)
 
 	// 復習物の更新
 	UpdateItem(ctx context.Context, item *Item) error

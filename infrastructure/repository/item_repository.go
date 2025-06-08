@@ -196,7 +196,7 @@ func (r *itemRepository) HasCompletedReviewDateByItemID(ctx context.Context, ite
 	return q.HasCompletedReviewDateByItemID(ctx, params)
 }
 
-func (r *itemRepository) GetReviewDateIDsAndInitialByItemID(ctx context.Context, itemID string, userID string) ([]*itemDomain.IDAndInitial, error) {
+func (r *itemRepository) GetReviewDateIDsByItemID(ctx context.Context, itemID string, userID string) ([]string, error) {
 	q := db.GetQuery(ctx)
 	pgItemID, err := toUUID(itemID)
 	if err != nil {
@@ -207,21 +207,18 @@ func (r *itemRepository) GetReviewDateIDsAndInitialByItemID(ctx context.Context,
 		return nil, err
 	}
 
-	params := dbgen.GetReviewDateIDsAndInitialByItemIDParams{
+	params := dbgen.GetReviewDateIDsByItemIDParams{
 		ItemID: pgItemID,
 		UserID: pgUserID,
 	}
-	rows, err := q.GetReviewDateIDsAndInitialByItemID(ctx, params)
+	ReviewDateID, err := q.GetReviewDateIDsByItemID(ctx, params)
 	if err != nil {
 		return nil, err
 	}
 
-	results := make([]*itemDomain.IDAndInitial, len(rows))
-	for i, row := range rows {
-		results[i] = &itemDomain.IDAndInitial{
-			ReviewDateID:     uuid.UUID(row.ID.Bytes).String(),
-			InitialScheduled: row.InitialScheduledDate.Time,
-		}
+	results := make([]string, len(ReviewDateID))
+	for i, row := range ReviewDateID {
+		results[i] = uuid.UUID(row.Bytes).String()
 	}
 	return results, nil
 }

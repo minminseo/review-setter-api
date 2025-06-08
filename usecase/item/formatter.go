@@ -93,7 +93,7 @@ func FormatWithOverdueMarkedInCompleted(
 // 更新
 func FormatWithOverdueMarkedCompletedWithIDs(
 	targetPatternSteps []*PatternDomain.PatternStep,
-	reviewDateIDsAndInitial []*ItemDomain.IDAndInitial,
+	reviewDateIDs []string,
 	userID string,
 	categoryID *string,
 	boxID *string,
@@ -102,7 +102,7 @@ func FormatWithOverdueMarkedCompletedWithIDs(
 	parsedToday time.Time,
 ) ([]*ItemDomain.Reviewdate, bool, error) {
 
-	if len(reviewDateIDsAndInitial) != len(targetPatternSteps) {
+	if len(reviewDateIDs) != len(targetPatternSteps) {
 		return nil, false, ItemDomain.ErrNewScheduledDateBeforeInitialScheduledDate
 	}
 
@@ -112,13 +112,13 @@ func FormatWithOverdueMarkedCompletedWithIDs(
 		calculatedScheduledDate := parsedLearnedDate.AddDate(0, 0, step.IntervalDays)
 
 		reviewdate, err := ItemDomain.NewReviewdate(
-			reviewDateIDsAndInitial[i].ReviewDateID,
+			reviewDateIDs[i],
 			userID,
 			categoryID,
 			boxID,
 			itemID,
 			step.StepNumber,
-			reviewDateIDsAndInitial[i].InitialScheduled,
+			calculatedScheduledDate,
 			calculatedScheduledDate,
 			calculatedScheduledDate.Before(parsedToday),
 		)
@@ -135,7 +135,7 @@ func FormatWithOverdueMarkedCompletedWithIDs(
 
 func FormatWithOverdueMarkedInCompletedWithIDs(
 	targetPatternSteps []*PatternDomain.PatternStep,
-	reviewDateIDsAndInitial []*ItemDomain.IDAndInitial,
+	reviewDateIDs []string,
 	userID string,
 	categoryID *string,
 	boxID *string,
@@ -143,7 +143,7 @@ func FormatWithOverdueMarkedInCompletedWithIDs(
 	parsedLearnedDate time.Time,
 	parsedToday time.Time,
 ) ([]*ItemDomain.Reviewdate, error) {
-	if len(reviewDateIDsAndInitial) != len(targetPatternSteps) {
+	if len(reviewDateIDs) != len(targetPatternSteps) {
 		return nil, ItemDomain.ErrNewScheduledDateBeforeInitialScheduledDate
 	}
 
@@ -160,13 +160,13 @@ func FormatWithOverdueMarkedInCompletedWithIDs(
 		calculatedScheduledDate := parsedLearnedDate.AddDate(0, 0, step.IntervalDays+addDuration)
 
 		reviewdate, err := ItemDomain.NewReviewdate(
-			reviewDateIDsAndInitial[i].ReviewDateID,
+			reviewDateIDs[i],
 			userID,
 			categoryID,
 			boxID,
 			itemID,
 			step.StepNumber,
-			reviewDateIDsAndInitial[i].InitialScheduled,
+			calculatedScheduledDate,
 			calculatedScheduledDate,
 			false,
 		)
