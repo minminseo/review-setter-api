@@ -1,0 +1,2385 @@
+openapi: 3.0.3
+info:
+  title: Review Manager API
+  version: "1.0.0"
+  description: |
+    review-setterのバックエンドAPI定義
+
+servers:
+  - url: https://api.example.com/v1
+
+tags:
+  - name: User
+    description: User management operations
+  - name: Category
+    description: Category management operations
+  - name: Box
+    description: Box management operations
+  - name: Pattern
+    description: Review Pattern management operations
+  - name: Item
+    description: Review Item management operations
+  - name: Summary
+    description: Data summary and statistics
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token # The name of the cookie containing the JWT
+
+  schemas:
+    # User Schemas
+    CreateUserInput:
+      type: object
+      required:
+        - email
+        - password
+        - timezone
+        - theme_color
+        - language
+      properties:
+        email:
+          type: string
+          format: email
+          example: test@example.com
+        password:
+          type: string
+          format: password
+          minLength: 6
+          example: secret123
+        timezone:
+          type: string
+          example: Asia/Tokyo
+        theme_color:
+          type: string
+          enum: [dark, light]
+          example: dark
+        language:
+          type: string
+          example: ja
+    CreateUserOutput:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        email:
+          type: string
+          format: email
+          example: test@example.com
+    LoginUserInput:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: test@example.com
+        password:
+          type: string
+          format: password
+          example: secret123
+    LoginUserOutput:
+      type: object
+      properties:
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        theme_color:
+          type: string
+          enum: [dark, light]
+          example: dark
+        language:
+          type: string
+          example: ja
+    GetUserOutput:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: test@example.com
+        timezone:
+          type: string
+          example: Asia/Tokyo
+        theme_color:
+          type: string
+          enum: [dark, light]
+          example: dark
+        language:
+          type: string
+          example: ja
+    UpdateUserInput:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: updated@example.com
+        timezone:
+          type: string
+          example: Europe/London
+        theme_color:
+          type: string
+          enum: [dark, light]
+          example: light
+        language:
+          type: string
+          example: en
+    UpdateUserOutput:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: updated@example.com
+        timezone:
+          type: string
+          example: Europe/London
+        theme_color:
+          type: string
+          enum: [dark, light]
+          example: light
+        language:
+          type: string
+          example: en
+    UpdatePasswordRequest:
+      type: object
+      required:
+        - password
+      properties:
+        password:
+          type: string
+          format: password
+          minLength: 6
+          example: new_secret123
+
+    # Category Schemas
+    CreateCategoryInput:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: English Vocabulary
+    CreateCategoryOutput:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174001
+        user_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        name:
+          type: string
+          example: English Vocabulary
+        registered_at:
+          type: string
+          format: date-time
+        edited_at:
+          type: string
+          format: date-time
+    GetCategoryOutput:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174001
+        user_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        name:
+          type: string
+          example: English Vocabulary
+        registered_at:
+          type: string
+          format: date-time
+        edited_at:
+          type: string
+          format: date-time
+    UpdateCategoryInput:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: Updated English Vocabulary
+    UpdateCategoryOutput:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174001
+        user_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        name:
+          type: string
+          example: Updated English Vocabulary
+        edited_at:
+          type: string
+          format: date-time
+
+    # Box Schemas
+    CreateBoxInput:
+      type: object
+      required:
+        - name
+        - pattern_id
+      properties:
+        name:
+          type: string
+          example: Beginner words
+        pattern_id:
+          type: string
+          format: uuid
+          nullable: true
+          example: 123e4567-e89b-12d3-a456-426614174002
+    CreateBoxOutput:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174003
+        user_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        category_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174001
+        pattern_id:
+          type: string
+          format: uuid
+          nullable: true
+          example: 123e4567-e89b-12d3-a456-426614174002
+        name:
+          type: string
+          example: Beginner words
+        registered_at:
+          type: string
+          format: date-time
+        edited_at:
+          type: string
+          format: date-time
+    GetBoxOutput:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174003
+        user_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        category_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174001
+        pattern_id:
+          type: string
+          format: uuid
+          nullable: true
+          example: 123e4567-e89b-12d3-a456-426614174002
+        name:
+          type: string
+          example: Beginner words
+        registered_at:
+          type: string
+          format: date-time
+        edited_at:
+          type: string
+          format: date-time
+    UpdateBoxInput:
+      type: object
+      required:
+        - name
+        - pattern_id
+      properties:
+        name:
+          type: string
+          example: Advanced words
+        pattern_id:
+          type: string
+          format: uuid
+          nullable: true
+          example: 123e4567-e89b-12d3-a456-426614174004
+    UpdateBoxOutput:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174003
+        user_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        category_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174001
+        pattern_id:
+          type: string
+          format: uuid
+          nullable: true
+          example: 123e4567-e89b-12d3-a456-426614174004
+        name:
+          type: string
+          example: Advanced words
+        edited_at:
+          type: string
+          format: date-time
+
+    # Pattern Schemas
+    CreatePatternStepField:
+      type: object
+      required:
+        - step_number
+        - interval_days
+      properties:
+        step_number:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 1
+        interval_days:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 1
+    CreatePatternRequest:
+      type: object
+      required:
+        - name
+        - target_weight
+        - steps
+      properties:
+        name:
+          type: string
+          example: Standard Review
+        target_weight:
+          type: string
+          enum: [heavy, normal, light, unset]
+          example: normal
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreatePatternStepField"
+          minItems: 1
+    CreatePatternStepOutput:
+      type: object
+      properties:
+        pattern_step_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        pattern_id:
+          type: string
+          format: uuid
+        step_number:
+          type: integer
+          format: int32
+        interval_days:
+          type: integer
+          format: int32
+    CreatePatternOutput:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        target_weight:
+          type: string
+          enum: [heavy, normal, light, unset]
+        registered_at:
+          type: string
+          format: date-time
+        edited_at:
+          type: string
+          format: date-time
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreatePatternStepOutput"
+    GetPatternStepOutput:
+      type: object
+      properties:
+        pattern_step_id:
+          type: string
+          format: uuid
+        pattern_id:
+          type: string
+          format: uuid
+        step_number:
+          type: integer
+          format: int32
+        interval_days:
+          type: integer
+          format: int32
+    GetPatternOutput:
+      type: object
+      properties:
+        pattern_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        target_weight:
+          type: string
+          enum: [heavy, normal, light, unset]
+        registered_at:
+          type: string
+          format: date-time
+        edited_at:
+          type: string
+          format: date-time
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/GetPatternStepOutput"
+    UpdatePatternStepField:
+      type: object
+      required:
+        - step_id
+        - step_number
+        - interval_days
+      properties:
+        step_id:
+          type: string
+          format: uuid
+        step_number:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 1
+        interval_days:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 1
+    UpdatePatternRequest:
+      type: object
+      required:
+        - name
+        - target_weight
+        - steps
+      properties:
+        name:
+          type: string
+          example: Updated Standard Review
+        target_weight:
+          type: string
+          enum: [heavy, normal, light, unset]
+          example: light
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpdatePatternStepField"
+          minItems: 1
+    UpdatePatternStepOutput:
+      type: object
+      properties:
+        pattern_step_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        pattern_id:
+          type: string
+          format: uuid
+        step_number:
+          type: integer
+          format: int32
+        interval_days:
+          type: integer
+          format: int32
+    UpdatePatternOutput:
+      type: object
+      properties:
+        pattern_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        target_weight:
+          type: string
+          enum: [heavy, normal, light, unset]
+        registered_at:
+          type: string
+          format: date-time
+        edited_at:
+          type: string
+          format: date-time
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpdatePatternStepOutput"
+
+    # Item Schemas
+    CreateItemRequest:
+      type: object
+      required:
+        - name
+        - learned_date
+        - is_mark_overdue_as_completed
+        - today
+      properties:
+        category_id:
+          type: string
+          format: uuid
+          nullable: true
+          example: 123e4567-e89b-12d3-a456-426614174001
+        box_id:
+          type: string
+          format: uuid
+          nullable: true
+          example: 123e4567-e89b-12d3-a456-426614174003
+        pattern_id:
+          type: string
+          format: uuid
+          nullable: true
+          example: 123e4567-e89b-12d3-a456-426614174002
+        name:
+          type: string
+          example: Go Concurrency
+        detail:
+          type: string
+          nullable: true
+          example: Goroutines and channels
+        learned_date:
+          type: string
+          format: date
+          example: "2023-01-01"
+        is_mark_overdue_as_completed:
+          type: boolean
+          example: true
+        today:
+          type: string
+          format: date
+          example: "2023-01-05"
+    CreateReviewdateOutput:
+      type: object
+      properties:
+        date_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        step_number:
+          type: integer
+          format: int32
+        initial_scheduled_date:
+          type: string
+          format: date
+        scheduled_date:
+          type: string
+          format: date
+        is_completed:
+          type: boolean
+    CreateItemOutput:
+      type: object
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        category_id:
+          type: string
+          format: uuid
+          nullable: true
+        box_id:
+          type: string
+          format: uuid
+          nullable: true
+        pattern_id:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+        detail:
+          type: string
+          nullable: true
+        learned_date:
+          type: string
+          format: date
+        is_completed:
+          type: boolean
+        registered_at:
+          type: string
+          format: date-time
+        edited_at:
+          type: string
+          format: date-time
+        reviewdates:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateReviewdateOutput"
+    UpdateItemRequest:
+      type: object
+      required:
+        - name
+        - learned_date
+        - is_mark_overdue_as_completed
+        - today
+      properties:
+        category_id:
+          type: string
+          format: uuid
+          nullable: true
+          example: 123e4567-e89b-12d3-a456-426614174001
+        box_id:
+          type: string
+          format: uuid
+          nullable: true
+          example: 123e4567-e89b-12d3-a456-426614174003
+        pattern_id:
+          type: string
+          format: uuid
+          nullable: true
+          example: 123e4567-e89b-12d3-a456-426614174002
+        name:
+          type: string
+          example: Updated Go Concurrency
+        detail:
+          type: string
+          nullable: true
+          example: Advanced Goroutines and channels
+        learned_date:
+          type: string
+          format: date
+          example: "2023-01-02"
+        is_mark_overdue_as_completed:
+          type: boolean
+          example: false
+        today:
+          type: string
+          format: date
+          example: "2023-01-06"
+    UpdateReviewDateOutput:
+      type: object
+      properties:
+        review_date_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        category_id:
+          type: string
+          format: uuid
+          nullable: true
+        box_id:
+          type: string
+          format: uuid
+          nullable: true
+        item_id:
+          type: string
+          format: uuid
+        step_number:
+          type: integer
+          format: int32
+        initial_scheduled_date:
+          type: string
+          format: date
+        scheduled_date:
+          type: string
+          format: date
+        is_completed:
+          type: boolean
+    UpdateItemOutput:
+      type: object
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        category_id:
+          type: string
+          format: uuid
+          nullable: true
+        box_id:
+          type: string
+          format: uuid
+          nullable: true
+        pattern_id:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+        detail:
+          type: string
+          nullable: true
+        learned_date:
+          type: string
+          format: date
+        is_finished:
+          type: boolean
+        edited_at:
+          type: string
+          format: date-time
+        review_dates:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpdateReviewDateOutput"
+    UpdateItemAsFinishedForceOutput:
+      type: object
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        is_finished:
+          type: boolean
+        edited_at:
+          type: string
+          format: date-time
+    UpdateItemAsUnFinishedForceOutput:
+      type: object
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        is_finished:
+          type: boolean
+        edited_at:
+          type: string
+          format: date-time
+    UpdateReviewDateAsCompletedRequest:
+      type: object
+      required:
+        - step_number
+      properties:
+        step_number:
+          type: integer
+          format: int32
+          example: 1
+    UpdateReviewDateAsCompletedOutput:
+      type: object
+      properties:
+        review_date_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        is_completed:
+          type: boolean
+        is_finished:
+          type: boolean
+        edited_at:
+          type: string
+          format: date-time
+    UpdateReviewDateAsInCompletedRequest:
+      type: object
+      required:
+        - step_number
+      properties:
+        step_number:
+          type: integer
+          format: int32
+          example: 1
+    UpdateReviewDateAsInCompletedOutput:
+      type: object
+      properties:
+        review_date_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        is_completed:
+          type: boolean
+        is_finished:
+          type: boolean
+        edited_at:
+          type: string
+          format: date-time
+    PatternStepForRequest:
+      type: object
+      required:
+        - pattern_step_id
+        - user_id
+        - pattern_id
+        - step_number
+        - interval_days
+      properties:
+        pattern_step_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        pattern_id:
+          type: string
+          format: uuid
+        step_number:
+          type: integer
+          format: int32
+        interval_days:
+          type: integer
+          format: int32
+    UpdateReviewDatesRequest:
+      type: object
+      required:
+        - request_scheduled_date
+        - is_mark_overdue_as_completed
+        - today
+        - pattern_steps
+        - learned_date
+        - initial_scheduled_date
+        - step_number
+      properties:
+        request_scheduled_date:
+          type: string
+          format: date
+          example: "2023-01-10"
+        is_mark_overdue_as_completed:
+          type: boolean
+          example: true
+        today:
+          type: string
+          format: date
+          example: "2023-01-08"
+        pattern_steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/PatternStepForRequest"
+        learned_date:
+          type: string
+          format: date
+          example: "2023-01-01"
+        initial_scheduled_date:
+          type: string
+          format: date
+          example: "2023-01-02"
+        step_number:
+          type: integer
+          format: int32
+          example: 2
+        category_id:
+          type: string
+          format: uuid
+          nullable: true
+          example: 123e4567-e89b-12d3-a456-426614174001
+        box_id:
+          type: string
+          format: uuid
+          nullable: true
+          example: 123e4567-e89b-12d3-a456-426614174003
+    UpdateBackReviewDateOutput:
+      type: object
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        is_finished:
+          type: boolean
+        edited_at:
+          type: string
+          format: date-time
+        review_dates:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpdateReviewDateOutput"
+    GetReviewDateOutput:
+      type: object
+      properties:
+        review_date_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        category_id:
+          type: string
+          format: uuid
+          nullable: true
+        box_id:
+          type: string
+          format: uuid
+          nullable: true
+        item_id:
+          type: string
+          format: uuid
+        step_number:
+          type: integer
+          format: int32
+        initial_scheduled_date:
+          type: string
+          format: date
+        scheduled_date:
+          type: string
+          format: date
+        is_completed:
+          type: boolean
+    GetItemOutput:
+      type: object
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        category_id:
+          type: string
+          format: uuid
+          nullable: true
+        box_id:
+          type: string
+          format: uuid
+          nullable: true
+        pattern_id:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+        detail:
+          type: string
+          nullable: true
+        learned_date:
+          type: string
+          format: date
+        is_finished:
+          type: boolean
+        registered_at:
+          type: string
+          format: date-time
+        edited_at:
+          type: string
+          format: date-time
+        review_dates:
+          type: array
+          items:
+            $ref: "#/components/schemas/GetReviewDateOutput"
+    ItemCountGroupedByBoxOutput:
+      type: object
+      properties:
+        category_id:
+          type: string
+          format: uuid
+        box_id:
+          type: string
+          format: uuid
+        count:
+          type: integer
+          format: int64
+    UnclassifiedItemCountGroupedByCategoryOutput:
+      type: object
+      properties:
+        category_id:
+          type: string
+          format: uuid
+        count:
+          type: integer
+          format: int64
+    DailyCountGroupedByBoxOutput:
+      type: object
+      properties:
+        category_id:
+          type: string
+          format: uuid
+        box_id:
+          type: string
+          format: uuid
+        count:
+          type: integer
+          format: int64
+    UnclassifiedDailyDatesCountGroupedByCategoryOutput:
+      type: object
+      properties:
+        category_id:
+          type: string
+          format: uuid
+        count:
+          type: integer
+          format: int64
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "エラーメッセージ"
+
+paths:
+  /signup:
+    post:
+      tags:
+        - User
+      summary: Sign up a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserInput"
+      responses:
+        "201":
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateUserOutput"
+        "400":
+          description: Bad request (e.g., invalid input)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /login:
+    post:
+      tags:
+        - User
+      summary: Log in a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginUserInput"
+      responses:
+        "200":
+          description: User logged in successfully, JWT token set as a cookie
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; Path=/; Domain=api.example.com; HttpOnly; SameSite=None; Secure
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginUserOutput"
+        "400":
+          description: Bad request (e.g., invalid input)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /logout:
+    post:
+      tags:
+        - User
+      summary: Log out a user
+      responses:
+        "200":
+          description: User logged out successfully, JWT token cookie cleared
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: token=; Path=/; Domain=api.example.com; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=None; Secure
+        "500":
+          description: Internal server error
+  /csrf:
+    get:
+      tags:
+        - User
+      summary: Get CSRF token
+      responses:
+        "200":
+          description: Successfully retrieved CSRF token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  csrf_token:
+                    type: string
+                    example: "your_csrf_token_here"
+        "500":
+          description: Internal server error
+
+  /user:
+    get:
+      tags:
+        - User
+      summary: Get user settings
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: User settings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetUserOutput"
+        "401":
+          description: Unauthorized (e.g., missing or invalid token)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      tags:
+        - User
+      summary: Update user settings
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserInput"
+      responses:
+        "200":
+          description: User settings updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateUserOutput"
+        "400":
+          description: Bad request (e.g., invalid input)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /user/password:
+    put:
+      tags:
+        - User
+      summary: Update user password
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePasswordRequest"
+      responses:
+        "200":
+          description: Password updated successfully
+        "400":
+          description: Bad request (e.g., invalid input)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /categories:
+    post:
+      tags:
+        - Category
+      summary: Create a new category
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCategoryInput"
+      responses:
+        "201":
+          description: Category created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateCategoryOutput"
+        "400":
+          description: Bad request (e.g., invalid input)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      tags:
+        - Category
+      summary: Get all categories for the authenticated user
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Categories retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GetCategoryOutput"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /categories/{id}:
+    put:
+      tags:
+        - Category
+      summary: Update a category by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the category to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCategoryInput"
+      responses:
+        "200":
+          description: Category updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateCategoryOutput"
+        "400":
+          description: Bad request (e.g., invalid input, missing category ID)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags:
+        - Category
+      summary: Delete a category by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the category to delete
+      responses:
+        "204":
+          description: Category deleted successfully
+        "400":
+          description: Bad request (e.g., missing category ID)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /{category_id}/boxes:
+    post:
+      tags:
+        - Box
+      summary: Create a new box within a category
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBoxInput"
+      responses:
+        "201":
+          description: Box created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateBoxOutput"
+        "400":
+          description: Bad request (e.g., invalid input, missing category ID)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      tags:
+        - Box
+      summary: Get all boxes within a category for the authenticated user
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the category
+      responses:
+        "200":
+          description: Boxes retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GetBoxOutput"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /{category_id}/boxes/{id}:
+    put:
+      tags:
+        - Box
+      summary: Update a box by ID within a category
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the category
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the box to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBoxInput"
+      responses:
+        "200":
+          description: Box updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateBoxOutput"
+        "400":
+          description: Bad request (e.g., invalid input, missing IDs, pattern conflict)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags:
+        - Box
+      summary: Delete a box by ID within a category
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the category
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the box to delete
+      responses:
+        "204":
+          description: Box deleted successfully
+        "400":
+          description: Bad request (e.g., missing IDs)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /patterns:
+    post:
+      tags:
+        - Pattern
+      summary: Create a new review pattern
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePatternRequest"
+      responses:
+        "201":
+          description: Pattern created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreatePatternOutput"
+        "400":
+          description: Bad request (e.g., invalid input)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      tags:
+        - Pattern
+      summary: Get all review patterns for the authenticated user
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Patterns retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GetPatternOutput"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /patterns/{id}:
+    put:
+      tags:
+        - Pattern
+      summary: Update a review pattern by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the pattern to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePatternRequest"
+      responses:
+        "200":
+          description: Pattern updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdatePatternOutput"
+        "400":
+          description: Bad request (e.g., invalid input, missing pattern ID)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags:
+        - Pattern
+      summary: Delete a review pattern by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the pattern to delete
+      responses:
+        "204":
+          description: Pattern deleted successfully
+        "400":
+          description: Bad request (e.g., missing pattern ID)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error (e.g., pattern related to item)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /items:
+    post:
+      tags:
+        - Item
+      summary: Create a new review item
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateItemRequest"
+      responses:
+        "201":
+          description: Item created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateItemOutput"
+        "400":
+          description: Bad request (e.g., invalid input)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /items/unclassified:
+    get:
+      tags:
+        - Item
+      summary: Get all unfinished unclassified items for the authenticated user
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Unfinished unclassified items retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GetItemOutput"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /items/{box_id}:
+    get:
+      tags:
+        - Item
+      summary: Get all unfinished items by box ID for the authenticated user
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: box_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the box
+      responses:
+        "200":
+          description: Unfinished items in the box retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GetItemOutput"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /items/unclassified/{category_id}:
+    get:
+      tags:
+        - Item
+      summary: Get all unfinished unclassified items by category ID for the authenticated user
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the category
+      responses:
+        "200":
+          description: Unfinished unclassified items in the category retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GetItemOutput"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /items/{item_id}:
+    put:
+      tags:
+        - Item
+      summary: Update a review item by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the item to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateItemRequest"
+      responses:
+        "200":
+          description: Item updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateItemOutput"
+        "400":
+          description: Bad request (e.g., invalid input, no diff, has completed review date)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags:
+        - Item
+      summary: Delete a review item by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the item to delete
+      responses:
+        "204":
+          description: Item deleted successfully
+        "400":
+          description: Bad request (e.g., missing item ID)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /items/{item_id}/finish:
+    patch:
+      tags:
+        - Item
+      summary: Force mark a review item as finished
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the item to mark as finished
+      responses:
+        "200":
+          description: Item marked as finished successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateItemAsFinishedForceOutput"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /items/{item_id}/unfinish:
+    patch:
+      tags:
+        - Item
+      summary: Force mark a review item as unfinished (reopen)
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the item to mark as unfinished
+      responses:
+        "200":
+          description: Item marked as unfinished successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateItemAsUnFinishedForceOutput"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /items/{item_id}/review-dates/{review_date_id}:
+    put:
+      tags:
+        - Item
+      summary: Update scheduled review dates for an item (e.g., shifting dates)
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the item
+        - name: review_date_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the specific review date to update from
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateReviewDatesRequest"
+      responses:
+        "200":
+          description: Review dates updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateBackReviewDateOutput"
+        "400":
+          description: Bad request (e.g., invalid input, new scheduled date before initial)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      tags:
+        - Item
+      summary: Mark a specific review date as completed
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the item
+        - name: review_date_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the review date to mark as completed
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateReviewDateAsCompletedRequest"
+      responses:
+        "200":
+          description: Review date marked as completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateReviewDateAsCompletedOutput"
+        "400":
+          description: Bad request (e.g., invalid input)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /items/{item_id}/review-dates/{review_date_id}/incomplete:
+    patch:
+      tags:
+        - Item
+      summary: Mark a specific review date as incomplete
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the item
+        - name: review_date_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the review date to mark as incomplete
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateReviewDateAsInCompletedRequest"
+      responses:
+        "200":
+          description: Review date marked as incomplete successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateReviewDateAsInCompletedOutput"
+        "400":
+          description: Bad request (e.g., invalid input)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /summary/items/count/by-box:
+    get:
+      tags:
+        - Summary
+      summary: Get count of unfinished items grouped by box and category for the authenticated user
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Item counts by box retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ItemCountGroupedByBoxOutput"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /summary/items/count/unclassified/by-category:
+    get:
+      tags:
+        - Summary
+      summary: Get count of unfinished unclassified items grouped by category for the authenticated user
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Unclassified item counts by category retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UnclassifiedItemCountGroupedByCategoryOutput"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /summary/items/count/unclassified:
+    get:
+      tags:
+        - Summary
+      summary: Get total count of unfinished unclassified items for the authenticated user
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Total unclassified item count retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    format: int64
+                    example: 10
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /summary/daily-reviews/count/by-box:
+    get:
+      tags:
+        - Summary
+      summary: Get count of daily review dates grouped by box and category for the authenticated user
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: The target date for daily reviews (YYYY-MM-DD)
+      responses:
+        "200":
+          description: Daily review counts by box retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DailyCountGroupedByBoxOutput"
+        "400":
+          description: Bad request (e.g., invalid date format)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /summary/daily-reviews/count/unclassified/by-category:
+    get:
+      tags:
+        - Summary
+      summary: Get count of daily unclassified review dates grouped by category for the authenticated user
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: The target date for daily reviews (YYYY-MM-DD)
+      responses:
+        "200":
+          description: Daily unclassified review counts by category retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UnclassifiedDailyDatesCountGroupedByCategoryOutput"
+        "400":
+          description: Bad request (e.g., invalid date format)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /summary/daily-reviews/count/unclassified:
+    get:
+      tags:
+        - Summary
+      summary: Get total count of daily unclassified review dates for the authenticated user
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: The target date for daily reviews (YYYY-MM-DD)
+      responses:
+        "200":
+          description: Total daily unclassified review count retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    format: int64
+                    example: 5
+        "400":
+          description: Bad request (e.g., invalid date format)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
