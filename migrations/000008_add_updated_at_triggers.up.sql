@@ -46,10 +46,10 @@ BEGIN
         BEFORE UPDATE ON pattern_steps
         FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-    -- scheduled_review_dates
-    DROP TRIGGER IF EXISTS trigger_set_updated_at ON scheduled_review_dates;
+    -- review_dates
+    DROP TRIGGER IF EXISTS trigger_set_updated_at ON review_dates;
     CREATE TRIGGER trigger_set_updated_at
-        BEFORE UPDATE ON scheduled_review_dates
+        BEFORE UPDATE ON review_dates
         FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 END;
 $$;

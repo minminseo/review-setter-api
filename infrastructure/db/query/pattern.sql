@@ -81,6 +81,8 @@ WHERE
 AND
     user_id = sqlc.arg(user_id);
 
+
+
 -- name: DeletePattern :exec
 DELETE
 FROM
@@ -90,7 +92,7 @@ WHERE
 AND
     user_id = sqlc.arg(user_id);
 
--- 親の復習パターンが削除された場合or復習ステップが更新対象に含まれた場合に発行する一括削除用のクエリ
+-- 復習ステップが更新対象に含まれた場合に発行する一括削除用のクエリ
 -- name: DeletePatternSteps :exec
 DELETE
 FROM

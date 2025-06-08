@@ -19,14 +19,6 @@ func NewPatternRepository() patternDomain.IPatternRepository {
 	return &patternRepository{}
 }
 
-func toUUID(s string) (pgtype.UUID, error) {
-	u, err := uuid.Parse(s)
-	if err != nil {
-		return pgtype.UUID{}, err
-	}
-	return pgtype.UUID{Bytes: u, Valid: true}, nil
-}
-
 func (r *patternRepository) CreatePattern(ctx context.Context, p *patternDomain.Pattern) error {
 	q := db.GetQuery(ctx)
 	pgID, _ := toUUID(p.PatternID)

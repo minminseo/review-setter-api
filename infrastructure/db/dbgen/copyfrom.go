@@ -45,3 +45,44 @@ func (r iteratorForCreatePatternSteps) Err() error {
 func (q *Queries) CreatePatternSteps(ctx context.Context, arg []CreatePatternStepsParams) (int64, error) {
 	return q.db.CopyFrom(ctx, []string{"pattern_steps"}, []string{"id", "user_id", "pattern_id", "step_number", "interval_days"}, &iteratorForCreatePatternSteps{rows: arg})
 }
+
+// iteratorForCreateReviewDates implements pgx.CopyFromSource.
+type iteratorForCreateReviewDates struct {
+	rows                 []CreateReviewDatesParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForCreateReviewDates) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForCreateReviewDates) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].ID,
+		r.rows[0].UserID,
+		r.rows[0].CategoryID,
+		r.rows[0].BoxID,
+		r.rows[0].ItemID,
+		r.rows[0].StepNumber,
+		r.rows[0].InitialScheduledDate,
+		r.rows[0].ScheduledDate,
+		r.rows[0].IsCompleted,
+	}, nil
+}
+
+func (r iteratorForCreateReviewDates) Err() error {
+	return nil
+}
+
+// 新規一括挿入時と、一括更新時に使う
+func (q *Queries) CreateReviewDates(ctx context.Context, arg []CreateReviewDatesParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"review_dates"}, []string{"id", "user_id", "category_id", "box_id", "item_id", "step_number", "initial_scheduled_date", "scheduled_date", "is_completed"}, &iteratorForCreateReviewDates{rows: arg})
+}

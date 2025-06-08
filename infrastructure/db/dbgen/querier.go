@@ -11,17 +11,30 @@ import (
 )
 
 type Querier interface {
+	CountDailyDatesGroupedByBoxByUserID(ctx context.Context, arg CountDailyDatesGroupedByBoxByUserIDParams) ([]CountDailyDatesGroupedByBoxByUserIDRow, error)
+	CountDailyDatesUnclassifiedByUserID(ctx context.Context, arg CountDailyDatesUnclassifiedByUserIDParams) ([]int64, error)
+	CountDailyDatesUnclassifiedGroupedByCategoryByUserID(ctx context.Context, arg CountDailyDatesUnclassifiedGroupedByCategoryByUserIDParams) ([]CountDailyDatesUnclassifiedGroupedByCategoryByUserIDRow, error)
+	// ここから下は概要表示用の取得クエリ
+	CountItemsGroupedByBoxByUserID(ctx context.Context, userID pgtype.UUID) ([]CountItemsGroupedByBoxByUserIDRow, error)
+	CountUnclassifiedItemsByUserID(ctx context.Context, userID pgtype.UUID) ([]int64, error)
+	CountUnclassifiedItemsGroupedByCategoryByUserID(ctx context.Context, userID pgtype.UUID) ([]CountUnclassifiedItemsGroupedByCategoryByUserIDRow, error)
 	CreateBox(ctx context.Context, arg CreateBoxParams) error
 	CreateCategory(ctx context.Context, arg CreateCategoryParams) error
+	CreateItem(ctx context.Context, arg CreateItemParams) error
 	CreatePattern(ctx context.Context, arg CreatePatternParams) error
 	// 新規一括挿入時と、一括更新時に使う
 	CreatePatternSteps(ctx context.Context, arg []CreatePatternStepsParams) (int64, error)
+	// 新規一括挿入時と、一括更新時に使う
+	CreateReviewDates(ctx context.Context, arg []CreateReviewDatesParams) (int64, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	DeleteBox(ctx context.Context, arg DeleteBoxParams) error
 	DeleteCategory(ctx context.Context, arg DeleteCategoryParams) error
+	DeleteItem(ctx context.Context, arg DeleteItemParams) error
 	DeletePattern(ctx context.Context, arg DeletePatternParams) error
-	// 親の復習パターンが削除された場合or復習ステップが更新対象に含まれた場合に発行する一括削除用のクエリ
+	// 復習ステップが更新対象に含まれた場合に発行する一括削除用のクエリ
 	DeletePatternSteps(ctx context.Context, arg DeletePatternStepsParams) error
+	// 復習日のパターンIDがnilに変更されたとき
+	DeleteReviewDates(ctx context.Context, arg DeleteReviewDatesParams) error
 	FindUserByEmail(ctx context.Context, email string) (FindUserByEmailRow, error)
 	GetAllBoxesByCategoryID(ctx context.Context, arg GetAllBoxesByCategoryIDParams) ([]GetAllBoxesByCategoryIDRow, error)
 	GetAllCategoriesByUserID(ctx context.Context, userID pgtype.UUID) ([]GetAllCategoriesByUserIDRow, error)
@@ -29,18 +42,46 @@ type Querier interface {
 	GetAllPatternStepsByUserID(ctx context.Context, userID pgtype.UUID) ([]GetAllPatternStepsByUserIDRow, error)
 	// 全パターン取得機能（パターン（親）のみ一覧取得）
 	GetAllPatternsByUserID(ctx context.Context, userID pgtype.UUID) ([]GetAllPatternsByUserIDRow, error)
+	//　ボックス内画面用の全復習物一覧取得機能（復習日（子）のみ一覧取得（親は区別しない。親が未完了復習物かどうかも区別しない））。
+	GetAllReviewDatesByBoxID(ctx context.Context, arg GetAllReviewDatesByBoxIDParams) ([]GetAllReviewDatesByBoxIDRow, error)
+	// ボックス内画面用の未完了の全復習物一覧取得機能（復習物（親）のみ一覧取得）
+	GetAllUnFinishedItemsByBoxID(ctx context.Context, arg GetAllUnFinishedItemsByBoxIDParams) ([]GetAllUnFinishedItemsByBoxIDRow, error)
+	GetAllUnFinishedUnclassifiedItemsByCategoryID(ctx context.Context, arg GetAllUnFinishedUnclassifiedItemsByCategoryIDParams) ([]GetAllUnFinishedUnclassifiedItemsByCategoryIDRow, error)
+	// ホーム画面の未分類未完了復習物
+	GetAllUnFinishedUnclassifiedItemsByUserID(ctx context.Context, userID pgtype.UUID) ([]GetAllUnFinishedUnclassifiedItemsByUserIDRow, error)
+	GetAllUnclassifiedReviewDatesByCategoryID(ctx context.Context, arg GetAllUnclassifiedReviewDatesByCategoryIDParams) ([]GetAllUnclassifiedReviewDatesByCategoryIDRow, error)
+	GetAllUnclassifiedReviewDatesByUserID(ctx context.Context, userID pgtype.UUID) ([]GetAllUnclassifiedReviewDatesByUserIDRow, error)
 	GetBoxByID(ctx context.Context, arg GetBoxByIDParams) (GetBoxByIDRow, error)
 	GetCategoryByID(ctx context.Context, arg GetCategoryByIDParams) (GetCategoryByIDRow, error)
+	// EditedAt取得専用
+	GetEditedAtByItemID(ctx context.Context, arg GetEditedAtByItemIDParams) (pgtype.Timestamptz, error)
+	// 学習日変更など、どういうリクエストなのかを判定するために使う
+	GetItemByID(ctx context.Context, arg GetItemByIDParams) (GetItemByIDRow, error)
 	// 復習パターンそのものが更新対象かどうか判定するために使う
 	GetPatternByID(ctx context.Context, arg GetPatternByIDParams) (GetPatternByIDRow, error)
 	// 復習ステップが更新対象かどうか判定するために使う
 	GetPatternStepsByPatternID(ctx context.Context, arg GetPatternStepsByPatternIDParams) ([]GetPatternStepsByPatternIDRow, error)
+	// 復習日Upate処理用。ReviewDateIDを使い回すために使う
+	GetReviewDateIDsAndInitialByItemID(ctx context.Context, arg GetReviewDateIDsAndInitialByItemIDParams) ([]GetReviewDateIDsAndInitialByItemIDRow, error)
+	GetReviewDatesByItemID(ctx context.Context, arg GetReviewDatesByItemIDParams) ([]GetReviewDatesByItemIDRow, error)
 	GetUserSettingByID(ctx context.Context, id pgtype.UUID) (GetUserSettingByIDRow, error)
+	// 完了済みの復習日がないか判別するためのクエリ
+	HasCompletedReviewDateByItemID(ctx context.Context, arg HasCompletedReviewDateByItemIDParams) (bool, error)
+	// patternパッケージで使う
+	IsPatternRelatedToItemByPatternID(ctx context.Context, arg IsPatternRelatedToItemByPatternIDParams) (bool, error)
 	UpdateBox(ctx context.Context, arg UpdateBoxParams) error
 	UpdateBoxIfNoReviewItems(ctx context.Context, arg UpdateBoxIfNoReviewItemsParams) (int64, error)
 	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) error
+	// 移動、完了、学習日変更、その他編集に使う
+	UpdateItem(ctx context.Context, arg UpdateItemParams) error
+	UpdateItemAsFinished(ctx context.Context, arg UpdateItemAsFinishedParams) error
+	UpdateItemAsUnfinished(ctx context.Context, arg UpdateItemAsUnfinishedParams) error
 	// pattern系のリクエストで、更新対象の中に復習パターンそのものが含まれる場合に発行するクエリ
 	UpdatePattern(ctx context.Context, arg UpdatePatternParams) error
+	UpdateReviewDateAsCompleted(ctx context.Context, arg UpdateReviewDateAsCompletedParams) error
+	UpdateReviewDateAsInCompleted(ctx context.Context, arg UpdateReviewDateAsInCompletedParams) error
+	// 復習日手動変更、完了、学習日変更機能の副次的な変更に使う
+	UpdateReviewDates(ctx context.Context, arg UpdateReviewDatesParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) error
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 }

@@ -1,59 +1,210 @@
 package item
 
-import validation "github.com/go-ozzo/ozzo-validation/v4"
+import (
+	"time"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+)
 
 type Item struct {
-	id          string
-	userID      string
-	categoryID  string
-	boxID       string
-	patternID   string
-	name        string
-	detail      string
-	learnedDate string
-	isFinished  bool
+	ItemID       string
+	UserID       string
+	CategoryID   *string
+	BoxID        *string
+	PatternID    *string
+	Name         string
+	Detail       string
+	LearnedDate  time.Time
+	IsFinished   bool
+	RegisteredAt time.Time
+	EditedAt     time.Time
 }
 
 func NewItem(
-	id string,
+	itemID string,
 	userID string,
-	categoryID string,
-	boxID string,
-	patternID string,
+	categoryID *string,
+	boxID *string,
+	patternID *string,
 	name string,
 	detail string,
-	learnedDate string,
+	learnedDate time.Time,
 	isFinished bool,
+	registeredAt time.Time,
+	editedAt time.Time,
 ) (*Item, error) {
-	i := &Item{
-		id:          id,
-		userID:      userID,
-		categoryID:  categoryID,
-		boxID:       boxID,
-		patternID:   patternID,
-		name:        name,
-		detail:      detail,
-		learnedDate: learnedDate,
-		isFinished:  isFinished,
-	}
-	if err := i.Validate(); err != nil {
+	if err := validateName(name); err != nil {
 		return nil, err
+	}
+	if err := validateLearnedDate(learnedDate); err != nil {
+		return nil, err
+	}
+
+	i := &Item{
+		ItemID:       itemID,
+		UserID:       userID,
+		CategoryID:   categoryID,
+		BoxID:        boxID,
+		PatternID:    patternID,
+		Name:         name,
+		Detail:       detail,
+		LearnedDate:  learnedDate,
+		IsFinished:   isFinished,
+		RegisteredAt: registeredAt,
+		EditedAt:     editedAt,
 	}
 	return i, nil
 }
-func (i *Item) Validate() error {
-	return validation.ValidateStruct(i,
+
+func ReconstructItem(
+	itemID string,
+	userID string,
+	categoryID *string,
+	boxID *string,
+	patternID *string,
+	name string,
+	detail string,
+	learnedDate time.Time,
+	isFinished bool,
+	registeredAt time.Time,
+	editedAt time.Time,
+) (*Item, error) {
+	i := &Item{
+		ItemID:       itemID,
+		UserID:       userID,
+		CategoryID:   categoryID,
+		BoxID:        boxID,
+		PatternID:    patternID,
+		Name:         name,
+		Detail:       detail,
+		LearnedDate:  learnedDate,
+		IsFinished:   isFinished,
+		RegisteredAt: registeredAt,
+		EditedAt:     editedAt,
+	}
+	return i, nil
+}
+
+func validateName(name string) error {
+	return validation.Validate(
+		name,
+		validation.Required.Error("アイテム名は必須です"),
+	)
+}
+
+func validateLearnedDate(learnedDate time.Time) error {
+	return validation.Validate(
+		learnedDate,
+		validation.Required.Error("学習日は必須です"),
+	)
+}
+
+// TODO: bool値用のバリデーション
+
+func (i *Item) Set(
+	categoryID *string,
+	boxID *string,
+	patternID *string,
+	name string,
+	detail string,
+	learnedDate time.Time,
+	editedAt time.Time,
+) error {
+	if err := validateName(name); err != nil {
+		return err
+	}
+	if err := validateLearnedDate(learnedDate); err != nil {
+		return err
+	}
+
+	i.CategoryID = categoryID
+	i.BoxID = boxID
+	i.PatternID = patternID
+	i.Name = name
+	i.Detail = detail
+	i.LearnedDate = learnedDate
+	i.EditedAt = editedAt
+
+	return nil
+}
+
+type Reviewdate struct {
+	ReviewdateID         string
+	UserID               string
+	CategoryID           *string
+	BoxID                *string
+	ItemID               string
+	StepNumber           int
+	InitialScheduledDate time.Time
+	ScheduledDate        time.Time
+	IsCompleted          bool
+}
+
+func NewReviewdate(
+	reviewdateID string,
+	userID string,
+	categoryID *string,
+	boxID *string,
+	itemID string,
+	stepNumber int,
+	initialScheduledDate time.Time,
+	scheduledDate time.Time,
+	isCompleted bool,
+) (*Reviewdate, error) {
+	s := &Reviewdate{
+		ReviewdateID:         reviewdateID,
+		UserID:               userID,
+		CategoryID:           categoryID,
+		BoxID:                boxID,
+		ItemID:               itemID,
+		StepNumber:           stepNumber,
+		InitialScheduledDate: initialScheduledDate,
+		ScheduledDate:        scheduledDate,
+		IsCompleted:          isCompleted,
+	}
+	if err := s.Validate(); err != nil {
+		return nil, err
+	}
+	return s, nil
+}
+
+func ReconstructReviewdate(
+	reviewdateID string,
+	userID string,
+	categoryID *string,
+	boxID *string,
+	itemID string,
+	stepNumber int,
+	initialScheduledDate time.Time,
+	scheduledDate time.Time,
+	isCompleted bool,
+) (*Reviewdate, error) {
+	rd := &Reviewdate{
+		ReviewdateID:         reviewdateID,
+		UserID:               userID,
+		CategoryID:           categoryID,
+		BoxID:                boxID,
+		ItemID:               itemID,
+		StepNumber:           stepNumber,
+		InitialScheduledDate: initialScheduledDate,
+		ScheduledDate:        scheduledDate,
+		IsCompleted:          isCompleted,
+	}
+	return rd, nil
+}
+
+func (s *Reviewdate) Validate() error {
+	return validation.ValidateStruct(s,
 		validation.Field(
-			&i.name,
-			validation.Required.Error("アイテム名は必須です"),
+			&s.StepNumber,
+			validation.Required.Error("ステップ番号は必須です"),
+			validation.Min(1).Error("ステップ番号の値が不正です"),
+			validation.Max(32767).Error("ステップは32768回以上は指定できません"),
 		),
 		validation.Field(
-			&i.learnedDate,
-			validation.Required.Error("学習日は必須です"),
-		),
-		validation.Field(
-			&i.isFinished,
-			validation.Required.Error("完了フラグは必須です"),
+			&s.ScheduledDate,
+			validation.Required.Error("スケジュール日は必須です"),
+			// スケジュール日フォーマットのバリデーションも書く
 		),
 	)
 }

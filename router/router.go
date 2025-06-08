@@ -9,11 +9,19 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	boxController "github.com/minminseo/recall-setter/controller/box"
 	categoryController "github.com/minminseo/recall-setter/controller/category"
+	itemController "github.com/minminseo/recall-setter/controller/item"
+
 	patternController "github.com/minminseo/recall-setter/controller/pattern"
 	userController "github.com/minminseo/recall-setter/controller/user"
 )
 
-func NewRouter(uc userController.IUserController, cc categoryController.ICategoryController, bc boxController.IBoxController, pc patternController.IPatternController) *echo.Echo {
+func NewRouter(
+	uc userController.IUserController,
+	cc categoryController.ICategoryController,
+	bc boxController.IBoxController,
+	pc patternController.IPatternController,
+	ic itemController.IItemController,
+) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
@@ -43,50 +51,97 @@ func NewRouter(uc userController.IUserController, cc categoryController.ICategor
 	e.POST("/logout", uc.LogOut)
 	e.GET("/csrf", uc.CsrfToken)
 
-	u := e.Group("/user")
-	u.Use(echojwt.WithConfig(echojwt.Config{
+	// JWT認証ミドルウェア共通化
+	authMiddleware := echojwt.WithConfig(echojwt.Config{
 		SigningKey:  []byte(os.Getenv("SECRET")),
 		TokenLookup: "cookie:token",
 		ContextKey:  "user",
-	}))
+	})
 
-	u.GET("", uc.GetUserSetting)
-	u.PUT("", uc.UpdateSetting)
-	u.PUT("/password", uc.UpdatePassword)
+	userGroup := e.Group("/user")
+	userGroup.Use(authMiddleware)
+	{
+		userGroup.GET("", uc.GetUserSetting)
+		userGroup.PUT("", uc.UpdateSetting)
+		userGroup.PUT("/password", uc.UpdatePassword)
+	}
 
-	catGroup := e.Group("/categories")
-	catGroup.Use(echojwt.WithConfig(echojwt.Config{
-		SigningKey:  []byte(os.Getenv("SECRET")),
-		TokenLookup: "cookie:token",
-		ContextKey:  "user",
-	}))
+	// カテゴリー系
+	categoryGroup := e.Group("/categories")
+	categoryGroup.Use(authMiddleware)
+	{
+		categoryGroup.POST("", cc.CreateCategory)
+		categoryGroup.GET("", cc.GetCategories)
+		categoryGroup.PUT("/:id", cc.UpdateCategory)
+		categoryGroup.DELETE("/:id", cc.DeleteCategory)
+	}
 
-	catGroup.POST("", cc.CreateCategory)
-	catGroup.GET("", cc.GetCategories)
-	catGroup.PUT("/:id", cc.UpdateCategory)
-	catGroup.DELETE("/:id", cc.DeleteCategory)
+	// ボックス系
+	boxGroup := e.Group("/:category_id/boxes")
+	boxGroup.Use(authMiddleware)
+	{
+		boxGroup.POST("", bc.CreateBox)
+		boxGroup.GET("", bc.GetBoxes)
+		boxGroup.PUT("/:id", bc.UpdateBox)
+		boxGroup.DELETE("/:id", bc.DeleteBox)
+	}
 
-	boxGroup := e.Group("/categories/:category_id/boxes")
-	boxGroup.Use(echojwt.WithConfig(echojwt.Config{
-		SigningKey:  []byte(os.Getenv("SECRET")),
-		TokenLookup: "cookie:token",
-		ContextKey:  "user",
-	}))
-	boxGroup.POST("", bc.CreateBox)
-	boxGroup.GET("", bc.GetBoxes)
-	boxGroup.PUT("/:id", bc.UpdateBox)
-	boxGroup.DELETE("/:id", bc.DeleteBox)
-
+	// 復習パターン系
 	patternGroup := e.Group("/patterns")
-	patternGroup.Use(echojwt.WithConfig(echojwt.Config{
-		SigningKey:  []byte(os.Getenv("SECRET")),
-		TokenLookup: "cookie:token",
-	}))
+	patternGroup.Use(authMiddleware)
+	{
+		patternGroup.POST("", pc.CreatePattern)
+		patternGroup.GET("", pc.GetPatterns)
+		patternGroup.PUT("/:id", pc.UpdatePattern)
+		patternGroup.DELETE("/:id", pc.DeletePattern)
+	}
 
-	patternGroup.POST("", pc.CreatePattern)
-	patternGroup.GET("", pc.GetPatterns)
-	patternGroup.PUT("/:id", pc.UpdatePattern)
-	patternGroup.DELETE("/:id", pc.DeletePattern)
+	// 復習打つ形
+	itemGroup := e.Group("/items")
+	itemGroup.Use(authMiddleware)
+	{
+		// 復習物の作成
+		itemGroup.POST("", ic.CreateItem)
+
+		// 復習物一覧取得系
+		itemGroup.GET("/unclassified", ic.GetAllUnFinishedUnclassifiedItemsByUserID)
+		itemGroup.GET("/:box_id", ic.GetAllUnFinishedItemsByBoxID)
+		itemGroup.GET("/unclassified/:category_id", ic.GetAllUnFinishedUnclassifiedItemsByCategoryID)
+
+		// 特定復習物への操作
+		itemDetailGroup := itemGroup.Group("/:item_id")
+		{
+			itemDetailGroup.PUT("", ic.UpdateItem)
+			itemDetailGroup.DELETE("", ic.DeleteItem)
+			itemDetailGroup.PATCH("/finish", ic.UpdateItemAsFinishedForce)
+			itemDetailGroup.PATCH("/unfinish", ic.UpdateItemAsUnFinishedForce)
+
+			// 特定復習物に属する復習日への操作
+			reviewDateGroup := itemDetailGroup.Group("/review-dates/:review_date_id")
+			{
+				// 復習日とその後の日付を再計算
+				reviewDateGroup.PUT("", ic.UpdateReviewDates)
+				// 復習日の完了状態を変更
+				reviewDateGroup.PATCH("/complete", ic.UpdateReviewDateAsCompleted)
+				reviewDateGroup.PATCH("/incomplete", ic.UpdateReviewDateAsInCompleted)
+			}
+		}
+	}
+
+	// データ概要系
+	summaryGroup := e.Group("/summary")
+	summaryGroup.Use(authMiddleware)
+	{
+		// 復習物の数：各カテゴリーのボックスごとの復習物の数、カテゴリーごとの未分類ボックスの復習物の数、ホーム画面の未分類ボックスの復習物の数
+		summaryGroup.GET("/items/count/by-box", ic.CountItemsGroupedByBoxByUserID)
+		summaryGroup.GET("/items/count/unclassified/by-category", ic.CountUnclassifiedItemsGroupedByCategoryByUserID)
+		summaryGroup.GET("/items/count/unclassified", ic.CountUnclassifiedItemsByUserID)
+
+		// 今日の復習内容の数 (日付はクエリパラメータで指定）：各カテゴリーのボックスごとの今日の復習内容の数、カテゴリーごとの未分類ボックスの今日の復習内容の数、ホーム画面の未分類ボックスの今日の復習内容の数
+		summaryGroup.GET("/daily-reviews/count/by-box", ic.CountDailyDatesGroupedByBoxByUserID)
+		summaryGroup.GET("/daily-reviews/count/unclassified/by-category", ic.CountDailyDatesUnclassifiedGroupedByCategoryByUserID)
+		summaryGroup.GET("/daily-reviews/count/unclassified", ic.CountDailyDatesUnclassifiedByUserID)
+	}
 
 	return e
 
