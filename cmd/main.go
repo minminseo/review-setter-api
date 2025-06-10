@@ -49,7 +49,7 @@ func main() {
 	categoryUsecase := categoryUsecase.NewCategoryUsecase(categoryRepository)
 	boxUsecase := boxUsecase.NewBoxUsecase(boxRepository)
 	patternUsecase := patternUsecase.NewPatternUsecase(patternRepository, itemRepository, transactionManager)
-	itemUsecase := itemUsecase.NewItemUsecase(itemRepository, patternRepository, transactionManager)
+	itemUsecase := itemUsecase.NewItemUsecase(categoryRepository, boxRepository, itemRepository, patternRepository, transactionManager)
 
 	// コントローラー
 	userController := userController.NewUserController(userUsecase)
