@@ -143,6 +143,43 @@ func (q *Queries) GetCategoryByID(ctx context.Context, arg GetCategoryByIDParams
 	return i, err
 }
 
+const getCategoryNamesByCategoryIDs = `-- name: GetCategoryNamesByCategoryIDs :many
+SELECT
+    id,
+    name
+FROM
+    categories
+WHERE
+    id = ANY($1::uuid[])
+`
+
+type GetCategoryNamesByCategoryIDsRow struct {
+	ID   pgtype.UUID `json:"id"`
+	Name string      `json:"name"`
+}
+
+// item_usecaseで使うクエリ
+// args: category_ids uuid[]
+func (q *Queries) GetCategoryNamesByCategoryIDs(ctx context.Context, categoryIds []pgtype.UUID) ([]GetCategoryNamesByCategoryIDsRow, error) {
+	rows, err := q.db.Query(ctx, getCategoryNamesByCategoryIDs, categoryIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetCategoryNamesByCategoryIDsRow{}
+	for rows.Next() {
+		var i GetCategoryNamesByCategoryIDsRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateCategory = `-- name: UpdateCategory :exec
 UPDATE
     categories

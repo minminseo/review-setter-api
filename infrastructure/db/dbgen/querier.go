@@ -38,6 +38,10 @@ type Querier interface {
 	FindUserByEmail(ctx context.Context, email string) (FindUserByEmailRow, error)
 	GetAllBoxesByCategoryID(ctx context.Context, arg GetAllBoxesByCategoryIDParams) ([]GetAllBoxesByCategoryIDRow, error)
 	GetAllCategoriesByUserID(ctx context.Context, userID pgtype.UUID) ([]GetAllCategoriesByUserIDRow, error)
+	// LAG→item_idごとにstep_numberの昇順で並べた時、scheduled_dateが持つstep_numberより一個前のstep_numberのscheduled_dateを取得
+	// LEAD→item_idごとにstep_numberの昇順で並べた時、scheduled_dateが持つstep_numberより一個後のstep_numberのscheduled_dateを取得
+	// 今日の復習日を取得するクエリ
+	GetAllDailyReviewDates(ctx context.Context, arg GetAllDailyReviewDatesParams) ([]GetAllDailyReviewDatesRow, error)
 	//　全パターン取得機能（ステップ（子）のみ一覧取得（親は区別しない））
 	GetAllPatternStepsByUserID(ctx context.Context, userID pgtype.UUID) ([]GetAllPatternStepsByUserIDRow, error)
 	// 全パターン取得機能（パターン（親）のみ一覧取得）
@@ -52,7 +56,13 @@ type Querier interface {
 	GetAllUnclassifiedReviewDatesByCategoryID(ctx context.Context, arg GetAllUnclassifiedReviewDatesByCategoryIDParams) ([]GetAllUnclassifiedReviewDatesByCategoryIDRow, error)
 	GetAllUnclassifiedReviewDatesByUserID(ctx context.Context, userID pgtype.UUID) ([]GetAllUnclassifiedReviewDatesByUserIDRow, error)
 	GetBoxByID(ctx context.Context, arg GetBoxByIDParams) (GetBoxByIDRow, error)
+	// item_usecaseで使うクエリ。
+	// args: box_ids uuid[]
+	GetBoxNamesByBoxIDs(ctx context.Context, boxIds []pgtype.UUID) ([]GetBoxNamesByBoxIDsRow, error)
 	GetCategoryByID(ctx context.Context, arg GetCategoryByIDParams) (GetCategoryByIDRow, error)
+	// item_usecaseで使うクエリ
+	// args: category_ids uuid[]
+	GetCategoryNamesByCategoryIDs(ctx context.Context, categoryIds []pgtype.UUID) ([]GetCategoryNamesByCategoryIDsRow, error)
 	// EditedAt取得専用
 	GetEditedAtByItemID(ctx context.Context, arg GetEditedAtByItemIDParams) (pgtype.Timestamptz, error)
 	// 学習日変更など、どういうリクエストなのかを判定するために使う
@@ -61,6 +71,9 @@ type Querier interface {
 	GetPatternByID(ctx context.Context, arg GetPatternByIDParams) (GetPatternByIDRow, error)
 	// 復習ステップが更新対象かどうか判定するために使う
 	GetPatternStepsByPatternID(ctx context.Context, arg GetPatternStepsByPatternIDParams) ([]GetPatternStepsByPatternIDRow, error)
+	// item_usecaseで使うクエリ。
+	// args: pattern_ids uuid[]
+	GetPatternTargetWeightsByPatternIDs(ctx context.Context, patternIds []pgtype.UUID) ([]GetPatternTargetWeightsByPatternIDsRow, error)
 	// 復習日Upate処理用。ReviewDateIDを使い回すために使う
 	GetReviewDateIDsByItemID(ctx context.Context, arg GetReviewDateIDsByItemIDParams) ([]pgtype.UUID, error)
 	GetReviewDatesByItemID(ctx context.Context, arg GetReviewDatesByItemIDParams) ([]GetReviewDatesByItemIDRow, error)

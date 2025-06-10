@@ -239,3 +239,27 @@ func (r *patternRepository) GetAllPatternStepsByPatternID(ctx context.Context, p
 	}
 	return out, nil
 }
+
+func (r *patternRepository) GetPatternTargetWeightsByPatternIDs(ctx context.Context, ids []string) ([]*patternDomain.TargetWeight, error) {
+	q := db.GetQuery(ctx)
+	pgIDs := make([]pgtype.UUID, len(ids))
+	for i, sid := range ids {
+		u, err := uuid.Parse(sid)
+		if err != nil {
+			return nil, err
+		}
+		pgIDs[i] = pgtype.UUID{Bytes: u, Valid: true}
+	}
+	rows, err := q.GetPatternTargetWeightsByPatternIDs(ctx, pgIDs)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*patternDomain.TargetWeight, len(rows))
+	for i, row := range rows {
+		out[i] = &patternDomain.TargetWeight{
+			PatternID:    uuid.UUID(row.ID.Bytes).String(),
+			TargetWeight: string(row.TargetWeight),
+		}
+	}
+	return out, nil
+}

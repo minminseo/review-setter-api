@@ -233,3 +233,71 @@ type UnclassifiedDailyDatesCountGroupedByCategoryOutput struct {
 
 
 */
+
+type DailyReviewDatesByBoxOutput struct {
+	ReviewDateID      string
+	CategoryID        string // 必ず存在する
+	BoxID             string // 必ず存在する
+	StepNumber        int
+	PrevScheduledDate *string
+	ScheduledDate     string
+	NextScheduledDate *string
+	IsCompleted       bool
+
+	// 復習物の情報
+	ItemName     string
+	Detail       string
+	RegisteredAt time.Time
+	EditedAt     time.Time
+}
+
+type DailyReviewDatesGroupedByBoxOutput struct {
+	BoxID        string
+	CategoryID   string
+	BoxName      string
+	ReviewDates  []DailyReviewDatesByBoxOutput
+	TargetWeight string
+}
+
+type UnclassifiedDailyReviewDatesGroupedByCategoryOutput struct {
+	ReviewDateID      string
+	CategoryID        string // 必ず存在する
+	StepNumber        int
+	PrevScheduledDate *string
+	ScheduledDate     string
+	NextScheduledDate *string
+	IsCompleted       bool
+
+	// 復習物の情報
+	ItemName     string
+	Detail       string
+	RegisteredAt time.Time
+	EditedAt     time.Time
+}
+
+type DailyReviewDatesGroupedByCategoryOutput struct {
+	CategoryID                             string
+	CategoryName                           string
+	Boxes                                  []DailyReviewDatesGroupedByBoxOutput
+	UnclassifiedDailyReviewDatesByCategory []UnclassifiedDailyReviewDatesGroupedByCategoryOutput
+}
+
+type UnclassifiedDailyReviewDatesGroupedByUserOutput struct {
+	ReviewDateID      string
+	StepNumber        int
+	PrevScheduledDate *string
+	ScheduledDate     string
+	NextScheduledDate *string
+	IsCompleted       bool
+
+	// 復習物の情報
+	ItemName     string
+	Detail       string
+	RegisteredAt time.Time
+	EditedAt     time.Time
+}
+
+type GetDailyReviewDatesOutput struct {
+	Categories                    []DailyReviewDatesGroupedByCategoryOutput
+	DailyReviewDatesGroupedByUser []UnclassifiedDailyReviewDatesGroupedByUserOutput
+}

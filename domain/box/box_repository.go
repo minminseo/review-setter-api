@@ -7,6 +7,12 @@ type BoxCountGroupedByCategory struct {
 	Count      int
 }
 
+type BoxName struct {
+	BoxID     string
+	Name      string
+	PatternID string
+}
+
 type IBoxRepository interface {
 	Create(ctx context.Context, box *Box) error
 
@@ -19,6 +25,6 @@ type IBoxRepository interface {
 	UpdateWithPatternID(ctx context.Context, box *Box) (int64, error)
 	Delete(ctx context.Context, boxID string, categoryID string, userID string) error
 
-	// TODO: これは復習物リポジトリの責任にする
-	// CountGroupedByCategoryByUserID(userID string) ([]*BoxCountGroupedByCategory, error)
+	// item_usecaseで使う。ボックスの名前とパターンIDを一覧取得する
+	GetBoxNamesByBoxIDs(ctx context.Context, boxIDs []string) ([]*BoxName, error)
 }

@@ -98,19 +98,16 @@ DELETE FROM
 WHERE
     id = sqlc.arg(id) AND user_id = sqlc.arg(user_id);
 
--- -- name: CountGroupedByCategoryByUserID :many
--- SELECT
---     c.id AS category_id,
---     c.name AS category_name,
---     COUNT(b.id) AS box_count
--- FROM
---     review_boxes b
--- JOIN
---     categories c ON b.category_id = c.id
--- WHERE
---     b.user_id = sqlc.arg(user_id)
--- GROUP BY
---     c.id, c.name
--- ORDER BY
---     c.registered_at;
+
+-- item_usecaseで使うクエリ。
+-- name: GetBoxNamesByBoxIDs :many
+-- args: box_ids uuid[]
+SELECT
+    id,
+    name,
+    pattern_id
+FROM
+    review_boxes
+WHERE
+    id = ANY(sqlc.arg(box_ids)::uuid[]);
 

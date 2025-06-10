@@ -184,6 +184,45 @@ func (q *Queries) GetBoxByID(ctx context.Context, arg GetBoxByIDParams) (GetBoxB
 	return i, err
 }
 
+const getBoxNamesByBoxIDs = `-- name: GetBoxNamesByBoxIDs :many
+SELECT
+    id,
+    name,
+    pattern_id
+FROM
+    review_boxes
+WHERE
+    id = ANY($1::uuid[])
+`
+
+type GetBoxNamesByBoxIDsRow struct {
+	ID        pgtype.UUID `json:"id"`
+	Name      string      `json:"name"`
+	PatternID pgtype.UUID `json:"pattern_id"`
+}
+
+// item_usecaseで使うクエリ。
+// args: box_ids uuid[]
+func (q *Queries) GetBoxNamesByBoxIDs(ctx context.Context, boxIds []pgtype.UUID) ([]GetBoxNamesByBoxIDsRow, error) {
+	rows, err := q.db.Query(ctx, getBoxNamesByBoxIDs, boxIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetBoxNamesByBoxIDsRow{}
+	for rows.Next() {
+		var i GetBoxNamesByBoxIDsRow
+		if err := rows.Scan(&i.ID, &i.Name, &i.PatternID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateBox = `-- name: UpdateBox :exec
 UPDATE
     review_boxes
