@@ -5,23 +5,31 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	BoxDomain "github.com/minminseo/recall-setter/domain/box"
+	CategoryDomain "github.com/minminseo/recall-setter/domain/category"
 	ItemDomain "github.com/minminseo/recall-setter/domain/item"
 	PatternDomain "github.com/minminseo/recall-setter/domain/pattern"
 	"github.com/minminseo/recall-setter/usecase/transaction"
 )
 
 type ItemUsecase struct {
+	categoryRepo       CategoryDomain.ICategoryRepository
+	boxRepo            BoxDomain.IBoxRepository
 	itemRepo           ItemDomain.IItemRepository
 	patternRepo        PatternDomain.IPatternRepository
 	transactionManager transaction.ITransactionManager
 }
 
 func NewItemUsecase(
+	categoryRepo CategoryDomain.ICategoryRepository,
+	boxRepo BoxDomain.IBoxRepository,
 	itemRepo ItemDomain.IItemRepository,
 	patternRepo PatternDomain.IPatternRepository,
 	transactionManager transaction.ITransactionManager,
 ) *ItemUsecase {
 	return &ItemUsecase{
+		categoryRepo:       categoryRepo,
+		boxRepo:            boxRepo,
 		itemRepo:           itemRepo,
 		patternRepo:        patternRepo,
 		transactionManager: transactionManager,
@@ -1033,3 +1041,212 @@ func (iu *ItemUsecase) CountDailyDatesUnclassifiedByUserID(ctx context.Context, 
 
 // TODO: ボックスレベルの完了済みの過去日の復習日を今日に変更するユースケース実装
 // TODO: 完了した復習物（is_finishedがtrue）を取得するユースケース実装
+
+func (iu *ItemUsecase) GetAllDailyReviewDates(ctx context.Context, userID string, today string) (*GetDailyReviewDatesOutput, error) {
+	parsedToday, err := time.Parse("2006-01-02", today)
+	if err != nil {
+		return nil, err
+	}
+
+	// ユーザー直下（NULL／NULL）の未分類ボックス今日の復習日、カテゴリー毎（非NULL／NULL）の未分類ボックスの今日の復習日、ボックス毎（非NULL／非NULL）の復習日をまとめて取得。
+	dailyDates, err := iu.itemRepo.GetAllDailyReviewDates(ctx, userID, parsedToday)
+	if err != nil {
+		return nil, err
+	}
+
+	// 一意なIDを保持するためのセットを作成
+	categorySet := make(map[string]struct{})
+	boxSet := make(map[string]struct{})
+
+	// category_idとbox_idをセットに追加
+	for _, d := range dailyDates {
+		if d.CategoryID != nil {
+			categorySet[*d.CategoryID] = struct{}{}
+		}
+		if d.BoxID != nil {
+			boxSet[*d.BoxID] = struct{}{}
+		}
+	}
+
+	// カテゴリー名を一括取得
+	categoryIDs := make([]string, 0, len(categorySet))
+	for id := range categorySet {
+		categoryIDs = append(categoryIDs, id)
+	}
+	categories, err := iu.categoryRepo.GetCategoryNamesByCategoryIDs(ctx, categoryIDs)
+	if err != nil {
+		return nil, err
+	}
+	// ID→Nameのマップを作成
+	categoryMap := make(map[string]string, len(categories))
+	for _, c := range categories {
+		categoryMap[c.ID] = c.Name
+	}
+
+	// ボックス名とpattern_idを一括取得
+	boxIDs := make([]string, 0, len(boxSet))
+	for id := range boxSet {
+		boxIDs = append(boxIDs, id)
+	}
+	boxes, err := iu.boxRepo.GetBoxNamesByBoxIDs(ctx, boxIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	// ID→NameとID→PatternIDのマップを作成
+	boxNameMap := make(map[string]string, len(boxes))
+	boxPatternMap := make(map[string]string, len(boxes))
+
+	// 一意なパターンIDを保持するためのセット
+	patternSet := make(map[string]struct{})
+	for _, b := range boxes {
+		boxNameMap[b.BoxID] = b.Name
+		boxPatternMap[b.BoxID] = b.PatternID
+
+		// 一意なパターンIDを保持するためのセットに追加
+		patternSet[b.PatternID] = struct{}{}
+	}
+
+	// 6. パターンIDsでtarget_weightを一括取得
+	patternIDs := make([]string, 0, len(patternSet))
+	for id := range patternSet {
+		patternIDs = append(patternIDs, id)
+	}
+	patterns, err := iu.patternRepo.GetPatternTargetWeightsByPatternIDs(ctx, patternIDs)
+	if err != nil {
+		return nil, err
+	}
+	// ID→TargetWeightのマップを作成
+	patternMap := make(map[string]string, len(patterns))
+	for _, p := range patterns {
+		patternMap[p.PatternID] = p.TargetWeight
+	}
+
+	// 結果を組み立てていく。
+	out := &GetDailyReviewDatesOutput{
+		Categories:                    []DailyReviewDatesGroupedByCategoryOutput{},
+		DailyReviewDatesGroupedByUser: []UnclassifiedDailyReviewDatesGroupedByUserOutput{},
+	}
+	categoryIndex := make(map[string]int)
+	boxIndex := make(map[string]int)
+
+	// 8. 一つずつマッピングとグルーピング
+	for _, d := range dailyDates {
+		var prev, next *string
+		// ScheduledDateのstep_numberが1の時、PrevScheduledDateは存在しないという例を考慮してnil確認
+		if d.PrevScheduledDate != nil {
+			s := d.PrevScheduledDate.Format("2006-01-02")
+			prev = &s
+		}
+		sched := d.ScheduledDate.Format("2006-01-02")
+		// ScheduledDateのstep_numberが最後の時、NextScheduledDateは存在しないという例を考慮してnil確認
+		if d.NextScheduledDate != nil {
+			s := d.NextScheduledDate.Format("2006-01-02")
+			next = &s
+		}
+
+		// 未分類 (category=nil && box=nil)の場合、ユーザー直下グループに追加
+		if d.CategoryID == nil && d.BoxID == nil {
+			out.DailyReviewDatesGroupedByUser = append(out.DailyReviewDatesGroupedByUser,
+				UnclassifiedDailyReviewDatesGroupedByUserOutput{
+					ReviewDateID:      d.ReviewdateID,
+					StepNumber:        d.StepNumber,
+					PrevScheduledDate: prev,
+					ScheduledDate:     sched,
+					NextScheduledDate: next,
+					IsCompleted:       d.IsCompleted,
+					ItemName:          d.Name,
+					Detail:            d.Detail,
+					RegisteredAt:      d.RegisteredAt,
+					EditedAt:          d.EditedAt,
+				},
+			)
+			// 未分類の分岐を通った場合、その後のカテゴリー・ボックス振り分け処理は不要なのでcontinue
+			continue
+		}
+
+		var categoryID, boxID string
+		if d.CategoryID != nil {
+			categoryID = *d.CategoryID
+		}
+		if d.BoxID != nil {
+			boxID = *d.BoxID
+		}
+
+		// カテゴリーグループ初期化
+		ci, ok := categoryIndex[categoryID]
+		if !ok {
+			out.Categories = append(out.Categories, DailyReviewDatesGroupedByCategoryOutput{
+				CategoryID:                             categoryID,
+				CategoryName:                           categoryMap[categoryID],
+				Boxes:                                  []DailyReviewDatesGroupedByBoxOutput{},
+				UnclassifiedDailyReviewDatesByCategory: []UnclassifiedDailyReviewDatesGroupedByCategoryOutput{},
+			})
+			ci = len(out.Categories) - 1
+			categoryIndex[categoryID] = ci
+		}
+		categoryGroup := &out.Categories[ci]
+
+		// ボックス未分類 (box=nil)の場合、カテゴリー毎の未分類に追加
+		if d.BoxID == nil {
+			categoryGroup.UnclassifiedDailyReviewDatesByCategory = append(categoryGroup.UnclassifiedDailyReviewDatesByCategory,
+				UnclassifiedDailyReviewDatesGroupedByCategoryOutput{
+					ReviewDateID:      d.ReviewdateID,
+					CategoryID:        categoryID,
+					StepNumber:        d.StepNumber,
+					PrevScheduledDate: prev,
+					ScheduledDate:     sched,
+					NextScheduledDate: next,
+					IsCompleted:       d.IsCompleted,
+					ItemName:          d.Name,
+					Detail:            d.Detail,
+					RegisteredAt:      d.RegisteredAt,
+					EditedAt:          d.EditedAt,
+				},
+			)
+			// ボックス未分類の分岐を通った場合、その後のボックスグループ振り分け処理は不要なのでcontinue
+			continue
+		}
+
+		// ボックスグループ初期化
+		key := categoryID + "|" + boxID
+		bi, ok := boxIndex[key]
+		if !ok {
+			boxName := boxNameMap[boxID]
+			patternID := boxPatternMap[boxID]
+			targetWeight := patternMap[patternID]
+
+			out.Categories[ci].Boxes = append(categoryGroup.Boxes,
+				DailyReviewDatesGroupedByBoxOutput{
+					BoxID:        boxID,
+					CategoryID:   categoryID,
+					BoxName:      boxName,
+					TargetWeight: targetWeight,
+					ReviewDates:  []DailyReviewDatesByBoxOutput{},
+				},
+			)
+			bi = len(categoryGroup.Boxes) - 1
+			boxIndex[key] = bi
+		}
+		boxGroup := &categoryGroup.Boxes[bi]
+
+		// 今日の復習日データをボックスグループに追加
+		boxGroup.ReviewDates = append(boxGroup.ReviewDates,
+			DailyReviewDatesByBoxOutput{
+				ReviewDateID:      d.ReviewdateID,
+				CategoryID:        categoryID,
+				BoxID:             boxID,
+				StepNumber:        d.StepNumber,
+				PrevScheduledDate: prev,
+				ScheduledDate:     sched,
+				NextScheduledDate: next,
+				IsCompleted:       d.IsCompleted,
+				ItemName:          d.Name,
+				Detail:            d.Detail,
+				RegisteredAt:      d.RegisteredAt,
+				EditedAt:          d.EditedAt,
+			},
+		)
+	}
+	return out, nil
+}
