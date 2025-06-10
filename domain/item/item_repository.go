@@ -26,6 +26,21 @@ type UnclassifiedDailyDatesCountGroupedByCategory struct {
 	Count      int
 }
 
+type DailyReviewDate struct {
+	ReviewdateID      string
+	CategoryID        *string
+	BoxID             *string
+	StepNumber        int
+	PrevScheduledDate *time.Time
+	ScheduledDate     time.Time
+	NextScheduledDate *time.Time
+	IsCompleted       bool
+	Name              string
+	Detail            string
+	RegisteredAt      time.Time
+	EditedAt          time.Time
+}
+
 type IItemRepository interface {
 	CreateItem(ctx context.Context, item *Item) error
 	CreateReviewdates(ctx context.Context, reviewdates []*Reviewdate) (int64, error)
@@ -116,4 +131,6 @@ type IItemRepository interface {
 	/*--------------------*/
 	// patternパッケージで使うメソッド
 	IsPatternRelatedToItemByPatternID(ctx context.Context, patternID string, userID string) (bool, error)
+
+	GetAllDailyReviewDates(ctx context.Context, userID string, parsedToday time.Time) ([]*DailyReviewDate, error)
 }
