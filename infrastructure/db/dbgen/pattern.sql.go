@@ -307,6 +307,43 @@ func (q *Queries) GetPatternStepsByPatternID(ctx context.Context, arg GetPattern
 	return items, nil
 }
 
+const getPatternTargetWeightsByPatternIDs = `-- name: GetPatternTargetWeightsByPatternIDs :many
+SELECT
+    id,
+    target_weight
+FROM
+    review_patterns
+WHERE
+    id = ANY($1::uuid[])
+`
+
+type GetPatternTargetWeightsByPatternIDsRow struct {
+	ID           pgtype.UUID      `json:"id"`
+	TargetWeight TargetWeightEnum `json:"target_weight"`
+}
+
+// item_usecaseで使うクエリ。
+// args: pattern_ids uuid[]
+func (q *Queries) GetPatternTargetWeightsByPatternIDs(ctx context.Context, patternIds []pgtype.UUID) ([]GetPatternTargetWeightsByPatternIDsRow, error) {
+	rows, err := q.db.Query(ctx, getPatternTargetWeightsByPatternIDs, patternIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetPatternTargetWeightsByPatternIDsRow{}
+	for rows.Next() {
+		var i GetPatternTargetWeightsByPatternIDsRow
+		if err := rows.Scan(&i.ID, &i.TargetWeight); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updatePattern = `-- name: UpdatePattern :exec
 UPDATE
     review_patterns

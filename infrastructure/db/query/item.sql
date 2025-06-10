@@ -481,3 +481,59 @@ SELECT EXISTS (
     AND
         user_id = sqlc.arg(user_id)
 );
+
+-- LAG→item_idごとにstep_numberの昇順で並べた時、scheduled_dateが持つstep_numberより一個前のstep_numberのscheduled_dateを取得
+-- LEAD→item_idごとにstep_numberの昇順で並べた時、scheduled_dateが持つstep_numberより一個後のstep_numberのscheduled_dateを取得
+-- 今日の復習日を取得するクエリ
+-- name: GetAllDailyReviewDates :many
+SELECT
+    rd.id,
+    rd.category_id,
+    rd.box_id,
+    rd.step_number,
+    rd.prev_scheduled_date,
+    rd.scheduled_date,
+    rd.next_scheduled_date,
+    rd.is_completed,
+    ri.name,
+    ri.detail,
+    ri.registered_at,
+    ri.edited_at
+FROM (
+    SELECT
+        id,
+        category_id,
+        box_id,
+        item_id,
+        step_number,
+        scheduled_date,
+        is_completed,
+        CAST(
+            LAG(scheduled_date) OVER (
+        PARTITION BY item_id
+        ORDER BY step_number
+        ) AS date
+        ) AS prev_scheduled_date,
+        CAST(
+            LEAD(scheduled_date) OVER (
+        PARTITION BY item_id
+        ORDER BY step_number
+        ) AS date
+        ) AS next_scheduled_date
+    FROM
+        review_dates
+    WHERE
+        user_id = sqlc.arg(user_id)::uuid
+) AS rd
+JOIN
+    review_items AS ri
+ON
+    ri.id = rd.item_id
+WHERE
+    rd.scheduled_date = sqlc.arg(today)::date
+ORDER BY
+    rd.category_id    NULLS LAST,
+    rd.box_id         NULLS LAST,
+    ri.registered_at;
+
+

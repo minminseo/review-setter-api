@@ -53,3 +53,15 @@ FROM
     categories
 WHERE
     id = sqlc.arg(id) AND user_id = sqlc.arg(user_id);
+
+-- item_usecaseで使うクエリ
+-- name: GetCategoryNamesByCategoryIDs :many
+-- args: category_ids uuid[]
+SELECT
+    id,
+    name
+FROM
+    categories
+WHERE
+    id = ANY(sqlc.arg(category_ids)::uuid[]);
+

@@ -854,3 +854,74 @@ func (r *itemRepository) GetEditedAtByItemID(ctx context.Context, itemID string,
 	}
 	return editedAt.Time, nil
 }
+
+// 今日の復習日取得
+func (r *itemRepository) GetAllDailyReviewDates(ctx context.Context, userID string, targetDate time.Time) ([]*itemDomain.DailyReviewDate, error) {
+	q := db.GetQuery(ctx)
+	pgUserID, err := toUUID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	pgToday := pgtype.Date{Time: targetDate, Valid: true}
+
+	params := dbgen.GetAllDailyReviewDatesParams{
+		UserID: pgUserID,
+		Today:  pgToday,
+	}
+
+	rows, err := q.GetAllDailyReviewDates(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]*itemDomain.DailyReviewDate, len(rows))
+	for i, row := range rows {
+		idStr := uuid.UUID(row.ID.Bytes).String()
+
+		var categoryID *string
+		if row.CategoryID.Valid {
+			s := uuid.UUID(row.CategoryID.Bytes).String()
+			categoryID = &s
+		}
+
+		var boxID *string
+		if row.BoxID.Valid {
+			s := uuid.UUID(row.BoxID.Bytes).String()
+			boxID = &s
+		}
+
+		var prev *time.Time
+		if row.PrevScheduledDate.Valid {
+			t := row.PrevScheduledDate.Time
+			prev = &t
+		}
+
+		scheduled := row.ScheduledDate.Time
+
+		var next *time.Time
+		if row.NextScheduledDate.Valid {
+			t := row.NextScheduledDate.Time
+			next = &t
+		}
+
+		detail := row.Detail.String
+
+		results[i] = &itemDomain.DailyReviewDate{
+			ReviewdateID:      idStr,
+			CategoryID:        categoryID,
+			BoxID:             boxID,
+			StepNumber:        int(row.StepNumber),
+			PrevScheduledDate: prev,
+			ScheduledDate:     scheduled,
+			NextScheduledDate: next,
+			IsCompleted:       row.IsCompleted,
+			Name:              row.Name,
+			Detail:            detail,
+			RegisteredAt:      row.RegisteredAt.Time,
+			EditedAt:          row.EditedAt.Time,
+		}
+	}
+
+	return results, nil
+}

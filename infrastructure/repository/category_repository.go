@@ -164,3 +164,27 @@ func (r *categoryRepository) Delete(ctx context.Context, categoryID string, user
 	}
 	return q.DeleteCategory(ctx, params)
 }
+
+func (r *categoryRepository) GetCategoryNamesByCategoryIDs(ctx context.Context, ids []string) ([]*categoryDomain.CategoryName, error) {
+	q := db.GetQuery(ctx)
+	pgIDs := make([]pgtype.UUID, len(ids))
+	for i, sid := range ids {
+		u, err := uuid.Parse(sid)
+		if err != nil {
+			return nil, err
+		}
+		pgIDs[i] = pgtype.UUID{Bytes: u, Valid: true}
+	}
+	rows, err := q.GetCategoryNamesByCategoryIDs(ctx, pgIDs)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*categoryDomain.CategoryName, len(rows))
+	for i, row := range rows {
+		out[i] = &categoryDomain.CategoryName{
+			ID:   row.ID.String(),
+			Name: row.Name,
+		}
+	}
+	return out, nil
+}

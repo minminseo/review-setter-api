@@ -240,3 +240,28 @@ func (r *boxRepository) Delete(ctx context.Context, boxID string, categoryID str
 	}
 	return q.DeleteBox(ctx, params)
 }
+
+func (r *boxRepository) GetBoxNamesByBoxIDs(ctx context.Context, ids []string) ([]*boxDomain.BoxName, error) {
+	q := db.GetQuery(ctx)
+	pgIDs := make([]pgtype.UUID, len(ids))
+	for i, sid := range ids {
+		u, err := uuid.Parse(sid)
+		if err != nil {
+			return nil, err
+		}
+		pgIDs[i] = pgtype.UUID{Bytes: u, Valid: true}
+	}
+	rows, err := q.GetBoxNamesByBoxIDs(ctx, pgIDs)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*boxDomain.BoxName, len(rows))
+	for i, row := range rows {
+		out[i] = &boxDomain.BoxName{
+			BoxID:     uuid.UUID(row.ID.Bytes).String(),
+			Name:      row.Name,
+			PatternID: row.PatternID.String(),
+		}
+	}
+	return out, nil
+}

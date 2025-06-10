@@ -134,3 +134,14 @@ WHERE
 ORDER BY
     pattern_id,
     step_number;
+
+-- item_usecaseで使うクエリ。
+-- name: GetPatternTargetWeightsByPatternIDs :many
+-- args: pattern_ids uuid[]
+SELECT
+    id,
+    target_weight
+FROM
+    review_patterns
+WHERE
+    id = ANY(sqlc.arg(pattern_ids)::uuid[]);
