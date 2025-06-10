@@ -107,6 +107,7 @@ func NewRouter(
 		itemGroup.GET("/unclassified", ic.GetAllUnFinishedUnclassifiedItemsByUserID)
 		itemGroup.GET("/:box_id", ic.GetAllUnFinishedItemsByBoxID)
 		itemGroup.GET("/unclassified/:category_id", ic.GetAllUnFinishedUnclassifiedItemsByCategoryID)
+		itemGroup.GET("/today", ic.GetAllDailyReviewDates)
 
 		// 特定復習物への操作
 		itemDetailGroup := itemGroup.Group("/:item_id")
