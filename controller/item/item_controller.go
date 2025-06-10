@@ -344,9 +344,9 @@ func (ic *itemController) CountDailyDatesGroupedByBoxByUserID(c echo.Context) er
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, echo.Map{"error": "トークンにユーザーIDが含まれていません"})
 	}
-	date := c.QueryParam("date")
+	today := c.QueryParam("today")
 
-	out, err := ic.iu.CountDailyDatesGroupedByBoxByUserID(ctx, userID, date)
+	out, err := ic.iu.CountDailyDatesGroupedByBoxByUserID(ctx, userID, today)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "ボックス毎の今日の復習数取得に失敗しました: " + err.Error()})
 	}
@@ -359,9 +359,9 @@ func (ic *itemController) CountDailyDatesUnclassifiedGroupedByCategoryByUserID(c
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, echo.Map{"error": "トークンにユーザーIDが含まれていません"})
 	}
-	date := c.QueryParam("date")
+	today := c.QueryParam("today")
 
-	out, err := ic.iu.CountDailyDatesUnclassifiedGroupedByCategoryByUserID(ctx, userID, date)
+	out, err := ic.iu.CountDailyDatesUnclassifiedGroupedByCategoryByUserID(ctx, userID, today)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "カテゴリ毎の今日の未分類復習数取得に失敗しました: " + err.Error()})
 	}
@@ -374,11 +374,28 @@ func (ic *itemController) CountDailyDatesUnclassifiedByUserID(c echo.Context) er
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, echo.Map{"error": "トークンにユーザーIDが含まれていません"})
 	}
-	date := c.QueryParam("date")
+	today := c.QueryParam("today")
 
-	out, err := ic.iu.CountDailyDatesUnclassifiedByUserID(ctx, userID, date)
+	out, err := ic.iu.CountDailyDatesUnclassifiedByUserID(ctx, userID, today)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "今日の未分類復習数取得に失敗しました: " + err.Error()})
 	}
 	return c.JSON(http.StatusOK, out)
+}
+
+// 今日の復習日一覧取得
+func (ic *itemController) GetAllDailyReviewDates(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, echo.Map{"error": "トークンにユーザーIDが含まれていません"})
+	}
+	today := c.QueryParam("today")
+
+	result, err := ic.iu.GetAllDailyReviewDates(ctx, userID, today)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "復習日の取得に失敗しました: " + err.Error()})
+	}
+	return c.JSON(http.StatusOK, result)
 }
