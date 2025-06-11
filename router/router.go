@@ -142,6 +142,9 @@ func NewRouter(
 		summaryGroup.GET("/daily-reviews/count/by-box", ic.CountDailyDatesGroupedByBoxByUserID)
 		summaryGroup.GET("/daily-reviews/count/unclassified/by-category", ic.CountDailyDatesUnclassifiedGroupedByCategoryByUserID)
 		summaryGroup.GET("/daily-reviews/count/unclassified", ic.CountDailyDatesUnclassifiedByUserID)
+
+		// 今日の全復習日数を取得
+		summaryGroup.GET("/daily-reviews/count", ic.CountAllDailyReviewDates)
 	}
 
 	return e

@@ -11,6 +11,8 @@ import (
 )
 
 type Querier interface {
+	// 今日の全復習日数を取得
+	CountAllDailyReviewDates(ctx context.Context, arg CountAllDailyReviewDatesParams) (int64, error)
 	CountDailyDatesGroupedByBoxByUserID(ctx context.Context, arg CountDailyDatesGroupedByBoxByUserIDParams) ([]CountDailyDatesGroupedByBoxByUserIDRow, error)
 	CountDailyDatesUnclassifiedByUserID(ctx context.Context, arg CountDailyDatesUnclassifiedByUserIDParams) ([]int64, error)
 	CountDailyDatesUnclassifiedGroupedByCategoryByUserID(ctx context.Context, arg CountDailyDatesUnclassifiedGroupedByCategoryByUserIDParams) ([]CountDailyDatesUnclassifiedGroupedByCategoryByUserIDRow, error)

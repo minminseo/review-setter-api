@@ -128,9 +128,12 @@ type IItemRepository interface {
 	// EditedAtの取得専用
 	GetEditedAtByItemID(ctx context.Context, itemID string, userID string) (time.Time, error)
 
+	// 今日の全復習日数を取得する
+	CountAllDailyReviewDates(ctx context.Context, userID string, parsedToday time.Time) (int, error)
+
+	GetAllDailyReviewDates(ctx context.Context, userID string, parsedToday time.Time) ([]*DailyReviewDate, error)
+
 	/*--------------------*/
 	// patternパッケージで使うメソッド
 	IsPatternRelatedToItemByPatternID(ctx context.Context, patternID string, userID string) (bool, error)
-
-	GetAllDailyReviewDates(ctx context.Context, userID string, parsedToday time.Time) ([]*DailyReviewDate, error)
 }

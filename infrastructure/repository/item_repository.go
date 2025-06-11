@@ -855,6 +855,28 @@ func (r *itemRepository) GetEditedAtByItemID(ctx context.Context, itemID string,
 	return editedAt.Time, nil
 }
 
+// 今日の全復習日数を取得
+func (r *itemRepository) CountAllDailyReviewDates(ctx context.Context, userID string, targetDate time.Time) (int, error) {
+	q := db.GetQuery(ctx)
+	pgUserID, err := toUUID(userID)
+	if err != nil {
+		return 0, err
+	}
+
+	pgToday := pgtype.Date{Time: targetDate, Valid: true}
+
+	params := dbgen.CountAllDailyReviewDatesParams{
+		UserID:     pgUserID,
+		TargetDate: pgToday,
+	}
+
+	counts, err := q.CountAllDailyReviewDates(ctx, params)
+	if err != nil {
+		return 0, err
+	}
+	return int(counts), nil
+}
+
 // 今日の復習日取得
 func (r *itemRepository) GetAllDailyReviewDates(ctx context.Context, userID string, targetDate time.Time) ([]*itemDomain.DailyReviewDate, error) {
 	q := db.GetQuery(ctx)
