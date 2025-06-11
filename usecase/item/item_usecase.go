@@ -1039,6 +1039,20 @@ func (iu *ItemUsecase) CountDailyDatesUnclassifiedByUserID(ctx context.Context, 
 	return count, nil
 }
 
+// 今日の全復習日数を取得
+func (iu *ItemUsecase) CountAllDailyReviewDates(ctx context.Context, userID string, today string) (int, error) {
+	parsedToday, err := time.Parse("2006-01-02", today)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := iu.itemRepo.CountAllDailyReviewDates(ctx, userID, parsedToday)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 // TODO: ボックスレベルの完了済みの過去日の復習日を今日に変更するユースケース実装
 // TODO: 完了した復習物（is_finishedがtrue）を取得するユースケース実装
 

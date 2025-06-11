@@ -28,6 +28,9 @@ type IItemUsecase interface {
 	CountDailyDatesUnclassifiedGroupedByCategoryByUserID(ctx context.Context, userID string, today string) ([]*UnclassifiedDailyDatesCountGroupedByCategoryOutput, error)
 	CountDailyDatesUnclassifiedByUserID(ctx context.Context, userID string, today string) (int, error)
 
+	// 今日の全復習日数を取得する
+	CountAllDailyReviewDates(ctx context.Context, userID string, today string) (int, error)
+
 	// 今日の復習日一覧を取得する
 	GetAllDailyReviewDates(ctx context.Context, userID string, today string) (*GetDailyReviewDatesOutput, error)
 }

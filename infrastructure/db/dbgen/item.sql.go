@@ -11,6 +11,30 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countAllDailyReviewDates = `-- name: CountAllDailyReviewDates :one
+SELECT
+    COUNT(*) AS count
+FROM
+    review_dates
+WHERE
+    user_id = $1
+AND
+    scheduled_date = $2
+`
+
+type CountAllDailyReviewDatesParams struct {
+	UserID     pgtype.UUID `json:"user_id"`
+	TargetDate pgtype.Date `json:"target_date"`
+}
+
+// 今日の全復習日数を取得
+func (q *Queries) CountAllDailyReviewDates(ctx context.Context, arg CountAllDailyReviewDatesParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countAllDailyReviewDates, arg.UserID, arg.TargetDate)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countDailyDatesGroupedByBoxByUserID = `-- name: CountDailyDatesGroupedByBoxByUserID :many
 SELECT
     category_id,

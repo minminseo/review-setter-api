@@ -23,5 +23,8 @@ type IItemController interface {
 	CountDailyDatesGroupedByBoxByUserID(c echo.Context) error
 	CountDailyDatesUnclassifiedGroupedByCategoryByUserID(c echo.Context) error
 	CountDailyDatesUnclassifiedByUserID(c echo.Context) error
+
+	CountAllDailyReviewDates(c echo.Context) error
+
 	GetAllDailyReviewDates(c echo.Context) error
 }

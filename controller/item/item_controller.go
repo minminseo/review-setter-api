@@ -383,6 +383,23 @@ func (ic *itemController) CountDailyDatesUnclassifiedByUserID(c echo.Context) er
 	return c.JSON(http.StatusOK, out)
 }
 
+// 今日の全復習日数を取得
+func (ic *itemController) CountAllDailyReviewDates(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, echo.Map{"error": "トークンにユーザーIDが含まれていません"})
+	}
+	today := c.QueryParam("today")
+
+	count, err := ic.iu.CountAllDailyReviewDates(ctx, userID, today)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "今日の復習日数の取得に失敗しました: " + err.Error()})
+	}
+	return c.JSON(http.StatusOK, echo.Map{"count": count})
+}
+
 // 今日の復習日一覧取得
 func (ic *itemController) GetAllDailyReviewDates(c echo.Context) error {
 	ctx := c.Request().Context()

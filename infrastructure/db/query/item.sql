@@ -482,6 +482,17 @@ SELECT EXISTS (
         user_id = sqlc.arg(user_id)
 );
 
+-- 今日の全復習日数を取得
+-- name: CountAllDailyReviewDates :one
+SELECT
+    COUNT(*) AS count
+FROM
+    review_dates
+WHERE
+    user_id = sqlc.arg(user_id)
+AND
+    scheduled_date = sqlc.arg(target_date);
+
 -- LAG→item_idごとにstep_numberの昇順で並べた時、scheduled_dateが持つstep_numberより一個前のstep_numberのscheduled_dateを取得
 -- LEAD→item_idごとにstep_numberの昇順で並べた時、scheduled_dateが持つstep_numberより一個後のstep_numberのscheduled_dateを取得
 -- 今日の復習日を取得するクエリ
