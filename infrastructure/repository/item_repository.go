@@ -947,3 +947,140 @@ func (r *itemRepository) GetAllDailyReviewDates(ctx context.Context, userID stri
 
 	return results, nil
 }
+
+func (r *itemRepository) GetFinishedItemsByBoxID(ctx context.Context, boxID string, userID string) ([]*itemDomain.Item, error) {
+	q := db.GetQuery(ctx)
+	pgBoxID, err := toUUID(boxID)
+	if err != nil {
+		return nil, err
+	}
+	pgUserID, err := toUUID(userID)
+	if err != nil {
+		return nil, err
+	}
+	params := dbgen.GetFinishedItemsByBoxIDParams{
+		BoxID:  pgBoxID,
+		UserID: pgUserID,
+	}
+	rows, err := q.GetFinishedItemsByBoxID(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]*itemDomain.Item, len(rows))
+	for i, row := range rows {
+		var categoryID, boxID, patternID *string
+		if row.CategoryID.Valid {
+			idStr := uuid.UUID(row.CategoryID.Bytes).String()
+			categoryID = &idStr
+		}
+		if row.BoxID.Valid {
+			idStr := uuid.UUID(row.BoxID.Bytes).String()
+			boxID = &idStr
+		}
+		if row.PatternID.Valid {
+			idStr := uuid.UUID(row.PatternID.Bytes).String()
+			patternID = &idStr
+		}
+		results[i], err = itemDomain.ReconstructItem(
+			uuid.UUID(row.ID.Bytes).String(),
+			uuid.UUID(row.UserID.Bytes).String(),
+			categoryID,
+			boxID,
+			patternID,
+			row.Name,
+			row.Detail.String,
+			row.LearnedDate.Time,
+			row.IsFinished,
+			row.RegisteredAt.Time,
+			row.EditedAt.Time,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return results, nil
+}
+
+func (r *itemRepository) GetUnclassfiedFinishedItemsByCategoryID(ctx context.Context, categoryID string, userID string) ([]*itemDomain.Item, error) {
+	q := db.GetQuery(ctx)
+	pgCategoryID, err := toUUID(categoryID)
+	if err != nil {
+		return nil, err
+	}
+	pgUserID, err := toUUID(userID)
+	if err != nil {
+		return nil, err
+	}
+	params := dbgen.GetUnclassfiedFinishedItemsByCategoryIDParams{
+		CategoryID: pgCategoryID,
+		UserID:     pgUserID,
+	}
+	rows, err := q.GetUnclassfiedFinishedItemsByCategoryID(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	results := make([]*itemDomain.Item, len(rows))
+	for i, row := range rows {
+		catIDStr := uuid.UUID(row.CategoryID.Bytes).String()
+		var patternID *string
+		if row.PatternID.Valid {
+			idStr := uuid.UUID(row.PatternID.Bytes).String()
+			patternID = &idStr
+		}
+		results[i], err = itemDomain.ReconstructItem(
+			uuid.UUID(row.ID.Bytes).String(),
+			uuid.UUID(row.UserID.Bytes).String(),
+			&catIDStr,
+			nil, // Unclassified
+			patternID,
+			row.Name,
+			row.Detail.String,
+			row.LearnedDate.Time,
+			row.IsFinished,
+			row.RegisteredAt.Time,
+			row.EditedAt.Time,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return results, nil
+}
+
+func (r *itemRepository) GetUnclassfiedFinishedItemsByUserID(ctx context.Context, userID string) ([]*itemDomain.Item, error) {
+	q := db.GetQuery(ctx)
+	pgUserID, err := toUUID(userID)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := q.GetUnclassfiedFinishedItemsByUserID(ctx, pgUserID)
+	if err != nil {
+		return nil, err
+	}
+	results := make([]*itemDomain.Item, len(rows))
+	for i, row := range rows {
+		var patternID *string
+		if row.PatternID.Valid {
+			idStr := uuid.UUID(row.PatternID.Bytes).String()
+			patternID = &idStr
+		}
+		results[i], err = itemDomain.ReconstructItem(
+			uuid.UUID(row.ID.Bytes).String(),
+			uuid.UUID(row.UserID.Bytes).String(),
+			nil, // Unclassified
+			nil, // Unclassified
+			patternID,
+			row.Name,
+			row.Detail.String,
+			row.LearnedDate.Time,
+			row.IsFinished,
+			row.RegisteredAt.Time,
+			row.EditedAt.Time,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return results, nil
+}

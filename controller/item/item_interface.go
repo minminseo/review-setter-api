@@ -27,4 +27,8 @@ type IItemController interface {
 	CountAllDailyReviewDates(c echo.Context) error
 
 	GetAllDailyReviewDates(c echo.Context) error
+
+	GetFinishedItemsByBoxID(c echo.Context) error
+	GetUnclassfiedFinishedItemsByCategoryID(c echo.Context) error
+	GetUnclassfiedFinishedItemsByUserID(c echo.Context) error
 }

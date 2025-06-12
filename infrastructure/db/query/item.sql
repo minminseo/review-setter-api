@@ -235,6 +235,8 @@ FROM
 WHERE
     box_id = sqlc.arg(box_id)
 AND
+    is_Finished = false
+AND
     user_id = sqlc.arg(user_id)
 ORDER BY
     registered_at;
@@ -548,3 +550,81 @@ ORDER BY
     ri.registered_at;
 
 
+
+-- ボックス内画面用の完了の全復習物一覧取得系（復習物（親）のみ一覧取得）
+-- name: GetFinishedItemsByBoxID :many
+SELECT
+    id,
+    user_id,
+    category_id,
+    box_id,
+    pattern_id,
+    name,
+    detail,
+    learned_date,
+    is_Finished,
+    registered_at,
+    edited_at
+FROM
+    review_items
+WHERE
+    box_id = sqlc.arg(box_id)
+AND
+    is_Finished = true
+AND
+    user_id = sqlc.arg(user_id)
+ORDER BY
+    registered_at;
+
+
+-- name: GetUnclassfiedFinishedItemsByCategoryID :many
+SELECT
+    id,
+    user_id,
+    category_id,
+    box_id,
+    pattern_id,
+    name,
+    detail,
+    learned_date,
+    is_Finished,
+    registered_at,
+    edited_at
+FROM
+    review_items
+WHERE
+    category_id = sqlc.arg(category_id)
+AND
+    user_id = sqlc.arg(user_id)
+AND
+    box_id IS NULL
+AND
+    is_Finished = true
+ORDER BY
+    registered_at;
+
+-- name: GetUnclassfiedFinishedItemsByUserID :many
+SELECT
+    id,
+    user_id,
+    category_id,
+    box_id,
+    pattern_id,
+    name,
+    detail,
+    learned_date,
+    is_Finished,
+    registered_at,
+    edited_at
+FROM
+    review_items
+WHERE
+    user_id = sqlc.arg(user_id)
+AND
+    category_id IS NULL
+AND
+    box_id IS NULL
+AND
+    is_Finished = true
+ORDER BY
+    registered_at;
