@@ -109,6 +109,11 @@ func NewRouter(
 		itemGroup.GET("/unclassified/:category_id", ic.GetAllUnFinishedUnclassifiedItemsByCategoryID)
 		itemGroup.GET("/today", ic.GetAllDailyReviewDates)
 
+		// 完了済み復習物一覧取得系
+		itemGroup.GET("/finished/unclassified", ic.GetUnclassfiedFinishedItemsByUserID)
+		itemGroup.GET("/finished/:box_id", ic.GetFinishedItemsByBoxID)
+		itemGroup.GET("/finished/unclassified/:category_id", ic.GetUnclassfiedFinishedItemsByCategoryID)
+
 		// 特定復習物への操作
 		itemDetailGroup := itemGroup.Group("/:item_id")
 		{
