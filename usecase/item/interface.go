@@ -33,4 +33,9 @@ type IItemUsecase interface {
 
 	// 今日の復習日一覧を取得する
 	GetAllDailyReviewDates(ctx context.Context, userID string, today string) (*GetDailyReviewDatesOutput, error)
+
+	// 完了済み復習物を取得する系
+	GetFinishedItemsByBoxID(ctx context.Context, boxID string, userID string) ([]*GetItemOutput, error)
+	GetUnclassfiedFinishedItemsByCategoryID(ctx context.Context, userID string, categoryID string) ([]*GetItemOutput, error)
+	GetUnclassfiedFinishedItemsByUserID(ctx context.Context, userID string) ([]*GetItemOutput, error)
 }

@@ -416,3 +416,47 @@ func (ic *itemController) GetAllDailyReviewDates(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, result)
 }
+
+func (ic *itemController) GetFinishedItemsByBoxID(c echo.Context) error {
+	ctx := c.Request().Context()
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, echo.Map{"error": "トークンにユーザーIDが含まれていません"})
+	}
+	boxID := c.Param("box_id")
+
+	out, err := ic.iu.GetFinishedItemsByBoxID(ctx, boxID, userID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "ボックス内の完了した復習物取得に失敗しました: " + err.Error()})
+	}
+	return c.JSON(http.StatusOK, out)
+}
+
+func (ic *itemController) GetUnclassfiedFinishedItemsByCategoryID(c echo.Context) error {
+	ctx := c.Request().Context()
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, echo.Map{"error": "トークンにユーザーIDが含まれていません"})
+	}
+	categoryID := c.Param("category_id")
+
+	out, err := ic.iu.GetUnclassfiedFinishedItemsByCategoryID(ctx, userID, categoryID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "カテゴリ内の未分類完了復習物取得に失敗しました: " + err.Error()})
+	}
+	return c.JSON(http.StatusOK, out)
+}
+
+func (ic *itemController) GetUnclassfiedFinishedItemsByUserID(c echo.Context) error {
+	ctx := c.Request().Context()
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, echo.Map{"error": "トークンにユーザーIDが含まれていません"})
+	}
+
+	out, err := ic.iu.GetUnclassfiedFinishedItemsByUserID(ctx, userID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "完了した復習物取得に失敗しました: " + err.Error()})
+	}
+	return c.JSON(http.StatusOK, out)
+}

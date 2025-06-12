@@ -602,6 +602,8 @@ FROM
 WHERE
     box_id = $1
 AND
+    is_Finished = false
+AND
     user_id = $2
 ORDER BY
     registered_at
@@ -972,6 +974,83 @@ func (q *Queries) GetEditedAtByItemID(ctx context.Context, arg GetEditedAtByItem
 	return edited_at, err
 }
 
+const getFinishedItemsByBoxID = `-- name: GetFinishedItemsByBoxID :many
+SELECT
+    id,
+    user_id,
+    category_id,
+    box_id,
+    pattern_id,
+    name,
+    detail,
+    learned_date,
+    is_Finished,
+    registered_at,
+    edited_at
+FROM
+    review_items
+WHERE
+    box_id = $1
+AND
+    is_Finished = true
+AND
+    user_id = $2
+ORDER BY
+    registered_at
+`
+
+type GetFinishedItemsByBoxIDParams struct {
+	BoxID  pgtype.UUID `json:"box_id"`
+	UserID pgtype.UUID `json:"user_id"`
+}
+
+type GetFinishedItemsByBoxIDRow struct {
+	ID           pgtype.UUID        `json:"id"`
+	UserID       pgtype.UUID        `json:"user_id"`
+	CategoryID   pgtype.UUID        `json:"category_id"`
+	BoxID        pgtype.UUID        `json:"box_id"`
+	PatternID    pgtype.UUID        `json:"pattern_id"`
+	Name         string             `json:"name"`
+	Detail       pgtype.Text        `json:"detail"`
+	LearnedDate  pgtype.Date        `json:"learned_date"`
+	IsFinished   bool               `json:"is_finished"`
+	RegisteredAt pgtype.Timestamptz `json:"registered_at"`
+	EditedAt     pgtype.Timestamptz `json:"edited_at"`
+}
+
+// ボックス内画面用の完了の全復習物一覧取得系（復習物（親）のみ一覧取得）
+func (q *Queries) GetFinishedItemsByBoxID(ctx context.Context, arg GetFinishedItemsByBoxIDParams) ([]GetFinishedItemsByBoxIDRow, error) {
+	rows, err := q.db.Query(ctx, getFinishedItemsByBoxID, arg.BoxID, arg.UserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetFinishedItemsByBoxIDRow{}
+	for rows.Next() {
+		var i GetFinishedItemsByBoxIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.CategoryID,
+			&i.BoxID,
+			&i.PatternID,
+			&i.Name,
+			&i.Detail,
+			&i.LearnedDate,
+			&i.IsFinished,
+			&i.RegisteredAt,
+			&i.EditedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getItemByID = `-- name: GetItemByID :one
 SELECT
     id,
@@ -1128,6 +1207,157 @@ func (q *Queries) GetReviewDatesByItemID(ctx context.Context, arg GetReviewDates
 			&i.InitialScheduledDate,
 			&i.ScheduledDate,
 			&i.IsCompleted,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUnclassfiedFinishedItemsByCategoryID = `-- name: GetUnclassfiedFinishedItemsByCategoryID :many
+SELECT
+    id,
+    user_id,
+    category_id,
+    box_id,
+    pattern_id,
+    name,
+    detail,
+    learned_date,
+    is_Finished,
+    registered_at,
+    edited_at
+FROM
+    review_items
+WHERE
+    category_id = $1
+AND
+    user_id = $2
+AND
+    box_id IS NULL
+AND
+    is_Finished = true
+ORDER BY
+    registered_at
+`
+
+type GetUnclassfiedFinishedItemsByCategoryIDParams struct {
+	CategoryID pgtype.UUID `json:"category_id"`
+	UserID     pgtype.UUID `json:"user_id"`
+}
+
+type GetUnclassfiedFinishedItemsByCategoryIDRow struct {
+	ID           pgtype.UUID        `json:"id"`
+	UserID       pgtype.UUID        `json:"user_id"`
+	CategoryID   pgtype.UUID        `json:"category_id"`
+	BoxID        pgtype.UUID        `json:"box_id"`
+	PatternID    pgtype.UUID        `json:"pattern_id"`
+	Name         string             `json:"name"`
+	Detail       pgtype.Text        `json:"detail"`
+	LearnedDate  pgtype.Date        `json:"learned_date"`
+	IsFinished   bool               `json:"is_finished"`
+	RegisteredAt pgtype.Timestamptz `json:"registered_at"`
+	EditedAt     pgtype.Timestamptz `json:"edited_at"`
+}
+
+func (q *Queries) GetUnclassfiedFinishedItemsByCategoryID(ctx context.Context, arg GetUnclassfiedFinishedItemsByCategoryIDParams) ([]GetUnclassfiedFinishedItemsByCategoryIDRow, error) {
+	rows, err := q.db.Query(ctx, getUnclassfiedFinishedItemsByCategoryID, arg.CategoryID, arg.UserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetUnclassfiedFinishedItemsByCategoryIDRow{}
+	for rows.Next() {
+		var i GetUnclassfiedFinishedItemsByCategoryIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.CategoryID,
+			&i.BoxID,
+			&i.PatternID,
+			&i.Name,
+			&i.Detail,
+			&i.LearnedDate,
+			&i.IsFinished,
+			&i.RegisteredAt,
+			&i.EditedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUnclassfiedFinishedItemsByUserID = `-- name: GetUnclassfiedFinishedItemsByUserID :many
+SELECT
+    id,
+    user_id,
+    category_id,
+    box_id,
+    pattern_id,
+    name,
+    detail,
+    learned_date,
+    is_Finished,
+    registered_at,
+    edited_at
+FROM
+    review_items
+WHERE
+    user_id = $1
+AND
+    category_id IS NULL
+AND
+    box_id IS NULL
+AND
+    is_Finished = true
+ORDER BY
+    registered_at
+`
+
+type GetUnclassfiedFinishedItemsByUserIDRow struct {
+	ID           pgtype.UUID        `json:"id"`
+	UserID       pgtype.UUID        `json:"user_id"`
+	CategoryID   pgtype.UUID        `json:"category_id"`
+	BoxID        pgtype.UUID        `json:"box_id"`
+	PatternID    pgtype.UUID        `json:"pattern_id"`
+	Name         string             `json:"name"`
+	Detail       pgtype.Text        `json:"detail"`
+	LearnedDate  pgtype.Date        `json:"learned_date"`
+	IsFinished   bool               `json:"is_finished"`
+	RegisteredAt pgtype.Timestamptz `json:"registered_at"`
+	EditedAt     pgtype.Timestamptz `json:"edited_at"`
+}
+
+func (q *Queries) GetUnclassfiedFinishedItemsByUserID(ctx context.Context, userID pgtype.UUID) ([]GetUnclassfiedFinishedItemsByUserIDRow, error) {
+	rows, err := q.db.Query(ctx, getUnclassfiedFinishedItemsByUserID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetUnclassfiedFinishedItemsByUserIDRow{}
+	for rows.Next() {
+		var i GetUnclassfiedFinishedItemsByUserIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.CategoryID,
+			&i.BoxID,
+			&i.PatternID,
+			&i.Name,
+			&i.Detail,
+			&i.LearnedDate,
+			&i.IsFinished,
+			&i.RegisteredAt,
+			&i.EditedAt,
 		); err != nil {
 			return nil, err
 		}

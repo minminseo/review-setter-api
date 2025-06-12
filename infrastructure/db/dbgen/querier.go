@@ -67,6 +67,8 @@ type Querier interface {
 	GetCategoryNamesByCategoryIDs(ctx context.Context, categoryIds []pgtype.UUID) ([]GetCategoryNamesByCategoryIDsRow, error)
 	// EditedAt取得専用
 	GetEditedAtByItemID(ctx context.Context, arg GetEditedAtByItemIDParams) (pgtype.Timestamptz, error)
+	// ボックス内画面用の完了の全復習物一覧取得系（復習物（親）のみ一覧取得）
+	GetFinishedItemsByBoxID(ctx context.Context, arg GetFinishedItemsByBoxIDParams) ([]GetFinishedItemsByBoxIDRow, error)
 	// 学習日変更など、どういうリクエストなのかを判定するために使う
 	GetItemByID(ctx context.Context, arg GetItemByIDParams) (GetItemByIDRow, error)
 	// 復習パターンそのものが更新対象かどうか判定するために使う
@@ -79,6 +81,8 @@ type Querier interface {
 	// 復習日Upate処理用。ReviewDateIDを使い回すために使う
 	GetReviewDateIDsByItemID(ctx context.Context, arg GetReviewDateIDsByItemIDParams) ([]pgtype.UUID, error)
 	GetReviewDatesByItemID(ctx context.Context, arg GetReviewDatesByItemIDParams) ([]GetReviewDatesByItemIDRow, error)
+	GetUnclassfiedFinishedItemsByCategoryID(ctx context.Context, arg GetUnclassfiedFinishedItemsByCategoryIDParams) ([]GetUnclassfiedFinishedItemsByCategoryIDRow, error)
+	GetUnclassfiedFinishedItemsByUserID(ctx context.Context, userID pgtype.UUID) ([]GetUnclassfiedFinishedItemsByUserIDRow, error)
 	GetUserSettingByID(ctx context.Context, id pgtype.UUID) (GetUserSettingByIDRow, error)
 	// 完了済みの復習日がないか判別するためのクエリ
 	HasCompletedReviewDateByItemID(ctx context.Context, arg HasCompletedReviewDateByItemIDParams) (bool, error)

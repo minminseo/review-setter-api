@@ -133,6 +133,11 @@ type IItemRepository interface {
 
 	GetAllDailyReviewDates(ctx context.Context, userID string, parsedToday time.Time) ([]*DailyReviewDate, error)
 
+	// 完了済み復習物系を取得する系
+	GetFinishedItemsByBoxID(ctx context.Context, boxID string, userID string) ([]*Item, error)
+	GetUnclassfiedFinishedItemsByCategoryID(ctx context.Context, userID string, categoryID string) ([]*Item, error)
+	GetUnclassfiedFinishedItemsByUserID(ctx context.Context, userID string) ([]*Item, error)
+
 	/*--------------------*/
 	// patternパッケージで使うメソッド
 	IsPatternRelatedToItemByPatternID(ctx context.Context, patternID string, userID string) (bool, error)
