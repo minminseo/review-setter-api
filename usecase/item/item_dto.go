@@ -96,15 +96,21 @@ type UpdateItemAsFinishedForceOutput struct {
 
 // 途中完了した復習物の再開リクエスト用のDTO
 type UpdateItemAsUnFinishedForceInput struct {
-	ItemID string
-	UserID string
+	ItemID      string
+	UserID      string
+	CategoryID  *string // nilなら未分類
+	BoxID       *string // nilなら未分類
+	PatternID   string  // 完了済みボックスの時点で必ずある
+	LearnedDate string  // 計算用
+	Today       string
 }
 
 type UpdateItemAsUnFinishedForceOutput struct {
-	ItemID     string
-	UserID     string
-	IsFinished bool
-	EditedAt   time.Time
+	ItemID      string
+	UserID      string
+	IsFinished  bool
+	EditedAt    time.Time
+	ReviewDates []UpdateReviewDateOutput // 復習物更新のDTO共有
 }
 
 type UpdateReviewDateAsCompletedInput struct {

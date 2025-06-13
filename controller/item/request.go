@@ -36,6 +36,14 @@ type UpdateReviewDatesRequest struct {
 	BoxID                    *string                 `json:"box_id"`
 }
 
+type UpdateItemAsUnFinishedForceRequest struct {
+	CategoryID  *string `json:"category_id"`
+	BoxID       *string `json:"box_id"`
+	PatternID   string  `json:"pattern_id"`
+	LearnedDate string  `json:"learned_date"`
+	Today       string  `json:"today"`
+}
+
 type PatternStepForRequest struct {
 	PatternStepID string `json:"pattern_step_id"`
 	UserID        string `json:"user_id"`

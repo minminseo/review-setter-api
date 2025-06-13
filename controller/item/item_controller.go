@@ -242,7 +242,21 @@ func (ic *itemController) UpdateItemAsUnFinishedForce(c echo.Context) error {
 	}
 	itemID := c.Param("item_id")
 
-	input := itemUsecase.UpdateItemAsUnFinishedForceInput{ItemID: itemID, UserID: userID}
+	var req UpdateItemAsUnFinishedForceRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "リクエストの形式が正しくありません: " + err.Error()})
+	}
+
+	input := itemUsecase.UpdateItemAsUnFinishedForceInput{
+		ItemID:      itemID,
+		UserID:      userID,
+		CategoryID:  req.CategoryID,
+		BoxID:       req.BoxID,
+		PatternID:   req.PatternID,
+		LearnedDate: req.LearnedDate,
+		Today:       req.Today,
+	}
+
 	out, err := ic.iu.UpdateItemAsUnFinishedForce(ctx, input)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "復習物の再開処理に失敗しました: " + err.Error()})

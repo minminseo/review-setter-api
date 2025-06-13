@@ -742,20 +742,125 @@ func (iu *ItemUsecase) UpdateReviewDateAsInCompleted(ctx context.Context, input 
 
 // 途中完了復習物再開リクエスト
 func (iu *ItemUsecase) UpdateItemAsUnFinishedForce(ctx context.Context, input UpdateItemAsUnFinishedForceInput) (*UpdateItemAsUnFinishedForceOutput, error) {
-	EditedAt := time.Now().UTC()
-	err := iu.itemRepo.UpdateItemAsUnFinished(ctx, input.ItemID, input.UserID, EditedAt)
+
+	ReviewDates, err := iu.itemRepo.GetReviewDatesByItemID(ctx, input.ItemID, input.UserID)
 	if err != nil {
 		return nil, err
 	}
 
-	resItem := &UpdateItemAsUnFinishedForceOutput{
+	var firstInCompletedScheduledDate time.Time
+	var firstInCompletedInitialScheduledDate time.Time
+	var firstInCompletedStepNumber int
+	for _, ReviewDate := range ReviewDates {
+		if !ReviewDate.IsCompleted {
+			firstInCompletedScheduledDate = ReviewDate.ScheduledDate
+			firstInCompletedInitialScheduledDate = ReviewDate.InitialScheduledDate
+			firstInCompletedStepNumber = ReviewDate.StepNumber
+			break
+		}
+	}
+
+	var shouldUpdateScheduledDates bool
+	parsedToday, err := time.Parse("2006-01-02", input.Today)
+	if err != nil {
+		return nil, err
+	}
+	var newReviewdates []*ItemDomain.Reviewdate
+	if parsedToday.Before(firstInCompletedScheduledDate) {
+		shouldUpdateScheduledDates = false
+	} else {
+		shouldUpdateScheduledDates = true
+		calculatedDuration := int(parsedToday.Sub(firstInCompletedInitialScheduledDate).Hours() / 24)
+		parsedLearnedDate, err := time.Parse("2006-01-02", input.LearnedDate)
+		if err != nil {
+			return nil, err
+		}
+		FakeLearnedDate := parsedLearnedDate.AddDate(0, 0, calculatedDuration)
+		patternSteps, err := iu.patternRepo.GetAllPatternStepsByPatternID(ctx, input.PatternID, input.UserID)
+		if err != nil {
+			return nil, err
+		}
+		reviewDateIDs := make([]string, len(ReviewDates))
+		for i, rd := range ReviewDates {
+			reviewDateIDs[i] = rd.ReviewdateID
+		}
+
+		newReviewdates, err = FormatWithOverdueMarkedInCompletedWithIDs(
+			patternSteps,
+			reviewDateIDs,
+			input.UserID,
+			input.CategoryID,
+			input.BoxID,
+			input.ItemID,
+			FakeLearnedDate,
+			parsedToday,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// 操作対象の復習日以降の復習日のみ抽出
+	filteredReviewdates := make([]*ItemDomain.Reviewdate, 0, len(newReviewdates)) // 操作対象が1個目の可能性もあるので容量はlen(newReviewdates)で初期化（最大値）
+	for _, Reviewdate := range newReviewdates {
+		if Reviewdate.StepNumber >= firstInCompletedStepNumber {
+			filteredReviewdates = append(filteredReviewdates, Reviewdate)
+		}
+	}
+
+	editedAt := time.Now().UTC()
+
+	if !shouldUpdateScheduledDates {
+		err := iu.itemRepo.UpdateItemAsUnFinished(ctx, input.ItemID, input.UserID, editedAt)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err := iu.transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
+			err = iu.itemRepo.UpdateItemAsUnFinished(ctx, input.ItemID, input.UserID, editedAt)
+			if err != nil {
+				return err
+			}
+
+			err = iu.itemRepo.UpdateReviewDates(ctx, filteredReviewdates, input.UserID)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// 最新の復習日たちをDBから取得（クライアントで復習日のうち何回目以降を上書きすべきか考慮せずに済むため）
+	latestReviewdates, err := iu.itemRepo.GetReviewDatesByItemID(ctx, input.ItemID, input.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	res := &UpdateItemAsUnFinishedForceOutput{
 		ItemID:     input.ItemID,
 		UserID:     input.UserID,
 		IsFinished: false,
-		EditedAt:   EditedAt,
+		EditedAt:   editedAt,
+	}
+	res.ReviewDates = make([]UpdateReviewDateOutput, len(latestReviewdates))
+	for i, rs := range latestReviewdates {
+		res.ReviewDates[i] = UpdateReviewDateOutput{
+			ReviewDateID:         rs.ReviewdateID,
+			UserID:               rs.UserID,
+			CategoryID:           rs.CategoryID,
+			BoxID:                rs.BoxID,
+			ItemID:               rs.ItemID,
+			StepNumber:           rs.StepNumber,
+			InitialScheduledDate: rs.InitialScheduledDate.Format("2006-01-02"),
+			ScheduledDate:        rs.ScheduledDate.Format("2006-01-02"),
+			IsCompleted:          rs.IsCompleted,
+		}
 	}
 
-	return resItem, nil
+	return res, nil
 }
 
 // 物理削除
