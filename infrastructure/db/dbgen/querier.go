@@ -107,6 +107,7 @@ type Querier interface {
 	UpdateReviewDates(ctx context.Context, arg UpdateReviewDatesParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) error
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
+	UpdateVerifiedAt(ctx context.Context, arg UpdateVerifiedAtParams) error
 }
 
 var _ Querier = (*Queries)(nil)

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -125,4 +126,20 @@ func (r *userRepository) UpdatePassword(ctx context.Context, userID, password st
 	}
 
 	return q.UpdateUserPassword(ctx, params)
+}
+
+func (r *userRepository) UpdateVerifiedAt(ctx context.Context, verifiedAt *time.Time, userID string) error {
+	q := db.GetQuery(ctx)
+
+	parsed, err := uuid.Parse(userID)
+	if err != nil {
+		return err
+	}
+	pgID := pgtype.UUID{Bytes: parsed, Valid: true}
+
+	params := dbgen.UpdateVerifiedAtParams{
+		VerifiedAt: pgtype.Timestamptz{Time: *verifiedAt, Valid: true},
+		ID:         pgID,
+	}
+	return q.UpdateVerifiedAt(ctx, params)
 }

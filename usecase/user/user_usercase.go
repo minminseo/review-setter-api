@@ -109,7 +109,7 @@ func (uu *userUsecase) VerifyEmail(ctx context.Context, dto VerifyEmailInput) (*
 	// ユーザーを認証済みに更新し、認証情報を削除
 	err = uu.transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
 		user.SetVerified()
-		if err := uu.userRepo.Update(ctx, user); err != nil {
+		if err := uu.userRepo.UpdateVerifiedAt(ctx, user.VerifiedAt, user.ID); err != nil {
 			return err
 		}
 		if err := uu.emailVerificationRepo.Delete(ctx, verification.ID); err != nil {
