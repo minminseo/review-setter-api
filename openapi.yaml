@@ -27,7 +27,7 @@ components:
     cookieAuth:
       type: apiKey
       in: cookie
-      name: token # The name of the cookie containing the JWT
+      name: token
 
   schemas:
     # User Schemas
@@ -97,6 +97,17 @@ components:
         language:
           type: string
           example: ja
+    VerifyEmailRequest:
+      type: object
+      required:
+        - email
+        - code
+      properties:
+        email:
+          type: string
+          format: email
+        code:
+          type: string
     GetUserOutput:
       type: object
       properties:
@@ -777,6 +788,30 @@ components:
         edited_at:
           type: string
           format: date-time
+    UpdateItemAsUnFinishedForceRequest:
+      type: object
+      required:
+        - learned_date
+        - today
+        - pattern_id
+      properties:
+        category_id:
+          type: string
+          format: uuid
+          nullable: true
+        box_id:
+          type: string
+          format: uuid
+          nullable: true
+        pattern_id:
+          type: string
+          format: uuid
+        learned_date:
+          type: string
+          format: date
+        today:
+          type: string
+          format: date
     UpdateItemAsUnFinishedForceOutput:
       type: object
       properties:
@@ -791,6 +826,10 @@ components:
         edited_at:
           type: string
           format: date-time
+        review_dates:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpdateReviewDateOutput"
     UpdateReviewDateAsCompletedRequest:
       type: object
       required:
@@ -1003,6 +1042,155 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/GetReviewDateOutput"
+    DailyReviewDatesByBoxOutput:
+      type: object
+      properties:
+        review_date_id:
+          type: string
+          format: uuid
+        category_id:
+          type: string
+          format: uuid
+        box_id:
+          type: string
+          format: uuid
+        step_number:
+          type: integer
+          format: int32
+        prev_scheduled_date:
+          type: string
+          format: date
+          nullable: true
+        scheduled_date:
+          type: string
+          format: date
+        next_scheduled_date:
+          type: string
+          format: date
+          nullable: true
+        is_completed:
+          type: boolean
+        item_name:
+          type: string
+        detail:
+          type: string
+        registered_at:
+          type: string
+          format: date-time
+        edited_at:
+          type: string
+          format: date-time
+    DailyReviewDatesGroupedByBoxOutput:
+      type: object
+      properties:
+        box_id:
+          type: string
+          format: uuid
+        category_id:
+          type: string
+          format: uuid
+        box_name:
+          type: string
+        review_dates:
+          type: array
+          items:
+            $ref: "#/components/schemas/DailyReviewDatesByBoxOutput"
+        target_weight:
+          type: string
+    UnclassifiedDailyReviewDatesGroupedByCategoryOutput:
+      type: object
+      properties:
+        review_date_id:
+          type: string
+          format: uuid
+        category_id:
+          type: string
+          format: uuid
+        step_number:
+          type: integer
+          format: int32
+        prev_scheduled_date:
+          type: string
+          format: date
+          nullable: true
+        scheduled_date:
+          type: string
+          format: date
+        next_scheduled_date:
+          type: string
+          format: date
+          nullable: true
+        is_completed:
+          type: boolean
+        item_name:
+          type: string
+        detail:
+          type: string
+        registered_at:
+          type: string
+          format: date-time
+        edited_at:
+          type: string
+          format: date-time
+    DailyReviewDatesGroupedByCategoryOutput:
+      type: object
+      properties:
+        category_id:
+          type: string
+          format: uuid
+        category_name:
+          type: string
+        boxes:
+          type: array
+          items:
+            $ref: "#/components/schemas/DailyReviewDatesGroupedByBoxOutput"
+        unclassified_daily_review_dates_by_category:
+          type: array
+          items:
+            $ref: "#/components/schemas/UnclassifiedDailyReviewDatesGroupedByCategoryOutput"
+    UnclassifiedDailyReviewDatesGroupedByUserOutput:
+      type: object
+      properties:
+        review_date_id:
+          type: string
+          format: uuid
+        step_number:
+          type: integer
+          format: int32
+        prev_scheduled_date:
+          type: string
+          format: date
+          nullable: true
+        scheduled_date:
+          type: string
+          format: date
+        next_scheduled_date:
+          type: string
+          format: date
+          nullable: true
+        is_completed:
+          type: boolean
+        item_name:
+          type: string
+        detail:
+          type: string
+        registered_at:
+          type: string
+          format: date-time
+        edited_at:
+          type: string
+          format: date-time
+    GetDailyReviewDatesOutput:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/DailyReviewDatesGroupedByCategoryOutput"
+        daily_review_dates_grouped_by_user:
+          type: array
+          items:
+            $ref: "#/components/schemas/UnclassifiedDailyReviewDatesGroupedByUserOutput"
     ItemCountGroupedByBoxOutput:
       type: object
       properties:
@@ -1151,7 +1339,42 @@ paths:
                     example: "your_csrf_token_here"
         "500":
           description: Internal server error
-
+  /verify-email:
+    post:
+      tags:
+        - User
+      summary: Verify user's email address
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyEmailRequest"
+      responses:
+        "200":
+          description: Email verified successfully, returns login response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginUserOutput"
+        "400":
+          description: Bad request (e.g., invalid code)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /user:
     get:
       tags:
@@ -1229,7 +1452,7 @@ paths:
             schema:
               $ref: "#/components/schemas/UpdatePasswordRequest"
       responses:
-        "200":
+        "204":
           description: Password updated successfully
         "400":
           description: Bad request (e.g., invalid input)
@@ -1859,6 +2082,132 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /items/today:
+    get:
+      tags:
+        - Item
+      summary: Get all daily review dates for the authenticated user
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Daily review dates retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetDailyReviewDatesOutput"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /items/finished/unclassified:
+    get:
+      tags:
+        - Item
+      summary: Get all finished unclassified items for the authenticated user
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Finished unclassified items retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GetItemOutput"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /items/finished/{box_id}:
+    get:
+      tags:
+        - Item
+      summary: Get all finished items by box ID for the authenticated user
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: box_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the box
+      responses:
+        "200":
+          description: Finished items in the box retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GetItemOutput"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /items/finished/unclassified/{category_id}:
+    get:
+      tags:
+        - Item
+      summary: Get all finished unclassified items by category ID for the authenticated user
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the category
+      responses:
+        "200":
+          description: Finished unclassified items in the category retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GetItemOutput"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /items/{item_id}:
     put:
       tags:
@@ -1989,6 +2338,12 @@ paths:
             type: string
             format: uuid
           description: The ID of the item to mark as unfinished
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateItemAsUnFinishedForceRequest"
       responses:
         "200":
           description: Item marked as unfinished successfully
@@ -2061,6 +2416,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /items/{item_id}/review-dates/{review_date_id}/complete:
     patch:
       tags:
         - Item
@@ -2365,6 +2721,51 @@ paths:
                     type: integer
                     format: int64
                     example: 5
+        "400":
+          description: Bad request (e.g., invalid date format)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /summary/daily-reviews/count:
+    get:
+      tags:
+        - Summary
+      summary: Get total count of all daily review dates for the authenticated user
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: today
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: The target date for daily reviews (YYYY-MM-DD)
+      responses:
+        "200":
+          description: Total daily review count retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    format: int64
+                    example: 15
         "400":
           description: Bad request (e.g., invalid date format)
           content:
