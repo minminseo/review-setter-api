@@ -162,3 +162,22 @@ func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPassword
 	_, err := q.db.Exec(ctx, updateUserPassword, arg.Password, arg.ID)
 	return err
 }
+
+const updateVerifiedAt = `-- name: UpdateVerifiedAt :exec
+UPDATE
+    users
+SET
+    verified_at = $1
+WHERE
+    id = $2
+`
+
+type UpdateVerifiedAtParams struct {
+	VerifiedAt pgtype.Timestamptz `json:"verified_at"`
+	ID         pgtype.UUID        `json:"id"`
+}
+
+func (q *Queries) UpdateVerifiedAt(ctx context.Context, arg UpdateVerifiedAtParams) error {
+	_, err := q.db.Exec(ctx, updateVerifiedAt, arg.VerifiedAt, arg.ID)
+	return err
+}
