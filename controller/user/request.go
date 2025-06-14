@@ -24,3 +24,8 @@ type updatePasswordRequest struct {
 	ID       string `json:"id"`
 	Password string `json:"password"`
 }
+
+type verifyEmailRequest struct {
+	Email string `json:"email"`
+	Code  string `json:"code"`
+}

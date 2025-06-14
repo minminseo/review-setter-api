@@ -10,4 +10,5 @@ type IUserController interface {
 	GetUserSetting(c echo.Context) error
 	UpdateSetting(c echo.Context) error
 	UpdatePassword(c echo.Context) error
+	VerifyEmail(c echo.Context) error
 }

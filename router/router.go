@@ -49,6 +49,7 @@ func NewRouter(
 	e.POST("/signup", uc.SignUp)
 	e.POST("/login", uc.LogIn)
 	e.POST("/logout", uc.LogOut)
+	e.POST("/verify-email", uc.VerifyEmail)
 	e.GET("/csrf", uc.CsrfToken)
 
 	// JWT認証ミドルウェア共通化

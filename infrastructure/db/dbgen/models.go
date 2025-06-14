@@ -107,6 +107,15 @@ type Category struct {
 	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
 }
 
+type EmailVerification struct {
+	ID        pgtype.UUID        `json:"id"`
+	UserID    pgtype.UUID        `json:"user_id"`
+	CodeHash  string             `json:"code_hash"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
 type PatternStep struct {
 	ID           pgtype.UUID        `json:"id"`
 	UserID       pgtype.UUID        `json:"user_id"`
@@ -177,6 +186,7 @@ type User struct {
 	Timezone   string             `json:"timezone"`
 	ThemeColor ThemeColorEnum     `json:"theme_color"`
 	Language   string             `json:"language"`
+	VerifiedAt pgtype.Timestamptz `json:"verified_at"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
 }

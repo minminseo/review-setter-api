@@ -22,6 +22,7 @@ type Querier interface {
 	CountUnclassifiedItemsGroupedByCategoryByUserID(ctx context.Context, userID pgtype.UUID) ([]CountUnclassifiedItemsGroupedByCategoryByUserIDRow, error)
 	CreateBox(ctx context.Context, arg CreateBoxParams) error
 	CreateCategory(ctx context.Context, arg CreateCategoryParams) error
+	CreateEmailVerification(ctx context.Context, arg CreateEmailVerificationParams) error
 	CreateItem(ctx context.Context, arg CreateItemParams) error
 	CreatePattern(ctx context.Context, arg CreatePatternParams) error
 	// 新規一括挿入時と、一括更新時に使う
@@ -31,12 +32,15 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	DeleteBox(ctx context.Context, arg DeleteBoxParams) error
 	DeleteCategory(ctx context.Context, arg DeleteCategoryParams) error
+	DeleteEmailVerification(ctx context.Context, id pgtype.UUID) error
+	DeleteEmailVerificationByUserID(ctx context.Context, userID pgtype.UUID) error
 	DeleteItem(ctx context.Context, arg DeleteItemParams) error
 	DeletePattern(ctx context.Context, arg DeletePatternParams) error
 	// 復習ステップが更新対象に含まれた場合に発行する一括削除用のクエリ
 	DeletePatternSteps(ctx context.Context, arg DeletePatternStepsParams) error
 	// 復習日のパターンIDがnilに変更されたとき
 	DeleteReviewDates(ctx context.Context, arg DeleteReviewDatesParams) error
+	FindEmailVerificationByUserID(ctx context.Context, userID pgtype.UUID) (FindEmailVerificationByUserIDRow, error)
 	FindUserByEmail(ctx context.Context, email string) (FindUserByEmailRow, error)
 	GetAllBoxesByCategoryID(ctx context.Context, arg GetAllBoxesByCategoryIDParams) ([]GetAllBoxesByCategoryIDRow, error)
 	GetAllCategoriesByUserID(ctx context.Context, userID pgtype.UUID) ([]GetAllCategoriesByUserIDRow, error)

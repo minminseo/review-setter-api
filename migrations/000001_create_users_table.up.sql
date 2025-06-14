@@ -7,6 +7,7 @@ CREATE TABLE users (
     timezone VARCHAR(64) NOT NULL,
     theme_color theme_color_enum NOT NULL,
     language VARCHAR(5) NOT NULL,
+    verified_at TIMESTAMPTZ DEFAULT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
