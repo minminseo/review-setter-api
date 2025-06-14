@@ -28,11 +28,11 @@ func NewRouter(
 
 	//CORS設定：フロントエンドからのリクエストを許可する
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"http://localhost:3000", os.Getenv("FE_URL")},
+		AllowOrigins: []string{"http://localhost:5173", os.Getenv("FE_URL")},
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept,
 			echo.HeaderAccessControlAllowHeaders, echo.HeaderXCSRFToken}, // 許可するヘッダーを指定
-		AllowMethods:     []string{"GET", "PUT", "POST", "DELETE"}, // 許可をしたいメソッドを設定
-		AllowCredentials: true,                                     // Cookieの送受信を可能にする
+		AllowMethods:     []string{"GET", "PUT", "POST", "DELETE", "PATCH"}, // 許可をしたいメソッドを設定
+		AllowCredentials: true,                                              // Cookieの送受信を可能にする
 	}))
 
 	//CSRF対策：CookieとTokenで不正リクエストを防ぐ
@@ -40,8 +40,8 @@ func NewRouter(
 		CookiePath:     "/",
 		CookieDomain:   os.Getenv("API_DOMAIN"),
 		CookieHTTPOnly: true,
-		// CookieSameSite: http.SameSiteNoneMode, // Postmanの動作確認ができたらこのモード
-		CookieSameSite: http.SameSiteDefaultMode, // Postmanで動作確認する時はこのモード（セキュア属性をFalseにする）
+		CookieSameSite: http.SameSiteNoneMode, // Postmanの動作確認ができたらこのモード
+		// CookieSameSite: http.SameSiteDefaultMode, // Postmanで動作確認する時はこのモード（セキュア属性をFalseにする）
 		// CookieSameSite: http.SameSiteNoneMode,
 		//CookieMaxAge:   60,Cookieの有効期限を設定するならこれ
 	}))
