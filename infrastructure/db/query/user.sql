@@ -21,7 +21,8 @@ SELECT
     id,
     password,
     theme_color,
-    language
+    language,
+    verified_at
 FROM
     users
 WHERE

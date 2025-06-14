@@ -56,7 +56,8 @@ SELECT
     id,
     password,
     theme_color,
-    language
+    language,
+    verified_at
 FROM
     users
 WHERE
@@ -64,10 +65,11 @@ WHERE
 `
 
 type FindUserByEmailRow struct {
-	ID         pgtype.UUID    `json:"id"`
-	Password   string         `json:"password"`
-	ThemeColor ThemeColorEnum `json:"theme_color"`
-	Language   string         `json:"language"`
+	ID         pgtype.UUID        `json:"id"`
+	Password   string             `json:"password"`
+	ThemeColor ThemeColorEnum     `json:"theme_color"`
+	Language   string             `json:"language"`
+	VerifiedAt pgtype.Timestamptz `json:"verified_at"`
 }
 
 func (q *Queries) FindUserByEmail(ctx context.Context, email string) (FindUserByEmailRow, error) {
@@ -78,6 +80,7 @@ func (q *Queries) FindUserByEmail(ctx context.Context, email string) (FindUserBy
 		&i.Password,
 		&i.ThemeColor,
 		&i.Language,
+		&i.VerifiedAt,
 	)
 	return i, err
 }
