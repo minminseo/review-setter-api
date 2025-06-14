@@ -56,3 +56,11 @@ SET
     password = sqlc.arg(password)
 WHERE
     id = sqlc.arg(id);
+
+-- name: UpdateVerifiedAt :exec
+UPDATE
+    users
+SET
+    verified_at = sqlc.arg(verified_at)
+WHERE
+    id = sqlc.arg(id);
