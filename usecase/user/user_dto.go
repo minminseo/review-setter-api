@@ -45,3 +45,8 @@ type UpdateUserOutput struct {
 	ThemeColor string
 	Language   string
 }
+
+type VerifyEmailInput struct {
+	Email string
+	Code  string
+}

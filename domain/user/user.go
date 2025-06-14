@@ -2,6 +2,7 @@ package user
 
 import (
 	"errors"
+	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
@@ -15,6 +16,7 @@ type User struct {
 	Timezone          string
 	ThemeColor        string
 	Language          string
+	VerifiedAt        *time.Time
 }
 
 func NewUser(
@@ -51,6 +53,8 @@ func NewUser(
 		Timezone:          timezone,
 		ThemeColor:        themeColor,
 		Language:          language,
+		VerifiedAt:        nil, // 初期値は未認証
+
 	}
 
 	return u, nil
@@ -62,6 +66,7 @@ func ReconstructUser(
 	timezone string,
 	themeColor string,
 	language string,
+	verifiedAt *time.Time,
 ) (*User, error) {
 	u := &User{
 		ID:         id,
@@ -69,6 +74,7 @@ func ReconstructUser(
 		Timezone:   timezone,
 		ThemeColor: themeColor,
 		Language:   language,
+		VerifiedAt: verifiedAt,
 	}
 	return u, nil
 }
@@ -210,4 +216,14 @@ func validateLanguage(language string) error {
 			return nil
 		}),
 	)
+}
+
+// 認証済みかを確認
+func (u *User) IsVerified() bool {
+	return u.VerifiedAt != nil
+}
+
+func (u *User) SetVerified() {
+	now := time.Now()
+	u.VerifiedAt = &now
 }

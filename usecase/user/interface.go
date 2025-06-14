@@ -8,4 +8,5 @@ type IUserUsecase interface {
 	GetUserSetting(ctx context.Context, userID string) (*GetUserOutput, error)
 	UpdateSetting(ctx context.Context, user UpdateUserInput) (*UpdateUserOutput, error)
 	UpdatePassword(ctx context.Context, userID, password string) error
+	VerifyEmail(ctx context.Context, input VerifyEmailInput) (*LoginUserOutput, error)
 }

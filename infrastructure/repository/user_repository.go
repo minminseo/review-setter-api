@@ -82,6 +82,7 @@ func (r *userRepository) GetSettingByID(ctx context.Context, userID string) (*us
 		row.Timezone,
 		string(row.ThemeColor),
 		row.Language,
+		nil, // VerifiedAt使わない
 	)
 	if err != nil {
 		return nil, err

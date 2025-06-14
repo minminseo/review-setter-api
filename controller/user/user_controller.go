@@ -40,6 +40,41 @@ func (uc *userController) SignUp(c echo.Context) error {
 	return c.JSON(http.StatusCreated, userRes)
 }
 
+func (uc *userController) VerifyEmail(c echo.Context) error {
+	ctx := c.Request().Context()
+	var request verifyEmailRequest
+	if err := c.Bind(&request); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	input := userUsecase.VerifyEmailInput{
+		Email: request.Email,
+		Code:  request.Code,
+	}
+
+	// 認証に成功すると、Usecaseからログインレスポンスが返ってくる
+	loginRes, err := uc.uu.VerifyEmail(ctx, input)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, err.Error())
+	}
+
+	// ログイン成功時と同様にCookieを設定
+	cookie := new(http.Cookie)
+	cookie.Name = "token"
+	cookie.Value = loginRes.Token
+	cookie.Expires = time.Now().Add(24 * time.Hour)
+	cookie.Path = "/"
+	cookie.Domain = os.Getenv("API_DOMAIN")
+	cookie.HttpOnly = true
+	cookie.SameSite = http.SameSiteNoneMode
+	c.SetCookie(cookie)
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"theme_color": loginRes.ThemeColor,
+		"language":    loginRes.Language,
+	})
+}
+
 func (uc *userController) LogIn(c echo.Context) error {
 	ctx := c.Request().Context()
 

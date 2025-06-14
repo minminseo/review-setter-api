@@ -39,13 +39,14 @@ func main() {
 
 	// リポジトリ
 	userRepository := repository.NewUserRepository()
+	emailVerificationRepository := repository.NewEmailVerificationRepository()
 	categoryRepository := repository.NewCategoryRepository()
 	boxRepository := repository.NewBoxRepository()
 	patternRepository := repository.NewPatternRepository()
 	itemRepository := repository.NewItemRepository()
 
 	// ユースケース
-	userUsecase := userUsecase.NewUserUsecase(userRepository)
+	userUsecase := userUsecase.NewUserUsecase(userRepository, emailVerificationRepository, transactionManager)
 	categoryUsecase := categoryUsecase.NewCategoryUsecase(categoryRepository)
 	boxUsecase := boxUsecase.NewBoxUsecase(boxRepository)
 	patternUsecase := patternUsecase.NewPatternUsecase(patternRepository, itemRepository, transactionManager)

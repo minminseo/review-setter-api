@@ -51,5 +51,11 @@ BEGIN
     CREATE TRIGGER trigger_set_updated_at
         BEFORE UPDATE ON review_dates
         FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+    -- email_verifications
+    DROP TRIGGER IF EXISTS trigger_set_updated_at ON email_verifications;
+    CREATE TRIGGER trigger_set_updated_at
+        BEFORE UPDATE ON email_verifications
+        FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 END;
 $$;
