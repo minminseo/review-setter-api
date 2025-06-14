@@ -54,12 +54,18 @@ func (r *userRepository) FindByEmail(ctx context.Context, email string) (*userDo
 	}
 	id := uuid.UUID(row.ID.Bytes).String()
 
+	var verifiedAt *time.Time
+	if row.VerifiedAt.Valid {
+		verifiedAt = &row.VerifiedAt.Time
+	}
+
 	return &userDomain.User{
 		ID:                id,
 		Email:             email,
 		EncryptedPassword: row.Password,
 		ThemeColor:        string(row.ThemeColor),
 		Language:          row.Language,
+		VerifiedAt:        verifiedAt,
 	}, nil
 }
 
