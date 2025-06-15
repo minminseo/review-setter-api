@@ -30,6 +30,14 @@ components:
       name: token
 
   schemas:
+    # Error Schema
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "エラーメッセージ"
+
     # User Schemas
     CreateUserInput:
       type: object
@@ -87,9 +95,6 @@ components:
     LoginUserOutput:
       type: object
       properties:
-        token:
-          type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         theme_color:
           type: string
           enum: [dark, light]
@@ -108,6 +113,22 @@ components:
           format: email
         code:
           type: string
+    VerifyEmailResponse:
+      type: object
+      properties:
+        theme_color:
+          type: string
+          enum: [dark, light]
+          example: dark
+        language:
+          type: string
+          example: ja
+    CsrfTokenResponse:
+      type: object
+      properties:
+        csrf_token:
+          type: string
+          example: "your_csrf_token_here"
     GetUserOutput:
       type: object
       properties:
@@ -258,7 +279,6 @@ components:
         pattern_id:
           type: string
           format: uuid
-          nullable: true
           example: 123e4567-e89b-12d3-a456-426614174002
     CreateBoxOutput:
       type: object
@@ -278,7 +298,6 @@ components:
         pattern_id:
           type: string
           format: uuid
-          nullable: true
           example: 123e4567-e89b-12d3-a456-426614174002
         name:
           type: string
@@ -307,7 +326,6 @@ components:
         pattern_id:
           type: string
           format: uuid
-          nullable: true
           example: 123e4567-e89b-12d3-a456-426614174002
         name:
           type: string
@@ -330,7 +348,6 @@ components:
         pattern_id:
           type: string
           format: uuid
-          nullable: true
           example: 123e4567-e89b-12d3-a456-426614174004
     UpdateBoxOutput:
       type: object
@@ -350,7 +367,6 @@ components:
         pattern_id:
           type: string
           format: uuid
-          nullable: true
           example: 123e4567-e89b-12d3-a456-426614174004
         name:
           type: string
@@ -395,7 +411,7 @@ components:
           items:
             $ref: "#/components/schemas/CreatePatternStepField"
           minItems: 1
-    CreatePatternStepOutput:
+    PatternStepResponse:
       type: object
       properties:
         pattern_step_id:
@@ -413,7 +429,7 @@ components:
         interval_days:
           type: integer
           format: int32
-    CreatePatternOutput:
+    PatternResponse:
       type: object
       properties:
         id:
@@ -436,46 +452,7 @@ components:
         steps:
           type: array
           items:
-            $ref: "#/components/schemas/CreatePatternStepOutput"
-    GetPatternStepOutput:
-      type: object
-      properties:
-        pattern_step_id:
-          type: string
-          format: uuid
-        pattern_id:
-          type: string
-          format: uuid
-        step_number:
-          type: integer
-          format: int32
-        interval_days:
-          type: integer
-          format: int32
-    GetPatternOutput:
-      type: object
-      properties:
-        pattern_id:
-          type: string
-          format: uuid
-        user_id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        target_weight:
-          type: string
-          enum: [heavy, normal, light, unset]
-        registered_at:
-          type: string
-          format: date-time
-        edited_at:
-          type: string
-          format: date-time
-        steps:
-          type: array
-          items:
-            $ref: "#/components/schemas/GetPatternStepOutput"
+            $ref: "#/components/schemas/PatternStepResponse"
     UpdatePatternStepField:
       type: object
       required:
@@ -515,48 +492,6 @@ components:
           items:
             $ref: "#/components/schemas/UpdatePatternStepField"
           minItems: 1
-    UpdatePatternStepOutput:
-      type: object
-      properties:
-        pattern_step_id:
-          type: string
-          format: uuid
-        user_id:
-          type: string
-          format: uuid
-        pattern_id:
-          type: string
-          format: uuid
-        step_number:
-          type: integer
-          format: int32
-        interval_days:
-          type: integer
-          format: int32
-    UpdatePatternOutput:
-      type: object
-      properties:
-        pattern_id:
-          type: string
-          format: uuid
-        user_id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        target_weight:
-          type: string
-          enum: [heavy, normal, light, unset]
-        registered_at:
-          type: string
-          format: date-time
-        edited_at:
-          type: string
-          format: date-time
-        steps:
-          type: array
-          items:
-            $ref: "#/components/schemas/UpdatePatternStepOutput"
 
     # Item Schemas
     CreateItemRequest:
@@ -600,15 +535,23 @@ components:
           type: string
           format: date
           example: "2023-01-05"
-    CreateReviewdateOutput:
+    ReviewDateResponse:
       type: object
       properties:
-        date_id:
+        review_date_id:
           type: string
           format: uuid
         user_id:
           type: string
           format: uuid
+        category_id:
+          type: string
+          format: uuid
+          nullable: true
+        box_id:
+          type: string
+          format: uuid
+          nullable: true
         item_id:
           type: string
           format: uuid
@@ -623,7 +566,7 @@ components:
           format: date
         is_completed:
           type: boolean
-    CreateItemOutput:
+    ItemResponse:
       type: object
       properties:
         item_id:
@@ -652,7 +595,7 @@ components:
         learned_date:
           type: string
           format: date
-        is_completed:
+        is_finished:
           type: boolean
         registered_at:
           type: string
@@ -660,10 +603,10 @@ components:
         edited_at:
           type: string
           format: date-time
-        reviewdates:
+        review_dates:
           type: array
           items:
-            $ref: "#/components/schemas/CreateReviewdateOutput"
+            $ref: "#/components/schemas/ReviewDateResponse"
     UpdateItemRequest:
       type: object
       required:
@@ -705,76 +648,7 @@ components:
           type: string
           format: date
           example: "2023-01-06"
-    UpdateReviewDateOutput:
-      type: object
-      properties:
-        review_date_id:
-          type: string
-          format: uuid
-        user_id:
-          type: string
-          format: uuid
-        category_id:
-          type: string
-          format: uuid
-          nullable: true
-        box_id:
-          type: string
-          format: uuid
-          nullable: true
-        item_id:
-          type: string
-          format: uuid
-        step_number:
-          type: integer
-          format: int32
-        initial_scheduled_date:
-          type: string
-          format: date
-        scheduled_date:
-          type: string
-          format: date
-        is_completed:
-          type: boolean
-    UpdateItemOutput:
-      type: object
-      properties:
-        item_id:
-          type: string
-          format: uuid
-        user_id:
-          type: string
-          format: uuid
-        category_id:
-          type: string
-          format: uuid
-          nullable: true
-        box_id:
-          type: string
-          format: uuid
-          nullable: true
-        pattern_id:
-          type: string
-          format: uuid
-          nullable: true
-        name:
-          type: string
-        detail:
-          type: string
-          nullable: true
-        learned_date:
-          type: string
-          format: date
-        is_finished:
-          type: boolean
-        edited_at:
-          type: string
-          format: date-time
-        review_dates:
-          type: array
-          items:
-            $ref: "#/components/schemas/UpdateReviewDateOutput"
-    UpdateItemAsFinishedForceOutput:
+    UpdateItemAsFinishedForceResponse:
       type: object
       properties:
         item_id:
@@ -812,7 +686,7 @@ components:
         today:
           type: string
           format: date
-    UpdateItemAsUnFinishedForceOutput:
+    UpdateItemAsUnFinishedForceResponse:
       type: object
       properties:
         item_id:
@@ -829,7 +703,7 @@ components:
         review_dates:
           type: array
           items:
-            $ref: "#/components/schemas/UpdateReviewDateOutput"
+            $ref: "#/components/schemas/ReviewDateResponse"
     UpdateReviewDateAsCompletedRequest:
       type: object
       required:
@@ -839,7 +713,7 @@ components:
           type: integer
           format: int32
           example: 1
-    UpdateReviewDateAsCompletedOutput:
+    UpdateReviewDateAsCompletedResponse:
       type: object
       properties:
         review_date_id:
@@ -864,7 +738,7 @@ components:
           type: integer
           format: int32
           example: 1
-    UpdateReviewDateAsInCompletedOutput:
+    UpdateReviewDateAsInCompletedResponse:
       type: object
       properties:
         review_date_id:
@@ -952,7 +826,7 @@ components:
           format: uuid
           nullable: true
           example: 123e4567-e89b-12d3-a456-426614174003
-    UpdateBackReviewDateOutput:
+    UpdateBackReviewDateResponse:
       type: object
       properties:
         item_id:
@@ -969,80 +843,8 @@ components:
         review_dates:
           type: array
           items:
-            $ref: "#/components/schemas/UpdateReviewDateOutput"
-    GetReviewDateOutput:
-      type: object
-      properties:
-        review_date_id:
-          type: string
-          format: uuid
-        user_id:
-          type: string
-          format: uuid
-        category_id:
-          type: string
-          format: uuid
-          nullable: true
-        box_id:
-          type: string
-          format: uuid
-          nullable: true
-        item_id:
-          type: string
-          format: uuid
-        step_number:
-          type: integer
-          format: int32
-        initial_scheduled_date:
-          type: string
-          format: date
-        scheduled_date:
-          type: string
-          format: date
-        is_completed:
-          type: boolean
-    GetItemOutput:
-      type: object
-      properties:
-        item_id:
-          type: string
-          format: uuid
-        user_id:
-          type: string
-          format: uuid
-        category_id:
-          type: string
-          format: uuid
-          nullable: true
-        box_id:
-          type: string
-          format: uuid
-          nullable: true
-        pattern_id:
-          type: string
-          format: uuid
-          nullable: true
-        name:
-          type: string
-        detail:
-          type: string
-          nullable: true
-        learned_date:
-          type: string
-          format: date
-        is_finished:
-          type: boolean
-        registered_at:
-          type: string
-          format: date-time
-        edited_at:
-          type: string
-          format: date-time
-        review_dates:
-          type: array
-          items:
-            $ref: "#/components/schemas/GetReviewDateOutput"
-    DailyReviewDatesByBoxOutput:
+            $ref: "#/components/schemas/ReviewDateResponse"
+    DailyReviewDatesByBoxResponse:
       type: object
       properties:
         review_date_id:
@@ -1080,7 +882,7 @@ components:
         edited_at:
           type: string
           format: date-time
-    DailyReviewDatesGroupedByBoxOutput:
+    DailyReviewDatesGroupedByBoxResponse:
       type: object
       properties:
         box_id:
@@ -1094,10 +896,10 @@ components:
         review_dates:
           type: array
           items:
-            $ref: "#/components/schemas/DailyReviewDatesByBoxOutput"
+            $ref: "#/components/schemas/DailyReviewDatesByBoxResponse"
         target_weight:
           type: string
-    UnclassifiedDailyReviewDatesGroupedByCategoryOutput:
+    UnclassifiedDailyReviewDatesGroupedByCategoryResponse:
       type: object
       properties:
         review_date_id:
@@ -1132,7 +934,7 @@ components:
         edited_at:
           type: string
           format: date-time
-    DailyReviewDatesGroupedByCategoryOutput:
+    DailyReviewDatesGroupedByCategoryResponse:
       type: object
       properties:
         category_id:
@@ -1143,12 +945,12 @@ components:
         boxes:
           type: array
           items:
-            $ref: "#/components/schemas/DailyReviewDatesGroupedByBoxOutput"
+            $ref: "#/components/schemas/DailyReviewDatesGroupedByBoxResponse"
         unclassified_daily_review_dates_by_category:
           type: array
           items:
-            $ref: "#/components/schemas/UnclassifiedDailyReviewDatesGroupedByCategoryOutput"
-    UnclassifiedDailyReviewDatesGroupedByUserOutput:
+            $ref: "#/components/schemas/UnclassifiedDailyReviewDatesGroupedByCategoryResponse"
+    UnclassifiedDailyReviewDatesGroupedByUserResponse:
       type: object
       properties:
         review_date_id:
@@ -1180,18 +982,26 @@ components:
         edited_at:
           type: string
           format: date-time
-    GetDailyReviewDatesOutput:
+    GetDailyReviewDatesResponse:
       type: object
       properties:
         categories:
           type: array
           items:
-            $ref: "#/components/schemas/DailyReviewDatesGroupedByCategoryOutput"
+            $ref: "#/components/schemas/DailyReviewDatesGroupedByCategoryResponse"
         daily_review_dates_grouped_by_user:
           type: array
           items:
-            $ref: "#/components/schemas/UnclassifiedDailyReviewDatesGroupedByUserOutput"
-    ItemCountGroupedByBoxOutput:
+            $ref: "#/components/schemas/UnclassifiedDailyReviewDatesGroupedByUserResponse"
+    CountResponse:
+      type: object
+      properties:
+        count:
+          type: integer
+          format: int64
+
+    # Summary Schemas
+    ItemCountGroupedByBoxResponse:
       type: object
       properties:
         category_id:
@@ -1203,7 +1013,7 @@ components:
         count:
           type: integer
           format: int64
-    UnclassifiedItemCountGroupedByCategoryOutput:
+    UnclassifiedItemCountGroupedByCategoryResponse:
       type: object
       properties:
         category_id:
@@ -1212,7 +1022,7 @@ components:
         count:
           type: integer
           format: int64
-    DailyCountGroupedByBoxOutput:
+    DailyCountGroupedByBoxResponse:
       type: object
       properties:
         category_id:
@@ -1224,7 +1034,7 @@ components:
         count:
           type: integer
           format: int64
-    UnclassifiedDailyDatesCountGroupedByCategoryOutput:
+    UnclassifiedDailyDatesCountGroupedByCategoryResponse:
       type: object
       properties:
         category_id:
@@ -1233,12 +1043,6 @@ components:
         count:
           type: integer
           format: int64
-    Error:
-      type: object
-      properties:
-        error:
-          type: string
-          example: "エラーメッセージ"
 
 paths:
   /signup:
@@ -1332,11 +1136,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  csrf_token:
-                    type: string
-                    example: "your_csrf_token_here"
+                $ref: "#/components/schemas/CsrfTokenResponse"
         "500":
           description: Internal server error
   /verify-email:
@@ -1356,7 +1156,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LoginUserOutput"
+                $ref: "#/components/schemas/VerifyEmailResponse"
         "400":
           description: Bad request (e.g., invalid code)
           content:
@@ -1494,7 +1294,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/CreateCategoryOutput"
         "400":
-          description: Bad request (e.g., invalid input)
+          description: Bad request
           content:
             application/json:
               schema:
@@ -1567,7 +1367,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/UpdateCategoryOutput"
         "400":
-          description: Bad request (e.g., invalid input, missing category ID)
+          description: Bad request
           content:
             application/json:
               schema:
@@ -1602,7 +1402,7 @@ paths:
         "204":
           description: Category deleted successfully
         "400":
-          description: Bad request (e.g., missing category ID)
+          description: Bad request
           content:
             application/json:
               schema:
@@ -1649,7 +1449,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/CreateBoxOutput"
         "400":
-          description: Bad request (e.g., invalid input, missing category ID)
+          description: Bad request
           content:
             application/json:
               schema:
@@ -1737,7 +1537,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/UpdateBoxOutput"
         "400":
-          description: Bad request (e.g., invalid input, missing IDs, pattern conflict)
+          description: Bad request
           content:
             application/json:
               schema:
@@ -1779,7 +1579,7 @@ paths:
         "204":
           description: Box deleted successfully
         "400":
-          description: Bad request (e.g., missing IDs)
+          description: Bad request
           content:
             application/json:
               schema:
@@ -1816,9 +1616,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreatePatternOutput"
+                $ref: "#/components/schemas/PatternResponse"
         "400":
-          description: Bad request (e.g., invalid input)
+          description: Bad request
           content:
             application/json:
               schema:
@@ -1849,7 +1649,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/GetPatternOutput"
+                  $ref: "#/components/schemas/PatternResponse"
         "401":
           description: Unauthorized
           content:
@@ -1889,9 +1689,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UpdatePatternOutput"
+                $ref: "#/components/schemas/PatternResponse"
         "400":
-          description: Bad request (e.g., invalid input, missing pattern ID)
+          description: Bad request
           content:
             application/json:
               schema:
@@ -1926,7 +1726,7 @@ paths:
         "204":
           description: Pattern deleted successfully
         "400":
-          description: Bad request (e.g., missing pattern ID)
+          description: Bad request
           content:
             application/json:
               schema:
@@ -1938,7 +1738,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "500":
-          description: Internal server error (e.g., pattern related to item)
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -1963,9 +1763,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreateItemOutput"
+                $ref: "#/components/schemas/ItemResponse"
         "400":
-          description: Bad request (e.g., invalid input)
+          description: Bad request
           content:
             application/json:
               schema:
@@ -1997,7 +1797,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/GetItemOutput"
+                  $ref: "#/components/schemas/ItemResponse"
         "401":
           description: Unauthorized
           content:
@@ -2033,7 +1833,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/GetItemOutput"
+                  $ref: "#/components/schemas/ItemResponse"
         "401":
           description: Unauthorized
           content:
@@ -2050,7 +1850,7 @@ paths:
     get:
       tags:
         - Item
-      summary: Get all unfinished unclassified items by category ID for the authenticated user
+      summary: Get all unfinished unclassified items by category ID
       security:
         - cookieAuth: []
       parameters:
@@ -2063,13 +1863,13 @@ paths:
           description: The ID of the category
       responses:
         "200":
-          description: Unfinished unclassified items in the category retrieved successfully
+          description: Unfinished unclassified items retrieved
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/GetItemOutput"
+                  $ref: "#/components/schemas/ItemResponse"
         "401":
           description: Unauthorized
           content:
@@ -2089,13 +1889,21 @@ paths:
       summary: Get all daily review dates for the authenticated user
       security:
         - cookieAuth: []
+      parameters:
+        - name: today
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: The target date for daily reviews (YYYY-MM-DD)
       responses:
         "200":
           description: Daily review dates retrieved successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetDailyReviewDatesOutput"
+                $ref: "#/components/schemas/GetDailyReviewDatesResponse"
         "401":
           description: Unauthorized
           content:
@@ -2123,7 +1931,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/GetItemOutput"
+                  $ref: "#/components/schemas/ItemResponse"
         "401":
           description: Unauthorized
           content:
@@ -2159,7 +1967,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/GetItemOutput"
+                  $ref: "#/components/schemas/ItemResponse"
         "401":
           description: Unauthorized
           content:
@@ -2176,7 +1984,7 @@ paths:
     get:
       tags:
         - Item
-      summary: Get all finished unclassified items by category ID for the authenticated user
+      summary: Get all finished unclassified items by category ID
       security:
         - cookieAuth: []
       parameters:
@@ -2189,13 +1997,13 @@ paths:
           description: The ID of the category
       responses:
         "200":
-          description: Finished unclassified items in the category retrieved successfully
+          description: Finished unclassified items retrieved successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/GetItemOutput"
+                  $ref: "#/components/schemas/ItemResponse"
         "401":
           description: Unauthorized
           content:
@@ -2235,9 +2043,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UpdateItemOutput"
+                $ref: "#/components/schemas/ItemResponse"
         "400":
-          description: Bad request (e.g., invalid input, no diff, has completed review date)
+          description: Bad request
           content:
             application/json:
               schema:
@@ -2272,7 +2080,7 @@ paths:
         "204":
           description: Item deleted successfully
         "400":
-          description: Bad request (e.g., missing item ID)
+          description: Bad request
           content:
             application/json:
               schema:
@@ -2310,7 +2118,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UpdateItemAsFinishedForceOutput"
+                $ref: "#/components/schemas/UpdateItemAsFinishedForceResponse"
         "401":
           description: Unauthorized
           content:
@@ -2350,7 +2158,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UpdateItemAsUnFinishedForceOutput"
+                $ref: "#/components/schemas/UpdateItemAsUnFinishedForceResponse"
         "401":
           description: Unauthorized
           content:
@@ -2397,9 +2205,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UpdateBackReviewDateOutput"
+                $ref: "#/components/schemas/UpdateBackReviewDateResponse"
         "400":
-          description: Bad request (e.g., invalid input, new scheduled date before initial)
+          description: Bad request
           content:
             application/json:
               schema:
@@ -2450,9 +2258,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UpdateReviewDateAsCompletedOutput"
+                $ref: "#/components/schemas/UpdateReviewDateAsCompletedResponse"
         "400":
-          description: Bad request (e.g., invalid input)
+          description: Bad request
           content:
             application/json:
               schema:
@@ -2503,9 +2311,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UpdateReviewDateAsInCompletedOutput"
+                $ref: "#/components/schemas/UpdateReviewDateAsInCompletedResponse"
         "400":
-          description: Bad request (e.g., invalid input)
+          description: Bad request
           content:
             application/json:
               schema:
@@ -2527,7 +2335,7 @@ paths:
     get:
       tags:
         - Summary
-      summary: Get count of unfinished items grouped by box and category for the authenticated user
+      summary: Get count of unfinished items grouped by box and category
       security:
         - cookieAuth: []
       responses:
@@ -2538,7 +2346,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/ItemCountGroupedByBoxOutput"
+                  $ref: "#/components/schemas/ItemCountGroupedByBoxResponse"
         "401":
           description: Unauthorized
           content:
@@ -2555,18 +2363,18 @@ paths:
     get:
       tags:
         - Summary
-      summary: Get count of unfinished unclassified items grouped by category for the authenticated user
+      summary: Get count of unfinished unclassified items grouped by category
       security:
         - cookieAuth: []
       responses:
         "200":
-          description: Unclassified item counts by category retrieved successfully
+          description: Unclassified item counts by category retrieved
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/UnclassifiedItemCountGroupedByCategoryOutput"
+                  $ref: "#/components/schemas/UnclassifiedItemCountGroupedByCategoryResponse"
         "401":
           description: Unauthorized
           content:
@@ -2583,7 +2391,7 @@ paths:
     get:
       tags:
         - Summary
-      summary: Get total count of unfinished unclassified items for the authenticated user
+      summary: Get total count of unfinished unclassified items
       security:
         - cookieAuth: []
       responses:
@@ -2592,12 +2400,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  count:
-                    type: integer
-                    format: int64
-                    example: 10
+                $ref: "#/components/schemas/CountResponse"
         "401":
           description: Unauthorized
           content:
@@ -2614,11 +2417,11 @@ paths:
     get:
       tags:
         - Summary
-      summary: Get count of daily review dates grouped by box and category for the authenticated user
+      summary: Get count of daily review dates grouped by box and category
       security:
         - cookieAuth: []
       parameters:
-        - name: date
+        - name: today
           in: query
           required: true
           schema:
@@ -2633,9 +2436,9 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/DailyCountGroupedByBoxOutput"
+                  $ref: "#/components/schemas/DailyCountGroupedByBoxResponse"
         "400":
-          description: Bad request (e.g., invalid date format)
+          description: Bad request
           content:
             application/json:
               schema:
@@ -2656,11 +2459,11 @@ paths:
     get:
       tags:
         - Summary
-      summary: Get count of daily unclassified review dates grouped by category for the authenticated user
+      summary: Get count of daily unclassified review dates grouped by category
       security:
         - cookieAuth: []
       parameters:
-        - name: date
+        - name: today
           in: query
           required: true
           schema:
@@ -2669,15 +2472,15 @@ paths:
           description: The target date for daily reviews (YYYY-MM-DD)
       responses:
         "200":
-          description: Daily unclassified review counts by category retrieved successfully
+          description: Daily unclassified review counts by category retrieved
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/UnclassifiedDailyDatesCountGroupedByCategoryOutput"
+                  $ref: "#/components/schemas/UnclassifiedDailyDatesCountGroupedByCategoryResponse"
         "400":
-          description: Bad request (e.g., invalid date format)
+          description: Bad request
           content:
             application/json:
               schema:
@@ -2698,11 +2501,11 @@ paths:
     get:
       tags:
         - Summary
-      summary: Get total count of daily unclassified review dates for the authenticated user
+      summary: Get total count of daily unclassified review dates
       security:
         - cookieAuth: []
       parameters:
-        - name: date
+        - name: today
           in: query
           required: true
           schema:
@@ -2711,18 +2514,13 @@ paths:
           description: The target date for daily reviews (YYYY-MM-DD)
       responses:
         "200":
-          description: Total daily unclassified review count retrieved successfully
+          description: Total daily unclassified review count retrieved
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  count:
-                    type: integer
-                    format: int64
-                    example: 5
+                $ref: "#/components/schemas/CountResponse"
         "400":
-          description: Bad request (e.g., invalid date format)
+          description: Bad request
           content:
             application/json:
               schema:
@@ -2743,7 +2541,7 @@ paths:
     get:
       tags:
         - Summary
-      summary: Get total count of all daily review dates for the authenticated user
+      summary: Get total count of all daily review dates
       security:
         - cookieAuth: []
       parameters:
@@ -2760,14 +2558,9 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  count:
-                    type: integer
-                    format: int64
-                    example: 15
+                $ref: "#/components/schemas/CountResponse"
         "400":
-          description: Bad request (e.g., invalid date format)
+          description: Bad request
           content:
             application/json:
               schema:
