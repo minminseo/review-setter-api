@@ -80,9 +80,9 @@ func (bc *boxController) GetBoxes(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "ボックス一覧の取得に失敗しました: " + err.Error()})
 	}
-	var res []BoxResponse
-	for _, b := range boxesRes {
-		res = append(res, BoxResponse{
+	res := make([]BoxResponse, len(boxesRes))
+	for i, b := range boxesRes {
+		res[i] = BoxResponse{
 			ID:           b.ID,
 			UserID:       b.UserID,
 			CategoryID:   b.CategoryID,
@@ -90,7 +90,7 @@ func (bc *boxController) GetBoxes(c echo.Context) error {
 			Name:         b.Name,
 			RegisteredAt: b.RegisteredAt,
 			EditedAt:     b.EditedAt,
-		})
+		}
 	}
 	return c.JSON(http.StatusOK, res)
 }
