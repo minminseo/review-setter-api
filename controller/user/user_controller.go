@@ -37,7 +37,13 @@ func (uc *userController) SignUp(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
-	return c.JSON(http.StatusCreated, userRes)
+
+	res := SignUpResponse{
+		ID:    userRes.ID,
+		Email: userRes.Email,
+	}
+	return c.JSON(http.StatusCreated, res)
+
 }
 
 func (uc *userController) VerifyEmail(c echo.Context) error {
@@ -70,10 +76,12 @@ func (uc *userController) VerifyEmail(c echo.Context) error {
 	cookie.SameSite = http.SameSiteNoneMode
 	c.SetCookie(cookie)
 
-	return c.JSON(http.StatusOK, echo.Map{
-		"theme_color": loginRes.ThemeColor,
-		"language":    loginRes.Language,
-	})
+	res := VerifyEmailResponse{
+		ThemeColor: loginRes.ThemeColor,
+		Language:   loginRes.Language,
+	}
+	return c.JSON(http.StatusOK, res)
+
 }
 
 func (uc *userController) LogIn(c echo.Context) error {
@@ -103,10 +111,13 @@ func (uc *userController) LogIn(c echo.Context) error {
 	cookie.HttpOnly = true
 	cookie.SameSite = http.SameSiteNoneMode
 	c.SetCookie(cookie)
-	return c.JSON(http.StatusOK, echo.Map{
-		"theme_color": userRes.ThemeColor,
-		"language":    userRes.Language,
-	})
+
+	res := LoginResponse{
+		ThemeColor: userRes.ThemeColor,
+		Language:   userRes.Language,
+	}
+	return c.JSON(http.StatusOK, res)
+
 }
 
 func (uc *userController) LogOut(c echo.Context) error {
@@ -124,11 +135,12 @@ func (uc *userController) LogOut(c echo.Context) error {
 }
 
 func (uc *userController) CsrfToken(c echo.Context) error {
-	token := c.Get("csrf").(string)        // echoのコンテキストの中で、"csrf"というキーワードでtokenを取得
-	return c.JSON(http.StatusOK, echo.Map{ /*上でstring型に型アサーションしてから
-		JSONでクライアントにcsrfトークンをレスポンスする*/
-		"csrf_token": token,
-	})
+	token := c.Get("csrf").(string) // echoのコンテキストの中で、"csrf"というキーワードでtokenを取得
+	res := CsrfTokenResponse{
+		CsrfToken: token,
+	}
+	return c.JSON(http.StatusOK, res)
+
 }
 
 func (uc *userController) GetUserSetting(c echo.Context) error {
@@ -144,7 +156,14 @@ func (uc *userController) GetUserSetting(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
-	return c.JSON(http.StatusOK, userRes)
+
+	res := GetUserSettingResponse{
+		Email:      userRes.Email,
+		Timezone:   userRes.Timezone,
+		ThemeColor: userRes.ThemeColor,
+		Language:   userRes.Language,
+	}
+	return c.JSON(http.StatusOK, res)
 }
 
 func (uc *userController) UpdateSetting(c echo.Context) error {
@@ -177,7 +196,15 @@ func (uc *userController) UpdateSetting(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
-	return c.JSON(http.StatusOK, userRes)
+
+	res := UpdateUserSettingResponse{
+		Email:      userRes.Email,
+		Timezone:   userRes.Timezone,
+		ThemeColor: userRes.ThemeColor,
+		Language:   userRes.Language,
+	}
+	return c.JSON(http.StatusOK, res)
+
 }
 
 func (uc *userController) UpdatePassword(c echo.Context) error {

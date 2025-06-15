@@ -44,7 +44,15 @@ func (cc *categoryController) CreateCategory(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "カテゴリの作成に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusCreated, categoryRes)
+	res := CategoryResponse{
+		ID:           categoryRes.ID,
+		UserID:       categoryRes.UserID,
+		Name:         categoryRes.Name,
+		RegisteredAt: categoryRes.RegisteredAt,
+		EditedAt:     categoryRes.EditedAt,
+	}
+	return c.JSON(http.StatusCreated, res)
+
 }
 
 func (cc *categoryController) GetCategories(c echo.Context) error {
@@ -65,7 +73,19 @@ func (cc *categoryController) GetCategories(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "カテゴリの取得に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, categoriesRes)
+
+	var res []CategoryResponse
+	for _, cat := range categoriesRes {
+		res = append(res, CategoryResponse{
+			ID:           cat.ID,
+			UserID:       cat.UserID,
+			Name:         cat.Name,
+			RegisteredAt: cat.RegisteredAt,
+			EditedAt:     cat.EditedAt,
+		})
+	}
+
+	return c.JSON(http.StatusOK, res)
 }
 
 func (cc *categoryController) UpdateCategory(c echo.Context) error {
@@ -102,7 +122,15 @@ func (cc *categoryController) UpdateCategory(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "カテゴリの更新に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, categoryRes)
+
+	res := UpdateCategoryResponse{
+		ID:       categoryRes.ID,
+		UserID:   categoryRes.UserID,
+		Name:     categoryRes.Name,
+		EditedAt: categoryRes.EditedAt,
+	}
+	return c.JSON(http.StatusOK, res)
+
 }
 
 func (cc *categoryController) DeleteCategory(c echo.Context) error {
