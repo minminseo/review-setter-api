@@ -74,15 +74,15 @@ func (cc *categoryController) GetCategories(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "カテゴリの取得に失敗しました: " + err.Error()})
 	}
 
-	var res []CategoryResponse
-	for _, cat := range categoriesRes {
-		res = append(res, CategoryResponse{
+	res := make([]CategoryResponse, len(categoriesRes))
+	for i, cat := range categoriesRes {
+		res[i] = CategoryResponse{
 			ID:           cat.ID,
 			UserID:       cat.UserID,
 			Name:         cat.Name,
 			RegisteredAt: cat.RegisteredAt,
 			EditedAt:     cat.EditedAt,
-		})
+		}
 	}
 
 	return c.JSON(http.StatusOK, res)
