@@ -64,7 +64,36 @@ func (ic *itemController) CreateItem(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "復習物の作成に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusCreated, out)
+	reviewDates := make([]ReviewDateResponse, len(out.Reviewdates))
+	for i, rd := range out.Reviewdates {
+		reviewDates[i] = ReviewDateResponse{
+			ReviewDateID:         rd.DateID,
+			UserID:               rd.UserID,
+			ItemID:               rd.ItemID,
+			StepNumber:           rd.StepNumber,
+			InitialScheduledDate: rd.InitialScheduledDate,
+			ScheduledDate:        rd.ScheduledDate,
+			IsCompleted:          rd.IsCompleted,
+		}
+	}
+
+	res := ItemResponse{
+		ItemID:       out.ItemID,
+		UserID:       out.UserID,
+		CategoryID:   out.CategoryID,
+		BoxID:        out.BoxID,
+		PatternID:    out.PatternID,
+		Name:         out.Name,
+		Detail:       out.Detail,
+		LearnedDate:  out.LearnedDate,
+		IsFinished:   out.IsCompleted,
+		RegisteredAt: out.RegisteredAt,
+		EditedAt:     out.EditedAt,
+		ReviewDates:  reviewDates,
+	}
+
+	return c.JSON(http.StatusCreated, res)
+
 }
 
 func (ic *itemController) UpdateItem(c echo.Context) error {
@@ -100,7 +129,37 @@ func (ic *itemController) UpdateItem(c echo.Context) error {
 		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "復習物の更新に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, out)
+	reviewDates := make([]ReviewDateResponse, len(out.ReviewDates))
+	for i, rd := range out.ReviewDates {
+		reviewDates[i] = ReviewDateResponse{
+			ReviewDateID:         rd.ReviewDateID,
+			UserID:               rd.UserID,
+			CategoryID:           rd.CategoryID,
+			BoxID:                rd.BoxID,
+			ItemID:               rd.ItemID,
+			StepNumber:           rd.StepNumber,
+			InitialScheduledDate: rd.InitialScheduledDate,
+			ScheduledDate:        rd.ScheduledDate,
+			IsCompleted:          rd.IsCompleted,
+		}
+	}
+
+	res := ItemResponse{
+		ItemID:      out.ItemID,
+		UserID:      out.UserID,
+		CategoryID:  out.CategoryID,
+		BoxID:       out.BoxID,
+		PatternID:   out.PatternID,
+		Name:        out.Name,
+		Detail:      out.Detail,
+		LearnedDate: out.LearnedDate,
+		IsFinished:  out.IsFinished,
+		EditedAt:    out.EditedAt,
+		ReviewDates: reviewDates,
+	}
+
+	return c.JSON(http.StatusOK, res)
+
 }
 
 func (ic *itemController) DeleteItem(c echo.Context) error {
@@ -159,7 +218,30 @@ func (ic *itemController) UpdateReviewDates(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "復習日の更新に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, out)
+	reviewDates := make([]ReviewDateResponse, len(out.ReviewDates))
+	for i, rd := range out.ReviewDates {
+		reviewDates[i] = ReviewDateResponse{
+			ReviewDateID:         rd.ReviewDateID,
+			UserID:               rd.UserID,
+			CategoryID:           rd.CategoryID,
+			BoxID:                rd.BoxID,
+			ItemID:               rd.ItemID,
+			StepNumber:           rd.StepNumber,
+			InitialScheduledDate: rd.InitialScheduledDate,
+			ScheduledDate:        rd.ScheduledDate,
+			IsCompleted:          rd.IsCompleted,
+		}
+	}
+
+	res := UpdateBackReviewDateResponse{
+		ItemID:      out.ItemID,
+		UserID:      out.UserID,
+		IsFinished:  out.IsFinished,
+		EditedAt:    out.EditedAt,
+		ReviewDates: reviewDates,
+	}
+	return c.JSON(http.StatusOK, res)
+
 }
 
 func (ic *itemController) UpdateItemAsFinishedForce(c echo.Context) error {
@@ -175,7 +257,15 @@ func (ic *itemController) UpdateItemAsFinishedForce(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "復習物の完了処理に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, out)
+	res := UpdateItemAsFinishedForceResponse{
+		ItemID:     out.ItemID,
+		UserID:     out.UserID,
+		IsFinished: out.IsFinished,
+		EditedAt:   out.EditedAt,
+	}
+
+	return c.JSON(http.StatusOK, res)
+
 }
 
 func (ic *itemController) UpdateReviewDateAsCompleted(c echo.Context) error {
@@ -203,7 +293,16 @@ func (ic *itemController) UpdateReviewDateAsCompleted(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "復習日の完了処理に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, out)
+	res := UpdateReviewDateAsCompletedResponse{
+		ReviewDateID: out.ReviewDateID,
+		UserID:       out.UserID,
+		IsCompleted:  out.IsCompleted,
+		IsFinished:   out.IsFinished,
+		EditedAt:     out.EditedAt,
+	}
+
+	return c.JSON(http.StatusOK, res)
+
 }
 
 func (ic *itemController) UpdateReviewDateAsInCompleted(c echo.Context) error {
@@ -231,7 +330,14 @@ func (ic *itemController) UpdateReviewDateAsInCompleted(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "復習日の未完了処理に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, out)
+	res := UpdateReviewDateAsInCompletedResponse{
+		ReviewDateID: out.ReviewDateID,
+		UserID:       out.UserID,
+		IsCompleted:  out.IsCompleted,
+		IsFinished:   out.IsFinished,
+		EditedAt:     out.EditedAt,
+	}
+	return c.JSON(http.StatusOK, res)
 }
 
 func (ic *itemController) UpdateItemAsUnFinishedForce(c echo.Context) error {
@@ -261,7 +367,31 @@ func (ic *itemController) UpdateItemAsUnFinishedForce(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "復習物の再開処理に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, out)
+	reviewDates := make([]ReviewDateResponse, len(out.ReviewDates))
+	for i, rd := range out.ReviewDates {
+		reviewDates[i] = ReviewDateResponse{
+			ReviewDateID:         rd.ReviewDateID,
+			UserID:               rd.UserID,
+			CategoryID:           rd.CategoryID,
+			BoxID:                rd.BoxID,
+			ItemID:               rd.ItemID,
+			StepNumber:           rd.StepNumber,
+			InitialScheduledDate: rd.InitialScheduledDate,
+			ScheduledDate:        rd.ScheduledDate,
+			IsCompleted:          rd.IsCompleted,
+		}
+	}
+
+	res := UpdateItemAsUnFinishedForceResponse{
+		ItemID:      out.ItemID,
+		UserID:      out.UserID,
+		IsFinished:  out.IsFinished,
+		EditedAt:    out.EditedAt,
+		ReviewDates: reviewDates,
+	}
+
+	return c.JSON(http.StatusOK, res)
+
 }
 
 // 取得系
@@ -277,7 +407,8 @@ func (ic *itemController) GetAllUnFinishedItemsByBoxID(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "ボックス内の復習物取得に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, out)
+	return c.JSON(http.StatusOK, mapToItemResponse(out))
+
 }
 
 func (ic *itemController) GetAllUnFinishedUnclassifiedItemsByUserID(c echo.Context) error {
@@ -291,7 +422,8 @@ func (ic *itemController) GetAllUnFinishedUnclassifiedItemsByUserID(c echo.Conte
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "未分類の復習物取得に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, out)
+	return c.JSON(http.StatusOK, mapToItemResponse(out))
+
 }
 
 func (ic *itemController) GetAllUnFinishedUnclassifiedItemsByCategoryID(c echo.Context) error {
@@ -306,7 +438,8 @@ func (ic *itemController) GetAllUnFinishedUnclassifiedItemsByCategoryID(c echo.C
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "カテゴリ内の未分類復習物取得に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, out)
+	return c.JSON(http.StatusOK, mapToItemResponse(out))
+
 }
 
 // カウント系
@@ -321,7 +454,16 @@ func (ic *itemController) CountItemsGroupedByBoxByUserID(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "ボックス毎の復習物数取得に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, out)
+	res := make([]ItemCountGroupedByBoxResponse, len(out))
+	for i, r := range out {
+		res[i] = ItemCountGroupedByBoxResponse{
+			CategoryID: r.CategoryID,
+			BoxID:      r.BoxID,
+			Count:      r.Count,
+		}
+	}
+	return c.JSON(http.StatusOK, res)
+
 }
 
 func (ic *itemController) CountUnclassifiedItemsGroupedByCategoryByUserID(c echo.Context) error {
@@ -335,7 +477,15 @@ func (ic *itemController) CountUnclassifiedItemsGroupedByCategoryByUserID(c echo
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "カテゴリ毎の未分類復習物数取得に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, out)
+	res := make([]UnclassifiedItemCountGroupedByCategoryResponse, len(out))
+	for i, r := range out {
+		res[i] = UnclassifiedItemCountGroupedByCategoryResponse{
+			CategoryID: r.CategoryID,
+			Count:      r.Count,
+		}
+	}
+	return c.JSON(http.StatusOK, res)
+
 }
 
 func (ic *itemController) CountUnclassifiedItemsByUserID(c echo.Context) error {
@@ -349,7 +499,8 @@ func (ic *itemController) CountUnclassifiedItemsByUserID(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "未分類復習物数取得に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, echo.Map{"count": out})
+	return c.JSON(http.StatusOK, CountResponse{Count: out})
+
 }
 
 func (ic *itemController) CountDailyDatesGroupedByBoxByUserID(c echo.Context) error {
@@ -364,7 +515,16 @@ func (ic *itemController) CountDailyDatesGroupedByBoxByUserID(c echo.Context) er
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "ボックス毎の今日の復習数取得に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, out)
+	res := make([]DailyCountGroupedByBoxResponse, len(out))
+	for i, r := range out {
+		res[i] = DailyCountGroupedByBoxResponse{
+			CategoryID: r.CategoryID,
+			BoxID:      r.BoxID,
+			Count:      r.Count,
+		}
+	}
+	return c.JSON(http.StatusOK, res)
+
 }
 
 func (ic *itemController) CountDailyDatesUnclassifiedGroupedByCategoryByUserID(c echo.Context) error {
@@ -379,7 +539,15 @@ func (ic *itemController) CountDailyDatesUnclassifiedGroupedByCategoryByUserID(c
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "カテゴリ毎の今日の未分類復習数取得に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, out)
+	res := make([]UnclassifiedDailyDatesCountGroupedByCategoryResponse, len(out))
+	for i, r := range out {
+		res[i] = UnclassifiedDailyDatesCountGroupedByCategoryResponse{
+			CategoryID: r.CategoryID,
+			Count:      r.Count,
+		}
+	}
+	return c.JSON(http.StatusOK, res)
+
 }
 
 func (ic *itemController) CountDailyDatesUnclassifiedByUserID(c echo.Context) error {
@@ -394,7 +562,8 @@ func (ic *itemController) CountDailyDatesUnclassifiedByUserID(c echo.Context) er
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "今日の未分類復習数取得に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, out)
+	return c.JSON(http.StatusOK, CountResponse{Count: out})
+
 }
 
 // 今日の全復習日数を取得
@@ -411,7 +580,8 @@ func (ic *itemController) CountAllDailyReviewDates(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "今日の復習日数の取得に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, echo.Map{"count": count})
+	return c.JSON(http.StatusOK, CountResponse{Count: count})
+
 }
 
 // 今日の復習日一覧取得
@@ -428,7 +598,82 @@ func (ic *itemController) GetAllDailyReviewDates(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "復習日の取得に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, result)
+	res := GetDailyReviewDatesResponse{}
+
+	categories := make([]DailyReviewDatesGroupedByCategoryResponse, len(result.Categories))
+	for i, cat := range result.Categories {
+		boxes := make([]DailyReviewDatesGroupedByBoxResponse, len(cat.Boxes))
+		for j, box := range cat.Boxes {
+			reviewDates := make([]DailyReviewDatesByBoxResponse, len(box.ReviewDates))
+			for k, rd := range box.ReviewDates {
+				reviewDates[k] = DailyReviewDatesByBoxResponse{
+					ReviewDateID:      rd.ReviewDateID,
+					CategoryID:        rd.CategoryID,
+					BoxID:             rd.BoxID,
+					StepNumber:        rd.StepNumber,
+					PrevScheduledDate: rd.PrevScheduledDate,
+					ScheduledDate:     rd.ScheduledDate,
+					NextScheduledDate: rd.NextScheduledDate,
+					IsCompleted:       rd.IsCompleted,
+					ItemName:          rd.ItemName,
+					Detail:            rd.Detail,
+					RegisteredAt:      rd.RegisteredAt,
+					EditedAt:          rd.EditedAt,
+				}
+			}
+			boxes[j] = DailyReviewDatesGroupedByBoxResponse{
+				BoxID:        box.BoxID,
+				CategoryID:   box.CategoryID,
+				BoxName:      box.BoxName,
+				ReviewDates:  reviewDates,
+				TargetWeight: box.TargetWeight,
+			}
+		}
+
+		unclassified := make([]UnclassifiedDailyReviewDatesGroupedByCategoryResponse, len(cat.UnclassifiedDailyReviewDatesByCategory))
+		for j, rd := range cat.UnclassifiedDailyReviewDatesByCategory {
+			unclassified[j] = UnclassifiedDailyReviewDatesGroupedByCategoryResponse{
+				ReviewDateID:      rd.ReviewDateID,
+				CategoryID:        rd.CategoryID,
+				StepNumber:        rd.StepNumber,
+				PrevScheduledDate: rd.PrevScheduledDate,
+				ScheduledDate:     rd.ScheduledDate,
+				NextScheduledDate: rd.NextScheduledDate,
+				IsCompleted:       rd.IsCompleted,
+				ItemName:          rd.ItemName,
+				Detail:            rd.Detail,
+				RegisteredAt:      rd.RegisteredAt,
+				EditedAt:          rd.EditedAt,
+			}
+		}
+
+		categories[i] = DailyReviewDatesGroupedByCategoryResponse{
+			CategoryID:                             cat.CategoryID,
+			CategoryName:                           cat.CategoryName,
+			Boxes:                                  boxes,
+			UnclassifiedDailyReviewDatesByCategory: unclassified,
+		}
+	}
+	res.Categories = categories
+
+	userUnclassified := make([]UnclassifiedDailyReviewDatesGroupedByUserResponse, len(result.DailyReviewDatesGroupedByUser))
+	for i, rd := range result.DailyReviewDatesGroupedByUser {
+		userUnclassified[i] = UnclassifiedDailyReviewDatesGroupedByUserResponse{
+			ReviewDateID:      rd.ReviewDateID,
+			StepNumber:        rd.StepNumber,
+			PrevScheduledDate: rd.PrevScheduledDate,
+			ScheduledDate:     rd.ScheduledDate,
+			NextScheduledDate: rd.NextScheduledDate,
+			IsCompleted:       rd.IsCompleted,
+			ItemName:          rd.ItemName,
+			Detail:            rd.Detail,
+			RegisteredAt:      rd.RegisteredAt,
+			EditedAt:          rd.EditedAt,
+		}
+	}
+	res.DailyReviewDatesGroupedByUser = userUnclassified
+
+	return c.JSON(http.StatusOK, res)
 }
 
 func (ic *itemController) GetFinishedItemsByBoxID(c echo.Context) error {
@@ -443,7 +688,8 @@ func (ic *itemController) GetFinishedItemsByBoxID(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "ボックス内の完了した復習物取得に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, out)
+	return c.JSON(http.StatusOK, mapToItemResponse(out))
+
 }
 
 func (ic *itemController) GetUnclassfiedFinishedItemsByCategoryID(c echo.Context) error {
@@ -458,7 +704,8 @@ func (ic *itemController) GetUnclassfiedFinishedItemsByCategoryID(c echo.Context
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "カテゴリ内の未分類完了復習物取得に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, out)
+	return c.JSON(http.StatusOK, mapToItemResponse(out))
+
 }
 
 func (ic *itemController) GetUnclassfiedFinishedItemsByUserID(c echo.Context) error {
@@ -472,5 +719,6 @@ func (ic *itemController) GetUnclassfiedFinishedItemsByUserID(c echo.Context) er
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "完了した復習物取得に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, out)
+	return c.JSON(http.StatusOK, mapToItemResponse(out))
+
 }

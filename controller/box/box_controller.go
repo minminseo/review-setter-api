@@ -47,7 +47,17 @@ func (bc *boxController) CreateBox(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "ボックスの作成に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusCreated, boxRes)
+	res := BoxResponse{
+		ID:           boxRes.ID,
+		UserID:       boxRes.UserID,
+		CategoryID:   boxRes.CategoryID,
+		PatternID:    boxRes.PatternID,
+		Name:         boxRes.Name,
+		RegisteredAt: boxRes.RegisteredAt,
+		EditedAt:     boxRes.EditedAt,
+	}
+	return c.JSON(http.StatusCreated, res)
+
 }
 
 func (bc *boxController) GetBoxes(c echo.Context) error {
@@ -70,7 +80,19 @@ func (bc *boxController) GetBoxes(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "ボックス一覧の取得に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, boxesRes)
+	var res []BoxResponse
+	for _, b := range boxesRes {
+		res = append(res, BoxResponse{
+			ID:           b.ID,
+			UserID:       b.UserID,
+			CategoryID:   b.CategoryID,
+			PatternID:    b.PatternID,
+			Name:         b.Name,
+			RegisteredAt: b.RegisteredAt,
+			EditedAt:     b.EditedAt,
+		})
+	}
+	return c.JSON(http.StatusOK, res)
 }
 
 func (bc *boxController) UpdateBox(c echo.Context) error {
@@ -103,9 +125,17 @@ func (bc *boxController) UpdateBox(c echo.Context) error {
 		PatternID:  req.PatternID,
 		Name:       req.Name,
 	}
-	res, err := bc.bu.UpdateBox(ctx, input)
+	boxRes, err := bc.bu.UpdateBox(ctx, input)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "ボックスの更新に失敗しました: " + err.Error()})
+	}
+	res := UpdateBoxResponse{
+		ID:         boxRes.ID,
+		UserID:     boxRes.UserID,
+		CategoryID: boxRes.CategoryID,
+		PatternID:  boxRes.PatternID,
+		Name:       boxRes.Name,
+		EditedAt:   boxRes.EditedAt,
 	}
 	return c.JSON(http.StatusOK, res)
 }

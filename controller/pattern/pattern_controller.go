@@ -54,7 +54,28 @@ func (pc *patternController) CreatePattern(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "パターンの作成に失敗しました: " + err.Error()})
 	}
 
-	return c.JSON(http.StatusCreated, out)
+	resSteps := make([]PatternStepResponse, len(out.Steps))
+	for i, s := range out.Steps {
+		resSteps[i] = PatternStepResponse{
+			PatternStepID: s.PatternStepID,
+			UserID:        s.UserID,
+			PatternID:     s.PatternID,
+			StepNumber:    s.StepNumber,
+			IntervalDays:  s.IntervalDays,
+		}
+	}
+
+	res := PatternResponse{
+		ID:           out.ID,
+		UserID:       out.UserID,
+		Name:         out.Name,
+		TargetWeight: out.TargetWeight,
+		RegisteredAt: out.RegisteredAt,
+		EditedAt:     out.EditedAt,
+		Steps:        resSteps,
+	}
+
+	return c.JSON(http.StatusCreated, res)
 }
 
 func (pc *patternController) GetPatterns(c echo.Context) error {
@@ -75,7 +96,31 @@ func (pc *patternController) GetPatterns(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "パターンの取得に失敗しました: " + err.Error()})
 	}
-	return c.JSON(http.StatusOK, results)
+
+	var res []PatternResponse
+	for _, p := range results {
+		steps := make([]PatternStepResponse, len(p.Steps))
+		for i, s := range p.Steps {
+			steps[i] = PatternStepResponse{
+				PatternStepID: s.PatternStepID,
+				UserID:        userID,
+				PatternID:     s.PatternID,
+				StepNumber:    s.StepNumber,
+				IntervalDays:  s.IntervalDays,
+			}
+		}
+		res = append(res, PatternResponse{
+			ID:           p.PatternID,
+			UserID:       p.UserID,
+			Name:         p.Name,
+			TargetWeight: p.TargetWeight,
+			RegisteredAt: p.RegisteredAt,
+			EditedAt:     p.EditedAt,
+			Steps:        steps,
+		})
+	}
+
+	return c.JSON(http.StatusOK, res)
 }
 
 func (pc *patternController) UpdatePattern(c echo.Context) error {
@@ -124,7 +169,28 @@ func (pc *patternController) UpdatePattern(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "パターンの更新に失敗しました: " + err.Error()})
 	}
 
-	return c.JSON(http.StatusOK, out)
+	resSteps := make([]PatternStepResponse, len(out.Steps))
+	for i, s := range out.Steps {
+		resSteps[i] = PatternStepResponse{
+			PatternStepID: s.PatternStepID,
+			UserID:        s.UserID,
+			PatternID:     s.PatternID,
+			StepNumber:    s.StepNumber,
+			IntervalDays:  s.IntervalDays,
+		}
+	}
+
+	res := PatternResponse{
+		ID:           out.PatternID,
+		UserID:       out.UserID,
+		Name:         out.Name,
+		TargetWeight: out.TargetWeight,
+		RegisteredAt: out.RegisteredAt,
+		EditedAt:     out.EditedAt,
+		Steps:        resSteps,
+	}
+
+	return c.JSON(http.StatusOK, res)
 }
 
 func (pc *patternController) DeletePattern(c echo.Context) error {
