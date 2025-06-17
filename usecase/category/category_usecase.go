@@ -54,15 +54,15 @@ func (cu *categoryUsecase) GetCategoriesByUserID(ctx context.Context, userID str
 		return nil, err
 	}
 
-	var outputCategories []*GetCategoryOutput
-	for _, c := range categories {
-		outputCategories = append(outputCategories, &GetCategoryOutput{
+	outputCategories := make([]*GetCategoryOutput, len(categories))
+	for i, c := range categories {
+		outputCategories[i] = &GetCategoryOutput{
 			ID:           c.ID,
 			UserID:       c.UserID,
 			Name:         c.Name,
 			RegisteredAt: c.RegisteredAt,
 			EditedAt:     c.EditedAt,
-		})
+		}
 	}
 	return outputCategories, nil
 }

@@ -485,16 +485,15 @@ func (iu *ItemUsecase) UpdateReviewDates(ctx context.Context, input UpdateBackRe
 	}
 
 	// input.PatternStepsInReviewDateをFormatWithOverdueMarkedCompletedに渡せるように型変換
-	var targetPatternSteps []*PatternDomain.PatternStep
-	for _, step := range input.PatternStepsInReviewDate {
-		patternStep := &PatternDomain.PatternStep{
+	targetPatternSteps := make([]*PatternDomain.PatternStep, len(input.PatternStepsInReviewDate))
+	for i, step := range input.PatternStepsInReviewDate {
+		targetPatternSteps[i] = &PatternDomain.PatternStep{
 			PatternStepID: step.PatternStepID,
 			UserID:        step.UserID,
 			PatternID:     step.PatternID,
 			StepNumber:    step.StepNumber,
 			IntervalDays:  step.IntervalDays,
 		}
-		targetPatternSteps = append(targetPatternSteps, patternStep)
 	}
 
 	var newReviewdates []*ItemDomain.Reviewdate
@@ -879,7 +878,7 @@ func (iu *ItemUsecase) GetAllUnFinishedItemsByBoxID(ctx context.Context, boxID s
 		return nil, err
 	}
 
-	// アイテムIDをキーに未完了アイテムをマップ化
+	// ItemIDをキーに未完了復習物をマップ化
 	unfinishedItemMap := make(map[string]struct{}, len(items))
 	for _, item := range items {
 		unfinishedItemMap[item.ItemID] = struct{}{}
@@ -891,43 +890,62 @@ func (iu *ItemUsecase) GetAllUnFinishedItemsByBoxID(ctx context.Context, boxID s
 		return nil, err
 	}
 
-	// 未完了アイテムを親に持つ復習日のみ抽出
-	reviewdatesByItem := make(map[string][]GetReviewDateOutput, len(items))
+	// 各復習物ごとの復習日件数をカウント
+	counts := make(map[string]int, len(items))
+	for _, rd := range reviewdates {
+		if _, ok := unfinishedItemMap[rd.ItemID]; ok {
+			counts[rd.ItemID]++
+		}
+	}
 
-	for _, reviewdate := range reviewdates {
-		if _, ok := unfinishedItemMap[reviewdate.ItemID]; !ok {
+	// 未完了復習物を親に持つ復習日のみ抽出
+	// カウントをもとにスライスを確保。各復習物の書き込み位置インデックスも初期化
+	reviewdatesByItem := make(map[string][]GetReviewDateOutput, len(counts))
+	idxs := make(map[string]int, len(counts))
+	for itemID, count := range counts {
+		reviewdatesByItem[itemID] = make([]GetReviewDateOutput, count)
+		idxs[itemID] = 0
+	}
+
+	// 復習日をItemIDごとに振り分け
+	for _, rd := range reviewdates {
+		if _, ok := unfinishedItemMap[rd.ItemID]; !ok {
 			continue
 		}
-		reviewdatesByItem[reviewdate.ItemID] = append(reviewdatesByItem[reviewdate.ItemID], GetReviewDateOutput{
-			ReviewDateID:         reviewdate.ReviewdateID,
-			UserID:               reviewdate.UserID,
-			CategoryID:           reviewdate.CategoryID,
-			BoxID:                reviewdate.BoxID,
-			ItemID:               reviewdate.ItemID,
-			StepNumber:           reviewdate.StepNumber,
-			InitialScheduledDate: reviewdate.InitialScheduledDate.Format("2006-01-02"),
-			ScheduledDate:        reviewdate.ScheduledDate.Format("2006-01-02"),
-			IsCompleted:          reviewdate.IsCompleted,
-		})
+		// 対象のItemIDのスライスに復習日を追加
+		pos := idxs[rd.ItemID]
+		reviewdatesByItem[rd.ItemID][pos] = GetReviewDateOutput{
+			ReviewDateID:         rd.ReviewdateID,
+			UserID:               rd.UserID,
+			CategoryID:           rd.CategoryID,
+			BoxID:                rd.BoxID,
+			ItemID:               rd.ItemID,
+			StepNumber:           rd.StepNumber,
+			InitialScheduledDate: rd.InitialScheduledDate.Format("2006-01-02"),
+			ScheduledDate:        rd.ScheduledDate.Format("2006-01-02"),
+			IsCompleted:          rd.IsCompleted,
+		}
+		idxs[rd.ItemID]++
 	}
 
-	result := make([]*GetItemOutput, 0, len(items))
-	for _, item := range items {
-		result = append(result, &GetItemOutput{
-			ItemID:       item.ItemID,
-			UserID:       item.UserID,
-			CategoryID:   item.CategoryID,
-			BoxID:        item.BoxID,
-			PatternID:    item.PatternID,
-			Name:         item.Name,
-			Detail:       item.Detail,
-			LearnedDate:  item.LearnedDate.Format("2006-01-02"),
-			IsFinished:   item.IsFinished,
-			RegisteredAt: item.RegisteredAt,
-			EditedAt:     item.EditedAt,
-			ReviewDates:  reviewdatesByItem[item.ItemID],
-		})
+	result := make([]*GetItemOutput, len(items))
+	for i, it := range items {
+		result[i] = &GetItemOutput{
+			ItemID:       it.ItemID,
+			UserID:       it.UserID,
+			CategoryID:   it.CategoryID,
+			BoxID:        it.BoxID,
+			PatternID:    it.PatternID,
+			Name:         it.Name,
+			Detail:       it.Detail,
+			LearnedDate:  it.LearnedDate.Format("2006-01-02"),
+			IsFinished:   it.IsFinished,
+			RegisteredAt: it.RegisteredAt,
+			EditedAt:     it.EditedAt,
+			ReviewDates:  reviewdatesByItem[it.ItemID],
+		}
 	}
+
 	return result, nil
 }
 
@@ -937,7 +955,7 @@ func (iu *ItemUsecase) GetAllUnFinishedUnclassifiedItemsByUserID(ctx context.Con
 		return nil, err
 	}
 
-	// アイテムIDをキーに未分類未完了アイテムをマップ化
+	// 復習物IDをキーに未分類未完了復習物をマップ化
 	unfinishedItemMap := make(map[string]struct{}, len(items))
 	for _, item := range items {
 		unfinishedItemMap[item.ItemID] = struct{}{}
@@ -949,43 +967,62 @@ func (iu *ItemUsecase) GetAllUnFinishedUnclassifiedItemsByUserID(ctx context.Con
 		return nil, err
 	}
 
-	// 未分類未完了アイテムを親に持つ復習日のみ抽出
-	reviewdatesByItem := make(map[string][]GetReviewDateOutput, len(items))
+	// 各復習物ごとの復習日件数をカウント
+	counts := make(map[string]int, len(items))
+	for _, rd := range reviewdates {
+		if _, ok := unfinishedItemMap[rd.ItemID]; ok {
+			counts[rd.ItemID]++
+		}
+	}
 
-	for _, reviewdate := range reviewdates {
-		if _, ok := unfinishedItemMap[reviewdate.ItemID]; !ok {
+	// 未分類未完了復習物を親に持つ復習日のみ抽出
+	// カウントをもとにスライスを確保。各復習物の書き込み位置インデックスも初期化
+	reviewdatesByItem := make(map[string][]GetReviewDateOutput, len(counts))
+	idxs := make(map[string]int, len(counts))
+	for itemID, count := range counts {
+		reviewdatesByItem[itemID] = make([]GetReviewDateOutput, count)
+		idxs[itemID] = 0
+	}
+
+	// 復習日をItemIDごとに振り分け
+	for _, rd := range reviewdates {
+		if _, ok := unfinishedItemMap[rd.ItemID]; !ok {
 			continue
 		}
-		reviewdatesByItem[reviewdate.ItemID] = append(reviewdatesByItem[reviewdate.ItemID], GetReviewDateOutput{
-			ReviewDateID:         reviewdate.ReviewdateID,
-			UserID:               reviewdate.UserID,
-			CategoryID:           reviewdate.CategoryID,
-			BoxID:                reviewdate.BoxID,
-			ItemID:               reviewdate.ItemID,
-			StepNumber:           reviewdate.StepNumber,
-			InitialScheduledDate: reviewdate.InitialScheduledDate.Format("2006-01-02"),
-			ScheduledDate:        reviewdate.ScheduledDate.Format("2006-01-02"),
-			IsCompleted:          reviewdate.IsCompleted,
-		})
+		// 対象のItemIDのスライスに復習日を追加
+		pos := idxs[rd.ItemID]
+		reviewdatesByItem[rd.ItemID][pos] = GetReviewDateOutput{
+			ReviewDateID:         rd.ReviewdateID,
+			UserID:               rd.UserID,
+			CategoryID:           rd.CategoryID,
+			BoxID:                rd.BoxID,
+			ItemID:               rd.ItemID,
+			StepNumber:           rd.StepNumber,
+			InitialScheduledDate: rd.InitialScheduledDate.Format("2006-01-02"),
+			ScheduledDate:        rd.ScheduledDate.Format("2006-01-02"),
+			IsCompleted:          rd.IsCompleted,
+		}
+		idxs[rd.ItemID]++
 	}
 
-	result := make([]*GetItemOutput, 0, len(items))
-	for _, item := range items {
-		result = append(result, &GetItemOutput{
-			ItemID:       item.ItemID,
-			UserID:       item.UserID,
-			CategoryID:   item.CategoryID,
-			BoxID:        item.BoxID,
-			PatternID:    item.PatternID,
-			Name:         item.Name,
-			Detail:       item.Detail,
-			LearnedDate:  item.LearnedDate.Format("2006-01-02"),
-			IsFinished:   item.IsFinished,
-			RegisteredAt: item.RegisteredAt,
-			EditedAt:     item.EditedAt,
-			ReviewDates:  reviewdatesByItem[item.ItemID],
-		})
+	result := make([]*GetItemOutput, len(items))
+	for i, it := range items {
+		result[i] = &GetItemOutput{
+			ItemID:       it.ItemID,
+			UserID:       it.UserID,
+			CategoryID:   it.CategoryID,
+			BoxID:        it.BoxID,
+			PatternID:    it.PatternID,
+			Name:         it.Name,
+			Detail:       it.Detail,
+			LearnedDate:  it.LearnedDate.Format("2006-01-02"),
+			IsFinished:   it.IsFinished,
+			RegisteredAt: it.RegisteredAt,
+			EditedAt:     it.EditedAt,
+			ReviewDates:  reviewdatesByItem[it.ItemID],
+		}
 	}
+
 	return result, nil
 }
 
@@ -995,7 +1032,7 @@ func (iu *ItemUsecase) GetAllUnFinishedUnclassifiedItemsByCategoryID(ctx context
 		return nil, err
 	}
 
-	// アイテムIDをキーに未分類未完了アイテムをマップ化
+	// 復習物IDをキーに未分類未完了復習物をマップ化
 	unfinishedItemMap := make(map[string]struct{}, len(items))
 	for _, item := range items {
 		unfinishedItemMap[item.ItemID] = struct{}{}
@@ -1006,44 +1043,58 @@ func (iu *ItemUsecase) GetAllUnFinishedUnclassifiedItemsByCategoryID(ctx context
 	if err != nil {
 		return nil, err
 	}
+	counts := make(map[string]int, len(items))
+	for _, rd := range reviewdates {
+		if _, ok := unfinishedItemMap[rd.ItemID]; ok {
+			counts[rd.ItemID]++
+		}
+	}
 
-	// 未分類未完了アイテムを親に持つ復習日のみ抽出
-	reviewdatesByItem := make(map[string][]GetReviewDateOutput, len(items))
+	// 未分類未完了復習物を親に持つ復習日のみ抽出
+	reviewdatesByItem := make(map[string][]GetReviewDateOutput, len(counts))
+	idxs := make(map[string]int, len(counts))
+	for itemID, count := range counts {
+		reviewdatesByItem[itemID] = make([]GetReviewDateOutput, count)
+		idxs[itemID] = 0
+	}
 
-	for _, reviewdate := range reviewdates {
-		if _, ok := unfinishedItemMap[reviewdate.ItemID]; !ok {
+	for _, rd := range reviewdates {
+		if _, ok := unfinishedItemMap[rd.ItemID]; !ok {
 			continue
 		}
-		reviewdatesByItem[reviewdate.ItemID] = append(reviewdatesByItem[reviewdate.ItemID], GetReviewDateOutput{
-			ReviewDateID:         reviewdate.ReviewdateID,
-			UserID:               reviewdate.UserID,
-			CategoryID:           reviewdate.CategoryID,
-			BoxID:                reviewdate.BoxID,
-			ItemID:               reviewdate.ItemID,
-			StepNumber:           reviewdate.StepNumber,
-			InitialScheduledDate: reviewdate.InitialScheduledDate.Format("2006-01-02"),
-			ScheduledDate:        reviewdate.ScheduledDate.Format("2006-01-02"),
-			IsCompleted:          reviewdate.IsCompleted,
-		})
+		pos := idxs[rd.ItemID]
+		reviewdatesByItem[rd.ItemID][pos] = GetReviewDateOutput{
+			ReviewDateID:         rd.ReviewdateID,
+			UserID:               rd.UserID,
+			CategoryID:           rd.CategoryID,
+			BoxID:                rd.BoxID,
+			ItemID:               rd.ItemID,
+			StepNumber:           rd.StepNumber,
+			InitialScheduledDate: rd.InitialScheduledDate.Format("2006-01-02"),
+			ScheduledDate:        rd.ScheduledDate.Format("2006-01-02"),
+			IsCompleted:          rd.IsCompleted,
+		}
+		idxs[rd.ItemID]++
 	}
 
-	result := make([]*GetItemOutput, 0, len(items))
-	for _, item := range items {
-		result = append(result, &GetItemOutput{
-			ItemID:       item.ItemID,
-			UserID:       item.UserID,
-			CategoryID:   item.CategoryID,
-			BoxID:        item.BoxID,
-			PatternID:    item.PatternID,
-			Name:         item.Name,
-			Detail:       item.Detail,
-			LearnedDate:  item.LearnedDate.Format("2006-01-02"),
-			IsFinished:   item.IsFinished,
-			RegisteredAt: item.RegisteredAt,
-			EditedAt:     item.EditedAt,
-			ReviewDates:  reviewdatesByItem[item.ItemID],
-		})
+	result := make([]*GetItemOutput, len(items))
+	for i, it := range items {
+		result[i] = &GetItemOutput{
+			ItemID:       it.ItemID,
+			UserID:       it.UserID,
+			CategoryID:   it.CategoryID,
+			BoxID:        it.BoxID,
+			PatternID:    it.PatternID,
+			Name:         it.Name,
+			Detail:       it.Detail,
+			LearnedDate:  it.LearnedDate.Format("2006-01-02"),
+			IsFinished:   it.IsFinished,
+			RegisteredAt: it.RegisteredAt,
+			EditedAt:     it.EditedAt,
+			ReviewDates:  reviewdatesByItem[it.ItemID],
+		}
 	}
+
 	return result, nil
 }
 
@@ -1377,7 +1428,7 @@ func (iu *ItemUsecase) GetFinishedItemsByBoxID(ctx context.Context, boxID string
 		return nil, err
 	}
 
-	// アイテムIDをキーに完了済みアイテムをマップ化
+	// 復習物IDをキーに完了済み復習物をマップ化
 	finishedItemMap := make(map[string]struct{}, len(items))
 	for _, item := range items {
 		finishedItemMap[item.ItemID] = struct{}{}
@@ -1389,7 +1440,7 @@ func (iu *ItemUsecase) GetFinishedItemsByBoxID(ctx context.Context, boxID string
 		return nil, err
 	}
 
-	// 完了済みアイテムを親に持つ復習日のみ抽出
+	// 完了済み復習物を親に持つ復習日のみ抽出
 	reviewdatesByItem := make(map[string][]GetReviewDateOutput, len(items))
 
 	for _, reviewdate := range reviewdates {
@@ -1435,7 +1486,7 @@ func (iu *ItemUsecase) GetUnclassfiedFinishedItemsByCategoryID(ctx context.Conte
 		return nil, err
 	}
 
-	// アイテムIDをキーに完了済みアイテムをマップ化
+	// 復習物IDをキーに完了済み復習物をマップ化
 	finishedItemMap := make(map[string]struct{}, len(items))
 	for _, item := range items {
 		finishedItemMap[item.ItemID] = struct{}{}
@@ -1447,7 +1498,7 @@ func (iu *ItemUsecase) GetUnclassfiedFinishedItemsByCategoryID(ctx context.Conte
 		return nil, err
 	}
 
-	// 完了済みアイテムを親に持つ復習日のみ抽出
+	// 完了済み復習物を親に持つ復習日のみ抽出
 	reviewdatesByItem := make(map[string][]GetReviewDateOutput, len(items))
 
 	for _, reviewdate := range reviewdates {
@@ -1493,7 +1544,7 @@ func (iu *ItemUsecase) GetUnclassfiedFinishedItemsByUserID(ctx context.Context, 
 		return nil, err
 	}
 
-	// アイテムIDをキーに完了済みアイテムをマップ化
+	// 復習物IDをキーに完了済み復習物をマップ化
 	finishedItemMap := make(map[string]struct{}, len(items))
 	for _, item := range items {
 		finishedItemMap[item.ItemID] = struct{}{}
@@ -1505,7 +1556,7 @@ func (iu *ItemUsecase) GetUnclassfiedFinishedItemsByUserID(ctx context.Context, 
 		return nil, err
 	}
 
-	// 完了済みアイテムを親に持つ復習日のみ抽出
+	// 完了済み復習物を親に持つ復習日のみ抽出
 	reviewdatesByItem := make(map[string][]GetReviewDateOutput, len(items))
 
 	for _, reviewdate := range reviewdates {
