@@ -82,8 +82,8 @@ func (r *boxRepository) GetAllByCategoryID(ctx context.Context, categoryID, user
 		return nil, err
 	}
 
-	var boxes []*boxDomain.Box
-	for _, row := range rows {
+	boxes := make([]*boxDomain.Box, len(rows))
+	for i, row := range rows {
 		id := uuid.UUID(row.ID.Bytes).String()
 		uid := uuid.UUID(row.UserID.Bytes).String()
 		cid := uuid.UUID(row.CategoryID.Bytes).String()
@@ -101,7 +101,7 @@ func (r *boxRepository) GetAllByCategoryID(ctx context.Context, categoryID, user
 		if err != nil {
 			return nil, err
 		}
-		boxes = append(boxes, b)
+		boxes[i] = b
 	}
 	return boxes, nil
 }

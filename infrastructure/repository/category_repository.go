@@ -60,8 +60,8 @@ func (r *categoryRepository) GetAllByUserID(ctx context.Context, userID string) 
 		return nil, err
 	}
 
-	var categories []*categoryDomain.Category
-	for _, row := range rows {
+	categories := make([]*categoryDomain.Category, len(rows))
+	for i, row := range rows {
 		catID := uuid.UUID(row.ID.Bytes).String()
 		catUserID := uuid.UUID(row.UserID.Bytes).String()
 
@@ -75,7 +75,7 @@ func (r *categoryRepository) GetAllByUserID(ctx context.Context, userID string) 
 		if err != nil {
 			return nil, err
 		}
-		categories = append(categories, cat)
+		categories[i] = cat
 	}
 	return categories, nil
 }
