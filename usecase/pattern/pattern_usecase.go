@@ -207,6 +207,11 @@ func (pu *patternUsecase) UpdatePattern(ctx context.Context, input UpdatePattern
 		}
 	}
 
+	err = patternDomain.ValidateSteps(newSteps)
+	if err != nil {
+		return nil, err
+	}
+
 	// patternとstepは別テーブルなので同一トランザクションで永続化
 	err = pu.transactionManeger.RunInTransaction(ctx, func(ctx context.Context) error {
 		// パターンに変更がある場合、パターンを更新
