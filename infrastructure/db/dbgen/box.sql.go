@@ -232,17 +232,14 @@ SET
 WHERE
     id = $3
 AND
-    category_id = $4
-AND
-    user_id = $5
+    user_id = $4
 `
 
 type UpdateBoxParams struct {
-	Name       string             `json:"name"`
-	EditedAt   pgtype.Timestamptz `json:"edited_at"`
-	ID         pgtype.UUID        `json:"id"`
-	CategoryID pgtype.UUID        `json:"category_id"`
-	UserID     pgtype.UUID        `json:"user_id"`
+	Name     string             `json:"name"`
+	EditedAt pgtype.Timestamptz `json:"edited_at"`
+	ID       pgtype.UUID        `json:"id"`
+	UserID   pgtype.UUID        `json:"user_id"`
 }
 
 func (q *Queries) UpdateBox(ctx context.Context, arg UpdateBoxParams) error {
@@ -250,7 +247,6 @@ func (q *Queries) UpdateBox(ctx context.Context, arg UpdateBoxParams) error {
 		arg.Name,
 		arg.EditedAt,
 		arg.ID,
-		arg.CategoryID,
 		arg.UserID,
 	)
 	return err
