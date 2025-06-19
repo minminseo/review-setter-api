@@ -63,8 +63,6 @@ SET
 WHERE
     id = sqlc.arg(id)
 AND
-    category_id = sqlc.arg(category_id)
-AND
     user_id = sqlc.arg(user_id);
 
 -- name: UpdateBoxIfNoReviewItems :execrows
