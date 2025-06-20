@@ -617,6 +617,7 @@ func (ic *itemController) GetAllDailyReviewDates(c echo.Context) error {
 					IsCompleted:       rd.IsCompleted,
 					ItemName:          rd.ItemName,
 					Detail:            rd.Detail,
+					LearnedDate:       rd.LearnedDate,
 					RegisteredAt:      rd.RegisteredAt,
 					EditedAt:          rd.EditedAt,
 				}
@@ -642,6 +643,7 @@ func (ic *itemController) GetAllDailyReviewDates(c echo.Context) error {
 				IsCompleted:       rd.IsCompleted,
 				ItemName:          rd.ItemName,
 				Detail:            rd.Detail,
+				LearnedDate:       rd.LearnedDate,
 				RegisteredAt:      rd.RegisteredAt,
 				EditedAt:          rd.EditedAt,
 			}
@@ -667,6 +669,7 @@ func (ic *itemController) GetAllDailyReviewDates(c echo.Context) error {
 			IsCompleted:       rd.IsCompleted,
 			ItemName:          rd.ItemName,
 			Detail:            rd.Detail,
+			LearnedDate:       rd.LearnedDate,
 			RegisteredAt:      rd.RegisteredAt,
 			EditedAt:          rd.EditedAt,
 		}
