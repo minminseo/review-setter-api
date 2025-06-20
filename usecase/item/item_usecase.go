@@ -1489,7 +1489,7 @@ func (iu *ItemUsecase) GetFinishedItemsByBoxID(ctx context.Context, boxID string
 }
 
 func (iu *ItemUsecase) GetUnclassfiedFinishedItemsByCategoryID(ctx context.Context, userID string, categoryID string) ([]*GetItemOutput, error) {
-	items, err := iu.itemRepo.GetUnclassfiedFinishedItemsByCategoryID(ctx, userID, categoryID)
+	items, err := iu.itemRepo.GetUnclassfiedFinishedItemsByCategoryID(ctx, categoryID, userID)
 	if err != nil {
 		return nil, err
 	}

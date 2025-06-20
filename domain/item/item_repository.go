@@ -137,7 +137,7 @@ type IItemRepository interface {
 
 	// 完了済み復習物系を取得する系
 	GetFinishedItemsByBoxID(ctx context.Context, boxID string, userID string) ([]*Item, error)
-	GetUnclassfiedFinishedItemsByCategoryID(ctx context.Context, userID string, categoryID string) ([]*Item, error)
+	GetUnclassfiedFinishedItemsByCategoryID(ctx context.Context, categoryID string, userID string) ([]*Item, error)
 	GetUnclassfiedFinishedItemsByUserID(ctx context.Context, userID string) ([]*Item, error)
 
 	/*--------------------*/
