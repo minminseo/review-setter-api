@@ -927,11 +927,9 @@ func (r *itemRepository) GetAllDailyReviewDates(ctx context.Context, userID stri
 			next = &t
 		}
 
-		var learnedDate time.Time
-		if row.LearnedDate.Valid {
-			t := row.LearnedDate.Time
-			learnedDate = t
-		}
+		itemID := uuid.UUID(row.ItemID.Bytes).String()
+
+		learnedDate := row.LearnedDate.Time
 
 		detail := row.Detail.String
 
@@ -944,6 +942,7 @@ func (r *itemRepository) GetAllDailyReviewDates(ctx context.Context, userID stri
 			ScheduledDate:     scheduled,
 			NextScheduledDate: next,
 			IsCompleted:       row.IsCompleted,
+			ItemID:            itemID,
 			Name:              row.Name,
 			Detail:            detail,
 			LearnedDate:       learnedDate,

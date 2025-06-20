@@ -35,6 +35,7 @@ type DailyReviewDate struct {
 	ScheduledDate     time.Time
 	NextScheduledDate *time.Time
 	IsCompleted       bool
+	ItemID            string
 	Name              string
 	Detail            string
 	LearnedDate       time.Time

@@ -416,6 +416,7 @@ SELECT
     rd.scheduled_date,
     rd.next_scheduled_date,
     rd.is_completed,
+    ri.id AS item_id,
     ri.name,
     ri.detail,
     ri.learned_date,
@@ -473,6 +474,7 @@ type GetAllDailyReviewDatesRow struct {
 	ScheduledDate     pgtype.Date        `json:"scheduled_date"`
 	NextScheduledDate pgtype.Date        `json:"next_scheduled_date"`
 	IsCompleted       bool               `json:"is_completed"`
+	ItemID            pgtype.UUID        `json:"item_id"`
 	Name              string             `json:"name"`
 	Detail            pgtype.Text        `json:"detail"`
 	LearnedDate       pgtype.Date        `json:"learned_date"`
@@ -501,6 +503,7 @@ func (q *Queries) GetAllDailyReviewDates(ctx context.Context, arg GetAllDailyRev
 			&i.ScheduledDate,
 			&i.NextScheduledDate,
 			&i.IsCompleted,
+			&i.ItemID,
 			&i.Name,
 			&i.Detail,
 			&i.LearnedDate,
