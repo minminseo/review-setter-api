@@ -103,6 +103,7 @@ type DailyReviewDatesByBoxResponse struct {
 	ScheduledDate     string    `json:"scheduled_date"`
 	NextScheduledDate *string   `json:"next_scheduled_date"`
 	IsCompleted       bool      `json:"is_completed"`
+	ItemID            string    `json:"item_id"`
 	ItemName          string    `json:"item_name"`
 	Detail            string    `json:"detail"`
 	LearnedDate       string    `json:"learned_date"`
@@ -126,6 +127,7 @@ type UnclassifiedDailyReviewDatesGroupedByCategoryResponse struct {
 	ScheduledDate     string    `json:"scheduled_date"`
 	NextScheduledDate *string   `json:"next_scheduled_date"`
 	IsCompleted       bool      `json:"is_completed"`
+	ItemID            string    `json:"item_id"`
 	ItemName          string    `json:"item_name"`
 	Detail            string    `json:"detail"`
 	LearnedDate       string    `json:"learned_date"`
@@ -147,6 +149,7 @@ type UnclassifiedDailyReviewDatesGroupedByUserResponse struct {
 	ScheduledDate     string    `json:"scheduled_date"`
 	NextScheduledDate *string   `json:"next_scheduled_date"`
 	IsCompleted       bool      `json:"is_completed"`
+	ItemID            string    `json:"item_id"`
 	ItemName          string    `json:"item_name"`
 	Detail            string    `json:"detail"`
 	LearnedDate       string    `json:"learned_date"`

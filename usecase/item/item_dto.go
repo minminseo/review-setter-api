@@ -251,6 +251,7 @@ type DailyReviewDatesByBoxOutput struct {
 	IsCompleted       bool
 
 	// 復習物の情報
+	ItemID       string
 	ItemName     string
 	Detail       string
 	LearnedDate  string
@@ -276,6 +277,7 @@ type UnclassifiedDailyReviewDatesGroupedByCategoryOutput struct {
 	IsCompleted       bool
 
 	// 復習物の情報
+	ItemID       string
 	ItemName     string
 	Detail       string
 	LearnedDate  string
@@ -299,6 +301,7 @@ type UnclassifiedDailyReviewDatesGroupedByUserOutput struct {
 	IsCompleted       bool
 
 	// 復習物の情報
+	ItemID       string
 	ItemName     string
 	Detail       string
 	LearnedDate  string

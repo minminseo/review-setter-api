@@ -508,6 +508,7 @@ SELECT
     rd.scheduled_date,
     rd.next_scheduled_date,
     rd.is_completed,
+    ri.id AS item_id,
     ri.name,
     ri.detail,
     ri.learned_date,
