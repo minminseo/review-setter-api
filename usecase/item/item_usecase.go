@@ -1315,11 +1315,7 @@ func (iu *ItemUsecase) GetAllDailyReviewDates(ctx context.Context, userID string
 			next = &s
 		}
 
-		var learnedDate string
-		if d.LearnedDate != nil {
-			learned := d.LearnedDate.Format("2006-01-02")
-			learnedDate = learned
-		}
+		learnedDate := d.LearnedDate.Format("2006-01-02")
 
 		// 未分類 (category=nil && box=nil)の場合、ユーザー直下グループに追加
 		if d.CategoryID == nil && d.BoxID == nil {
