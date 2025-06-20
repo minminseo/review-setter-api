@@ -1315,6 +1315,8 @@ func (iu *ItemUsecase) GetAllDailyReviewDates(ctx context.Context, userID string
 			next = &s
 		}
 
+		learnedDate := d.LearnedDate.Format("2006-01-02")
+
 		// 未分類 (category=nil && box=nil)の場合、ユーザー直下グループに追加
 		if d.CategoryID == nil && d.BoxID == nil {
 			out.DailyReviewDatesGroupedByUser = append(out.DailyReviewDatesGroupedByUser,
@@ -1327,6 +1329,7 @@ func (iu *ItemUsecase) GetAllDailyReviewDates(ctx context.Context, userID string
 					IsCompleted:       d.IsCompleted,
 					ItemName:          d.Name,
 					Detail:            d.Detail,
+					LearnedDate:       learnedDate,
 					RegisteredAt:      d.RegisteredAt,
 					EditedAt:          d.EditedAt,
 				},
@@ -1370,6 +1373,7 @@ func (iu *ItemUsecase) GetAllDailyReviewDates(ctx context.Context, userID string
 					IsCompleted:       d.IsCompleted,
 					ItemName:          d.Name,
 					Detail:            d.Detail,
+					LearnedDate:       learnedDate,
 					RegisteredAt:      d.RegisteredAt,
 					EditedAt:          d.EditedAt,
 				},
@@ -1413,6 +1417,7 @@ func (iu *ItemUsecase) GetAllDailyReviewDates(ctx context.Context, userID string
 				IsCompleted:       d.IsCompleted,
 				ItemName:          d.Name,
 				Detail:            d.Detail,
+				LearnedDate:       learnedDate,
 				RegisteredAt:      d.RegisteredAt,
 				EditedAt:          d.EditedAt,
 			},

@@ -37,6 +37,7 @@ type DailyReviewDate struct {
 	IsCompleted       bool
 	Name              string
 	Detail            string
+	LearnedDate       time.Time
 	RegisteredAt      time.Time
 	EditedAt          time.Time
 }

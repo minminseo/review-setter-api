@@ -927,6 +927,12 @@ func (r *itemRepository) GetAllDailyReviewDates(ctx context.Context, userID stri
 			next = &t
 		}
 
+		var learnedDate time.Time
+		if row.LearnedDate.Valid {
+			t := row.LearnedDate.Time
+			learnedDate = t
+		}
+
 		detail := row.Detail.String
 
 		results[i] = &itemDomain.DailyReviewDate{
@@ -940,6 +946,7 @@ func (r *itemRepository) GetAllDailyReviewDates(ctx context.Context, userID stri
 			IsCompleted:       row.IsCompleted,
 			Name:              row.Name,
 			Detail:            detail,
+			LearnedDate:       learnedDate,
 			RegisteredAt:      row.RegisteredAt.Time,
 			EditedAt:          row.EditedAt.Time,
 		}

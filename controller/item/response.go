@@ -105,6 +105,7 @@ type DailyReviewDatesByBoxResponse struct {
 	IsCompleted       bool      `json:"is_completed"`
 	ItemName          string    `json:"item_name"`
 	Detail            string    `json:"detail"`
+	LearnedDate       string    `json:"learned_date"`
 	RegisteredAt      time.Time `json:"registered_at"`
 	EditedAt          time.Time `json:"edited_at"`
 }
@@ -127,6 +128,7 @@ type UnclassifiedDailyReviewDatesGroupedByCategoryResponse struct {
 	IsCompleted       bool      `json:"is_completed"`
 	ItemName          string    `json:"item_name"`
 	Detail            string    `json:"detail"`
+	LearnedDate       string    `json:"learned_date"`
 	RegisteredAt      time.Time `json:"registered_at"`
 	EditedAt          time.Time `json:"edited_at"`
 }
@@ -147,6 +149,7 @@ type UnclassifiedDailyReviewDatesGroupedByUserResponse struct {
 	IsCompleted       bool      `json:"is_completed"`
 	ItemName          string    `json:"item_name"`
 	Detail            string    `json:"detail"`
+	LearnedDate       string    `json:"learned_date"`
 	RegisteredAt      time.Time `json:"registered_at"`
 	EditedAt          time.Time `json:"edited_at"`
 }

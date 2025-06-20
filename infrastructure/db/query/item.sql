@@ -510,6 +510,7 @@ SELECT
     rd.is_completed,
     ri.name,
     ri.detail,
+    ri.learned_date,
     ri.registered_at,
     ri.edited_at
 FROM (

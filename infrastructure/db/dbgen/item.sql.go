@@ -418,6 +418,7 @@ SELECT
     rd.is_completed,
     ri.name,
     ri.detail,
+    ri.learned_date,
     ri.registered_at,
     ri.edited_at
 FROM (
@@ -474,6 +475,7 @@ type GetAllDailyReviewDatesRow struct {
 	IsCompleted       bool               `json:"is_completed"`
 	Name              string             `json:"name"`
 	Detail            pgtype.Text        `json:"detail"`
+	LearnedDate       pgtype.Date        `json:"learned_date"`
 	RegisteredAt      pgtype.Timestamptz `json:"registered_at"`
 	EditedAt          pgtype.Timestamptz `json:"edited_at"`
 }
@@ -501,6 +503,7 @@ func (q *Queries) GetAllDailyReviewDates(ctx context.Context, arg GetAllDailyRev
 			&i.IsCompleted,
 			&i.Name,
 			&i.Detail,
+			&i.LearnedDate,
 			&i.RegisteredAt,
 			&i.EditedAt,
 		); err != nil {

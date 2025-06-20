@@ -253,6 +253,7 @@ type DailyReviewDatesByBoxOutput struct {
 	// 復習物の情報
 	ItemName     string
 	Detail       string
+	LearnedDate  string
 	RegisteredAt time.Time
 	EditedAt     time.Time
 }
@@ -277,6 +278,7 @@ type UnclassifiedDailyReviewDatesGroupedByCategoryOutput struct {
 	// 復習物の情報
 	ItemName     string
 	Detail       string
+	LearnedDate  string
 	RegisteredAt time.Time
 	EditedAt     time.Time
 }
@@ -299,6 +301,7 @@ type UnclassifiedDailyReviewDatesGroupedByUserOutput struct {
 	// 復習物の情報
 	ItemName     string
 	Detail       string
+	LearnedDate  string
 	RegisteredAt time.Time
 	EditedAt     time.Time
 }
