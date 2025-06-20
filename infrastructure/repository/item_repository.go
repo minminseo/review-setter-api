@@ -927,10 +927,10 @@ func (r *itemRepository) GetAllDailyReviewDates(ctx context.Context, userID stri
 			next = &t
 		}
 
-		var learnedDate *time.Time
+		var learnedDate time.Time
 		if row.LearnedDate.Valid {
 			t := row.LearnedDate.Time
-			learnedDate = &t
+			learnedDate = t
 		}
 
 		detail := row.Detail.String
