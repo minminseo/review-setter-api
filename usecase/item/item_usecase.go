@@ -165,171 +165,144 @@ func (iu *ItemUsecase) CreateItem(ctx context.Context, in CreateItemInput) (*Cre
 	return out, nil
 }
 
-// 復習物の更新（編集）
+// 復習物更新
+// <前提条件>
+// 復習物は必ず学習日を持つ。
 
-/*
-<前提条件>
-復習物は必ず学習日を持つ。
-
-学習日が変更されているかどうかは問わない
-・未設定→設定なら復習日s作成（リクエストに含めた学習日で算出）：完了済み復習日の有無の判定不要
-・設定済み→未設定なら復習日s削除：完了済み復習日の有無の判定必要
-・復習パターンの長さが不一致なら復習日s一括削除→一括挿入（リクエストに含めた学習日で算出）：完了済み復習日の有無の判定必要
-・復習パターンの長さは一致するが、InterVal_daysが不一致なら復習日s更新（リクエストに含めた学習日で算出）：完了済み復習日の有無の判定必要
-・未設定→未設定なら復習物のみ更新：完了済み復習日の有無の判定不要
-
-学習日が変更されているかどうかを問う
-・同一復習パターンステップ、かつisLearnedDateChanged=trueなら復習日s更新（リクエストに含めた学習日で算出）：完了済み復習日の有無の判定必要
-・同一復習パターンステップ、かつisLearnedDateChanged=falseなら復習物のみ更新：完了済み復習日の有無の判定不要
-
-<その他補足>
-復習パターン未設定→必ず「完了済み復習日の有無の判定不要」になる
-復習パターンは設定済みだが、復習日の変更の必要がない場合→「完了済み復習日の有無の判定不要」になる
-*/
 func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*UpdateItemOutput, error) {
-	// フラグたち作成のために対象の復習物情報を取得
-	targetItem, err := iu.itemRepo.GetItemByID(ctx, input.ItemID, input.UserID)
-	if err != nil {
-		return nil, err
-	}
-	targetPatternSteps, err := iu.patternRepo.GetAllPatternStepsByPatternID(ctx, *input.PatternID, input.UserID)
-	if err != nil {
-		return nil, err
-	}
 
-	// 単なるreview_itemsテーブルだけの操作にとどまるかどうか判別するためのフラグ
-	isNameAndDetailChanged := targetItem.Name != input.Name || targetItem.Detail != input.Detail
+	/*--------- ここで行う処理の概要 ---------*/
+	// 0. 準備：下記の3つの処理で使われるフラグを最初に用意。各フラグがどの番号の処理で使われるか分かりやすいように、各フラグに番号をつける。
 
-	// 完了済み復習物の有無の判定が必要かどうか判定するための土台づくり
-	// 元の復習パターンが未設定だったかどうかのフラグ
-	isOriginalPatternNil := targetItem.PatternID == nil
+	// 1. 更新対象のreview_itemsのidを外部キーとして持つreview_datesの中に、is_completedがtrueなレコードがあるなら変更不可エラーを返す処理。
+	// 2. review_datesのIDを新規作成するか、既存のIDを再利用するか判定し、その結果に従ってformatter.goの関数を使い分ける処理。
+	// 3. review_itemsの更新のみか、review_datesの更新、削除、挿入のどのクエリを発行する必要があるかを判定する処理。
+	/*-------------------------------------*/
 
-	// 新たに適用したい復習パターンがnilかどうかのフラグ
-	isInputPatternNil := input.PatternID == nil
-
-	/* 学習日の変更があるかどうかのフラグ*/
-	parsedLearnedDate, err := time.Parse("2006-01-02", input.LearnedDate)
-	if err != nil {
-		return nil, err
-	}
-	isLearnedDateChanged := targetItem.LearnedDate != parsedLearnedDate
-
-	// 即エラーリターン用フラグ
-	isCategoryChanged := targetItem.CategoryID != input.CategoryID
-	isBoxChanged := targetItem.BoxID != input.BoxID
-	isPatternChangedWithNillPossible := targetItem.PatternID != input.PatternID
-	var isPatternChanged bool
-	if !isOriginalPatternNil && !isInputPatternNil {
-		isPatternChanged = targetItem.PatternID != input.PatternID
-	}
-	// 変更点なしの場合、エラーを返す
-	if !isCategoryChanged && !isBoxChanged && !isPatternChangedWithNillPossible && !isNameAndDetailChanged && !isLearnedDateChanged {
-		return nil, ItemDomain.ErrNoDiff
-	}
-
-	/* 「(復習パターンステップが完全一致 || 同一の復習パターンID) && 学習日の変更なし」なら「完了済み復習日の有無の判定不要」になる */
-	// ここで、復習日テーブルの操作する時に、「削除→挿入」か「更新」のどちらをするかの判定をするためのフラグ「isTargetPatternStepsLengthChanged」と「isTargetPatternStepsChangedWithoutLengthChange」を作成
-
-	// 具体的な検証内容：shouldCheckRecordExistence
-	// 元のパターンIDがnil（新たなパターンIDの値は問わない）：false
-	// 同じIDかつ学習日の変更なし：false
-	// 同じIDだが学習日の変更あり：true
-	// 異なるIDだがパターンステップが完全一致、かつ学習日の変更なし：false
-	// 異なるIDだがパターンステップが完全一致、かつ学習日の変更あり：true
-	// 異なるIDかつパターンステップが不一致（学習日変更の有無は問わない）：true
-
-	shouldCheckRecordExistence := true
-	var isCurrentPatternStepsLengthChanged bool              // これがtrueなら復習日一括削除→一括挿入
-	var isCurrentPatternStepsChangedWithoutLengthChange bool // これがtrueでisCurrentPatternStepsLengthChangedがfalseなら復習日一括更新（削除はしない）
-
-	// 元の復習物のパターンIDがNilの場合、復習日は存在しないことが確定するので、完了済み復習日の有無の判定は不要
-	if isOriginalPatternNil {
-		shouldCheckRecordExistence = false
-
-		// 元の復習物のパターンIDがNil出ない場合、新しいパターンIDフィールド値との関係性を検証
-	} else {
-		if !isInputPatternNil {
-			/* 復習パターンIDが一致、かつ学習日の変更なし */
-			if targetItem.PatternID == input.PatternID { // 復習パターンIDが一致
-				if !isLearnedDateChanged { // 学習日の変更なし
-
-					shouldCheckRecordExistence = false
-				}
-
-				/* 異なる復習パターンIDだがパターンステップが完全一致、かつ学習日の変更なし*/
-			} else {
-				// パターンステップを取得
-				var CurrentPatternSteps []*PatternDomain.PatternStep
-				CurrentPatternSteps, err = iu.patternRepo.GetAllPatternStepsByPatternID(ctx, *input.PatternID, input.UserID)
-				if err != nil {
-					return nil, err
-				}
-
-				// パターンステップの長さが異なるかどうか検証
-				if len(CurrentPatternSteps) != len(targetPatternSteps) { // targetPatternStepsは新たに適用したい復習パターンのステップ。
-					isCurrentPatternStepsLengthChanged = true
-				}
-
-				// パターンステップの長さは一致するが、IntervalDaysが異なるかどうか検証
-				if !isCurrentPatternStepsLengthChanged {
-					for i, step := range CurrentPatternSteps {
-						if step.IntervalDays != targetPatternSteps[i].IntervalDays {
-							isCurrentPatternStepsChangedWithoutLengthChange = true
-							break
-						}
-					}
-				}
-
-				// 「異なる復習パターンIDだがパターンステップが完全一致、かつ学習日の変更なし」が真かどうか検証
-				if !isCurrentPatternStepsLengthChanged && !isCurrentPatternStepsChangedWithoutLengthChange { // パターンは異なるが、パターンステップが完全一致
-					if !isLearnedDateChanged { // 学習日の変更なし
-						shouldCheckRecordExistence = false
-					}
-				}
-			}
-		} /*else { // これは不要なコード：elseも記述した場合↓↓↓↓。ネスト深いから書いた
-			// 設定済み→Nil：復習日削除のため、完了済み復習日があるかどうかの判定が必要
-			shouldCheckRecordExistence = true
-		}*/
-	}
-
-	editedAt := time.Now().UTC()
-	// 更新用のItem完成
-	err = targetItem.Set(input.CategoryID, input.BoxID, input.PatternID, input.Name, input.Detail, parsedLearnedDate, editedAt)
+	/*---------------- 0. 準備：フラグを最初に用意 ----------------*/
+	currentItem, err := iu.itemRepo.GetItemByID(ctx, input.ItemID, input.UserID)
 	if err != nil {
 		return nil, err
 	}
 
-	//isNameAndDetailChanged・shouldCheckRecordExistence・isCurrentPatternStepsLengthChanged・isCurrentPatternStepsChangedWithoutLengthChange
-	if shouldCheckRecordExistence {
-		HasCompleted, err := iu.itemRepo.HasCompletedReviewDateByItemID(ctx, input.ItemID, input.UserID)
+	// learned_dateに変更があるか
+	// 1, 2, 3
+	isLearnedDateChanged := false
+	persedInputLearnedDate, err := time.Parse("2006-01-02", input.LearnedDate)
+	if currentItem.LearnedDate != persedInputLearnedDate {
+		isLearnedDateChanged = true
+	}
+
+	// pattern_idが「NULLからNOT NULL」か
+	// 1, 2, 3
+	isPatternNilToNotNil := false
+	if currentItem.PatternID == nil && input.PatternID != nil {
+		isPatternNilToNotNil = true
+	}
+
+	// pattern_idが「NOT NULLからNULL」か
+	// 3
+	isPatternNotNilToNil := false
+	if currentItem.PatternID != nil && input.PatternID == nil {
+		isPatternNotNilToNil = true
+	}
+
+	// pattern_idが「NOT NULLからNOT NULL」か
+	// 2, 3
+	isPatternNotNilToNotNil := false
+	if currentItem.PatternID != nil && input.PatternID != nil {
+		isPatternNotNilToNotNil = true
+	}
+
+	// pettern_idが一致するか（nullとnullの場合もtrueとなるのでisPatternNotNilToNotNilと必ず併用）
+	// 1, 2, 3
+	isSamePatternID := false
+	if currentItem.PatternID == input.PatternID {
+		isSamePatternID = true
+	}
+
+	var currentSelectedPatternSteps []*PatternDomain.PatternStep
+	var requstedSelectedPatternSteps []*PatternDomain.PatternStep
+	isPatternStepsLengthDiff := false
+	isOnlyPatternStepsIntervalDaysDiff := false
+	isSamePatternStepsStructure := false
+	if isPatternNotNilToNotNil {
+		/*
+			「現在のreview_items」が持つpattern_idを外部キーに持つpattern_stepsのstep_numberとinterval_daysの構成と、リクエストのpattern_idを外部キーに持つpattern_stepsのstep_numberとinterval_daysの構成を比較した時、
+			a. pattern_idを外部キーに持つpattern_stepsのレコード数の長さが異なるか
+			b. pattern_idを外部キーに持つpattern_stepsのレコード数の長さは同じだが、interval_daysの構成が異なるか
+			c. pattern_idを外部キーに持つpattern_stepsのレコード数の長さも同じで、interval_daysの構成も同じか
+			という3つのフラグを生成する。
+		*/
+
+		currentSelectedPatternSteps, err = iu.patternRepo.GetAllPatternStepsByPatternID(ctx, *currentItem.PatternID, currentItem.UserID)
 		if err != nil {
 			return nil, err
 		}
-		if HasCompleted {
+		requstedSelectedPatternSteps, err = iu.patternRepo.GetAllPatternStepsByPatternID(ctx, *input.PatternID, input.UserID)
+		if err != nil {
+			return nil, err
+		}
+
+		// a. pattern_idを外部キーに持つpattern_stepsのレコード数の長さが異なるか
+		// 2, 3
+		if len(currentSelectedPatternSteps) != len(requstedSelectedPatternSteps) {
+			isPatternStepsLengthDiff = true
+		}
+
+		// b. pattern_idを外部キーに持つpattern_stepsのレコード数の長さは同じだが、interval_daysの構成が異なるか
+		// 2, 3
+		if !isPatternStepsLengthDiff {
+			for i, currentStep := range currentSelectedPatternSteps {
+				if currentStep.IntervalDays != requstedSelectedPatternSteps[i].IntervalDays {
+					isOnlyPatternStepsIntervalDaysDiff = true
+					break
+				}
+			}
+		}
+
+		// c. pattern_idを外部キーに持つpattern_stepsのレコード数の長さも同じで、interval_daysの構成も同じか
+		// 1, 2, 3
+		if !isPatternStepsLengthDiff && !isOnlyPatternStepsIntervalDaysDiff {
+			isSamePatternStepsStructure = true
+		}
+	}
+
+	/*---------------- ここまでがフラグの生成 ----------------*/
+
+	// 1. 更新対象のreview_itemsのidを外部キーとして持つreview_datesの中に、is_completedがtrueなレコードがあるなら変更不可エラーを返す処理。
+	if isPatternNotNilToNil ||
+		(isPatternNotNilToNotNil && isLearnedDateChanged) ||
+		(isPatternNotNilToNotNil && !isLearnedDateChanged && !isSamePatternID) ||
+		(!isLearnedDateChanged && isPatternStepsLengthDiff) ||
+		(!isLearnedDateChanged && isOnlyPatternStepsIntervalDaysDiff) {
+		hasCompleted, err := iu.itemRepo.HasCompletedReviewDateByItemID(ctx, input.ItemID, input.UserID)
+		if err != nil {
+			return nil, err
+		}
+		if hasCompleted {
 			return nil, ItemDomain.ErrHasCompletedReviewDate
 		}
 	}
 
-	/* 復習日のオブジェクト生成 */
+	// 2. review_datesのIDを新規作成するか、既存のIDを再利用するか判定し、その結果に従ってformatter.goの関数を使い分ける処理。
 	parsedToday, err := time.Parse("2006-01-02", input.Today)
 	if err != nil {
 		return nil, err
 	}
+	var newReviewdates []*ItemDomain.Reviewdate
 
-	var reviewdatesResult []*ItemDomain.Reviewdate
-
-	if (isCurrentPatternStepsLengthChanged) || (isOriginalPatternNil && !isInputPatternNil) {
-
+	if isPatternNilToNotNil || isPatternStepsLengthDiff {
+		//　IDを新規作成
 		if input.IsMarkOverdueAsCompleted {
 			var isFinished bool
-			reviewdatesResult, isFinished, err = FormatWithOverdueMarkedCompleted(
-				targetPatternSteps,
+			newReviewdates, isFinished, err = FormatWithOverdueMarkedCompleted(
+				requstedSelectedPatternSteps,
 				input.UserID,
 				input.CategoryID,
 				input.BoxID,
 				input.ItemID,
-				parsedLearnedDate,
+				persedInputLearnedDate,
 				parsedToday,
 			)
 			if err != nil {
@@ -337,41 +310,43 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 			}
 			// もし最後のステップが今日より前なら（復習物作成の時点で全復習日完了扱いなら）、newItem.isFinishedをtrueにする
 			if isFinished {
-				targetItem.IsFinished = true
+				currentItem.IsFinished = true
 			}
 		} else {
-			reviewdatesResult, err = FormatWithOverdueMarkedInCompleted(
-				targetPatternSteps,
+			newReviewdates, err = FormatWithOverdueMarkedInCompleted(
+				requstedSelectedPatternSteps,
 				input.UserID,
 				input.CategoryID,
 				input.BoxID,
 				input.ItemID,
-				parsedLearnedDate,
+				persedInputLearnedDate,
 				parsedToday,
 			)
 			if err != nil {
 				return nil, err
 			}
 		}
+
 	}
 
-	if (isCurrentPatternStepsChangedWithoutLengthChange) ||
-		(!isCurrentPatternStepsLengthChanged && !isCurrentPatternStepsChangedWithoutLengthChange && isLearnedDateChanged) ||
-		(!isPatternChanged && isLearnedDateChanged) {
+	if (isOnlyPatternStepsIntervalDaysDiff) ||
+		(isSamePatternStepsStructure && isLearnedDateChanged) ||
+		(isPatternNotNilToNotNil && isSamePatternID && isLearnedDateChanged) {
+		// 既存のIDを再利用
 		reviewDateIDs, err := iu.itemRepo.GetReviewDateIDsByItemID(ctx, input.ItemID, input.UserID)
 		if err != nil {
 			return nil, err
 		}
 		var isFinished bool
 		if input.IsMarkOverdueAsCompleted {
-			reviewdatesResult, isFinished, err = FormatWithOverdueMarkedCompletedWithIDs(
-				targetPatternSteps,
+			newReviewdates, isFinished, err = FormatWithOverdueMarkedCompletedWithIDs(
+				requstedSelectedPatternSteps,
 				reviewDateIDs,
 				input.UserID,
 				input.CategoryID,
 				input.BoxID,
 				input.ItemID,
-				parsedLearnedDate,
+				persedInputLearnedDate,
 				parsedToday,
 			)
 			if err != nil {
@@ -379,17 +354,17 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 			}
 			// もし最後のステップが今日より前なら（復習物作成の時点で全復習日完了扱いなら）、newItem.isFinishedをtrueにする
 			if isFinished {
-				targetItem.IsFinished = true
+				currentItem.IsFinished = true
 			}
 		} else {
-			reviewdatesResult, err = FormatWithOverdueMarkedInCompletedWithIDs(
-				targetPatternSteps,
+			newReviewdates, err = FormatWithOverdueMarkedInCompletedWithIDs(
+				requstedSelectedPatternSteps,
 				reviewDateIDs,
 				input.UserID,
 				input.CategoryID,
 				input.BoxID,
 				input.ItemID,
-				parsedLearnedDate,
+				persedInputLearnedDate,
 				parsedToday,
 			)
 			if err != nil {
@@ -398,27 +373,36 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 		}
 	}
 
+	editedAt := time.Now().UTC()
+	// 更新用のItem完成
+	err = currentItem.Set(input.CategoryID, input.BoxID, input.PatternID, input.Name, input.Detail, persedInputLearnedDate, editedAt)
+	if err != nil {
+		return nil, err
+	}
+
 	err = iu.transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
-		err = iu.itemRepo.UpdateItem(ctx, targetItem)
+		err = iu.itemRepo.UpdateItem(ctx, currentItem)
 		if err != nil {
 			return err
 		}
-		if (!isOriginalPatternNil && isInputPatternNil) || (isCurrentPatternStepsLengthChanged) {
+
+		if isPatternNotNilToNil || isPatternStepsLengthDiff {
 			err = iu.itemRepo.DeleteReviewDates(ctx, input.ItemID, input.UserID)
 			if err != nil {
 				return err
 			}
 		}
-		if (isCurrentPatternStepsLengthChanged) || (isOriginalPatternNil && !isInputPatternNil) {
-			_, err = iu.itemRepo.CreateReviewdates(ctx, reviewdatesResult)
+		if isPatternNilToNotNil || isPatternStepsLengthDiff {
+			_, err = iu.itemRepo.CreateReviewdates(ctx, newReviewdates)
 			if err != nil {
 				return err
 			}
 		}
-		if (isCurrentPatternStepsChangedWithoutLengthChange) ||
-			(!isCurrentPatternStepsLengthChanged && !isCurrentPatternStepsChangedWithoutLengthChange && isLearnedDateChanged) ||
-			(!isPatternChanged && isLearnedDateChanged) {
-			err = iu.itemRepo.UpdateReviewDates(ctx, reviewdatesResult, input.UserID)
+		if (isSamePatternID && isPatternNotNilToNotNil && isLearnedDateChanged) ||
+			(isSamePatternStepsStructure && isLearnedDateChanged) ||
+			(isOnlyPatternStepsIntervalDaysDiff) {
+
+			err = iu.itemRepo.UpdateReviewDates(ctx, newReviewdates, input.UserID)
 			if err != nil {
 				return err
 			}
@@ -427,19 +411,19 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 	})
 
 	resItem := &UpdateItemOutput{
-		ItemID:      targetItem.ItemID,
-		UserID:      targetItem.UserID,
-		CategoryID:  targetItem.CategoryID,
-		BoxID:       targetItem.BoxID,
-		PatternID:   targetItem.PatternID,
-		Name:        targetItem.Name,
-		Detail:      targetItem.Detail,
-		LearnedDate: (targetItem.LearnedDate).Format("2006-01-02"),
-		IsFinished:  targetItem.IsFinished,
-		EditedAt:    targetItem.EditedAt,
+		ItemID:      currentItem.ItemID,
+		UserID:      currentItem.UserID,
+		CategoryID:  currentItem.CategoryID,
+		BoxID:       currentItem.BoxID,
+		PatternID:   currentItem.PatternID,
+		Name:        currentItem.Name,
+		Detail:      currentItem.Detail,
+		LearnedDate: (currentItem.LearnedDate).Format("2006-01-02"),
+		IsFinished:  currentItem.IsFinished,
+		EditedAt:    currentItem.EditedAt,
 	}
-	resItem.ReviewDates = make([]UpdateReviewDateOutput, len(reviewdatesResult))
-	for i, rs := range reviewdatesResult {
+	resItem.ReviewDates = make([]UpdateReviewDateOutput, len(newReviewdates))
+	for i, rs := range newReviewdates {
 		resItem.ReviewDates[i] = UpdateReviewDateOutput{
 			ReviewDateID:         rs.ReviewdateID,
 			UserID:               rs.UserID,
