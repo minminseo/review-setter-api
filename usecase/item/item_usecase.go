@@ -235,8 +235,17 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 		isSamePatternID = true
 	}
 
-	var currentSelectedPatternSteps []*PatternDomain.PatternStep
 	var requstedSelectedPatternSteps []*PatternDomain.PatternStep
+	// NULL → NOT NULLの場合はINSERTクエリ確定でパターンの比較が不要なのでrequstedSelectedPatternStepsだけ取得
+	if isPatternNilToNotNil {
+		requstedSelectedPatternSteps, err = iu.patternRepo.GetAllPatternStepsByPatternID(ctx, *input.PatternID, input.UserID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// NOT NULL →　NOT NULLの場合はINSERTクエリかUPDATEクエリで済むか判別するためのフラグを作成する必要があるのでrequstedSelectedPatternStepsとcurrentSelectedPatternSteps両方取得
+	var currentSelectedPatternSteps []*PatternDomain.PatternStep
 	isPatternStepsLengthDiff := false
 	isOnlyPatternStepsIntervalDaysDiff := false
 	isSamePatternStepsStructure := false
