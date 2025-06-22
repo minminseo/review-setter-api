@@ -70,6 +70,20 @@ func (iu *ItemUsecase) CreateItem(ctx context.Context, in CreateItemInput) (*Cre
 		if err != nil {
 			return nil, err
 		}
+		out := &CreateItemOutput{
+			ItemID:       newItem.ItemID,
+			UserID:       newItem.UserID,
+			CategoryID:   newItem.CategoryID,
+			BoxID:        newItem.BoxID,
+			PatternID:    newItem.PatternID,
+			Name:         newItem.Name,
+			Detail:       newItem.Detail,
+			LearnedDate:  newItem.LearnedDate.Format("2006-01-02"),
+			IsCompleted:  newItem.IsFinished,
+			RegisteredAt: newItem.RegisteredAt,
+			EditedAt:     newItem.EditedAt,
+		}
+		return out, nil
 	}
 
 	var newReviewdates []*ItemDomain.Reviewdate
