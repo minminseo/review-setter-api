@@ -228,13 +228,14 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 		isPatternNotNilToNotNil = true
 	}
 
-	// pettern_idが一致するか（nullとnullの場合もtrueとなるのでisPatternNotNilToNotNilと必ず併用）
+	// pettern_idが一致するか
 	// 1, 2, 3
 	isSamePatternID := false
-	if *currentItem.PatternID == *input.PatternID {
-		isSamePatternID = true
+	if isPatternNotNilToNotNil {
+		if *currentItem.PatternID == *input.PatternID {
+			isSamePatternID = true
+		}
 	}
-
 	var requstedSelectedPatternSteps []*PatternDomain.PatternStep
 	// NULL → NOT NULLの場合はINSERTクエリ確定でパターンの比較が不要なのでrequstedSelectedPatternStepsだけ取得
 	if isPatternNilToNotNil {
@@ -296,7 +297,7 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 	// 1. 更新対象のreview_itemsのidを外部キーとして持つreview_datesの中に、is_completedがtrueなレコードがあるなら変更不可エラーを返す処理。
 	if isPatternNotNilToNil ||
 		(isPatternNotNilToNotNil && isLearnedDateChanged) ||
-		(isPatternNotNilToNotNil && !isLearnedDateChanged && !isSamePatternID) ||
+		(!isLearnedDateChanged && !isSamePatternID) ||
 		(!isLearnedDateChanged && isPatternStepsLengthDiff) ||
 		(!isLearnedDateChanged && isOnlyPatternStepsIntervalDaysDiff) {
 		hasCompleted, err := iu.itemRepo.HasCompletedReviewDateByItemID(ctx, input.ItemID, input.UserID)
@@ -354,7 +355,7 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 
 	if (isOnlyPatternStepsIntervalDaysDiff) ||
 		(isSamePatternStepsStructure && isLearnedDateChanged) ||
-		(isPatternNotNilToNotNil && isSamePatternID && isLearnedDateChanged) {
+		(isSamePatternID && isLearnedDateChanged) {
 		// 既存のIDを再利用
 		reviewDateIDs, err := iu.itemRepo.GetReviewDateIDsByItemID(ctx, input.ItemID, input.UserID)
 		if err != nil {
@@ -421,7 +422,7 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 				return err
 			}
 		}
-		if (isSamePatternID && isPatternNotNilToNotNil && isLearnedDateChanged) ||
+		if (isSamePatternID && isLearnedDateChanged) ||
 			(isSamePatternStepsStructure && isLearnedDateChanged) ||
 			(isOnlyPatternStepsIntervalDaysDiff) {
 
