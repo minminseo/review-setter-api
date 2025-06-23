@@ -270,8 +270,7 @@ func (r *itemRepository) UpdateReviewDates(ctx context.Context, reviewdates []*i
 
 	inputs := make([]string, len(reviewdates))
 	for i, rd := range reviewdates {
-		// UNNESTに渡すための(id,scheduled_date,is_completed)形式の文字列を生成
-		// CategoryID, BoxIDがnilの場合はNULLを入れる
+		// UNNESTに渡すための(id,category_id,box_id,scheduled_date,is_completed)形式の文字列を生成
 		var categoryID string
 		if rd.CategoryID != nil {
 			categoryID = *rd.CategoryID
