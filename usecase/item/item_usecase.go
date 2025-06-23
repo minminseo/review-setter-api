@@ -190,7 +190,8 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 
 	// 1. 更新対象のreview_itemsのidを外部キーとして持つreview_datesの中に、is_completedがtrueなレコードがあるなら変更不可エラーを返す処理。
 	// 2. review_datesのIDを新規作成するか、既存のIDを再利用するか判定し、その結果に従ってformatter.goの関数を使い分ける処理。
-	// 3. review_itemsの更新のみか、review_datesの更新、削除、挿入のどのクエリを発行する必要があるかを判定する処理。
+	// 3. review_datesのcategory_idとbox_idだけの更新を行うためにnewReviewdatesを生成する処理。
+	// 4. review_itemsの更新のみか、review_datesの更新、削除、挿入のどのクエリを発行する必要があるかを判定する処理。
 	/*-------------------------------------*/
 
 	/*---------------- 0. 準備：フラグを最初に用意 ----------------*/
@@ -200,7 +201,7 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 	}
 
 	// learned_dateに変更があるか
-	// 1, 2, 3
+	// 1, 2, 4
 	isLearnedDateChanged := false
 	persedInputLearnedDate, err := time.Parse("2006-01-02", input.LearnedDate)
 	if currentItem.LearnedDate != persedInputLearnedDate {
@@ -208,34 +209,91 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 	}
 
 	// pattern_idが「NULLからNOT NULL」か
-	// 1, 2, 3
+	// 1, 2, 4
 	isPatternNilToNotNil := false
 	if currentItem.PatternID == nil && input.PatternID != nil {
 		isPatternNilToNotNil = true
 	}
 
 	// pattern_idが「NOT NULLからNULL」か
-	// 3
+	// 4
 	isPatternNotNilToNil := false
 	if currentItem.PatternID != nil && input.PatternID == nil {
 		isPatternNotNilToNil = true
 	}
 
 	// pattern_idが「NOT NULLからNOT NULL」か
-	// 2, 3
+	// 2, 4
 	isPatternNotNilToNotNil := false
 	if currentItem.PatternID != nil && input.PatternID != nil {
 		isPatternNotNilToNotNil = true
 	}
 
 	// pettern_idが一致するか
-	// 1, 2, 3
+	// 1, 2, 4
 	isSamePatternID := false
 	if isPatternNotNilToNotNil {
 		if *currentItem.PatternID == *input.PatternID {
 			isSamePatternID = true
 		}
 	}
+
+	// category_idが「NULLからNOT NULL」か
+	// 3
+	isCategoryNilToNotNil := false
+	if currentItem.CategoryID == nil && input.CategoryID != nil {
+		isCategoryNilToNotNil = true
+	}
+	// category_idが「NOT NULLからNULL」か
+	// 3
+	isCategoryNotNilToNil := false
+	if currentItem.CategoryID != nil && input.CategoryID == nil {
+		isCategoryNotNilToNil = true
+	}
+	// category_idが「NOT NULLからNOT NULL」か
+	// 3
+	isCategoryNotNilToNotNil := false
+	if currentItem.CategoryID != nil && input.CategoryID != nil {
+		isCategoryNotNilToNotNil = true
+	}
+
+	// category_idが一致するか
+	// 3
+	isSameCategoryID := false
+	if isCategoryNotNilToNotNil {
+		if *currentItem.CategoryID == *input.CategoryID {
+			isSameCategoryID = true
+		}
+	}
+
+	// box_idが「NULLからNOT NULL」か
+	// 3
+	isBoxNilToNotNil := false
+	if currentItem.BoxID == nil && input.BoxID != nil {
+		isBoxNilToNotNil = true
+	}
+	// box_idが「NOT NULLからNULL」か
+	// 3
+	isBoxNotNilToNil := false
+	if currentItem.BoxID != nil && input.BoxID == nil {
+		isBoxNotNilToNil = true
+	}
+	// box_idが「NOT NULLからNOT NULL」か
+	// 3
+	isBoxNotNilToNotNil := false
+	if currentItem.BoxID != nil && input.BoxID != nil {
+		isBoxNotNilToNotNil = true
+	}
+
+	// box_idが一致するか
+	// 3
+	isSameBoxID := false
+	if isBoxNotNilToNotNil {
+		if *currentItem.BoxID == *input.BoxID {
+			isSameBoxID = true
+		}
+	}
+
 	var requstedSelectedPatternSteps []*PatternDomain.PatternStep
 	// NULL → NOT NULLの場合はINSERTクエリ確定でパターンの比較が不要なのでrequstedSelectedPatternStepsだけ取得
 	if isPatternNilToNotNil {
@@ -397,6 +455,34 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 		}
 	}
 
+	// 3. review_datesのcategory_idとbox_idだけの更新を行うためにnewReviewdatesを生成する処理。
+	isOnlyCategoryIDBoxIDUpdate := false // category_idとbox_idだけの永続化処理を行うためのフラグ
+	if (isSamePatternStepsStructure || isSamePatternID) && (!isLearnedDateChanged) &&
+		(isCategoryNilToNotNil || isCategoryNotNilToNil || !isSameCategoryID || isBoxNilToNotNil || isBoxNotNilToNil || !isSameBoxID) {
+		// category_idとbox_idだけの更新を行うためのnewReviewdatesを生成
+		currentReviewdates, err := iu.itemRepo.GetReviewDatesByItemID(ctx, input.ItemID, input.UserID)
+		if err != nil {
+			return nil, err
+		}
+		newReviewdates = make([]*ItemDomain.Reviewdate, len(currentReviewdates))
+		for i, rd := range currentReviewdates {
+			newReviewdates[i] = &ItemDomain.Reviewdate{
+				ReviewdateID:         rd.ReviewdateID,
+				UserID:               rd.UserID,
+				ItemID:               rd.ItemID,
+				StepNumber:           rd.StepNumber,
+				InitialScheduledDate: rd.InitialScheduledDate,
+				ScheduledDate:        rd.ScheduledDate,
+				IsCompleted:          rd.IsCompleted,
+			}
+			err := newReviewdates[i].SetOnlyIDs(input.CategoryID, input.BoxID)
+			if err != nil {
+				return nil, err
+			}
+		}
+		isOnlyCategoryIDBoxIDUpdate = true
+	}
+
 	editedAt := time.Now().UTC()
 	// 更新用のItem完成
 	err = currentItem.Set(input.CategoryID, input.BoxID, input.PatternID, input.Name, input.Detail, persedInputLearnedDate, editedAt)
@@ -424,7 +510,8 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 		}
 		if (isSamePatternID && isLearnedDateChanged) ||
 			(isSamePatternStepsStructure && isLearnedDateChanged) ||
-			(isOnlyPatternStepsIntervalDaysDiff) {
+			isOnlyPatternStepsIntervalDaysDiff ||
+			isOnlyCategoryIDBoxIDUpdate {
 
 			err = iu.itemRepo.UpdateReviewDates(ctx, newReviewdates, input.UserID)
 			if err != nil {

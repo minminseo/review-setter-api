@@ -270,8 +270,16 @@ func (r *itemRepository) UpdateReviewDates(ctx context.Context, reviewdates []*i
 
 	inputs := make([]string, len(reviewdates))
 	for i, rd := range reviewdates {
-		// UNNESTに渡すための(id,scheduled_date,is_completed)形式の文字列を生成
-		inputs[i] = fmt.Sprintf(`(%q, %q, %t)`, rd.ReviewdateID, rd.ScheduledDate.Format("2006-01-02"), rd.IsCompleted)
+		// UNNESTに渡すための(id,category_id,box_id,scheduled_date,is_completed)形式の文字列を生成
+		var categoryID string
+		if rd.CategoryID != nil {
+			categoryID = *rd.CategoryID
+		}
+		var boxID string
+		if rd.BoxID != nil {
+			boxID = *rd.BoxID
+		}
+		inputs[i] = fmt.Sprintf("(%s,%s,%s,%s,%t)", rd.ReviewdateID, categoryID, boxID, rd.ScheduledDate.Format("2006-01-02"), rd.IsCompleted)
 	}
 
 	params := dbgen.UpdateReviewDatesParams{

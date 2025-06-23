@@ -208,3 +208,12 @@ func (s *Reviewdate) Validate() error {
 		),
 	)
 }
+
+func (s *Reviewdate) SetOnlyIDs(
+	categoryID *string,
+	boxID *string,
+) error {
+	s.CategoryID = categoryID
+	s.BoxID = boxID
+	return nil
+}
