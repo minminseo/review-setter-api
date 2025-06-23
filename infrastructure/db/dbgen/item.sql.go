@@ -7,7 +7,6 @@ package dbgen
 
 import (
 	"context"
-
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -1567,12 +1566,14 @@ func (q *Queries) UpdateReviewDateAsInCompleted(ctx context.Context, arg UpdateR
 const updateReviewDates = `-- name: UpdateReviewDates :exec
 UPDATE review_dates r
 SET
+    category_id = v.category_id,
+    box_id = v.box_id,
     scheduled_date = v.scheduled_date,
     is_completed = v.is_completed
 FROM
     UNNEST(
         $2::reviewdate_input[]
-    ) AS v(id, scheduled_date, is_completed)
+    ) AS v(id, category_id, box_id, scheduled_date, is_completed)
 WHERE
     r.id = v.id
 AND
