@@ -231,7 +231,7 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 	// pettern_idが一致するか（nullとnullの場合もtrueとなるのでisPatternNotNilToNotNilと必ず併用）
 	// 1, 2, 3
 	isSamePatternID := false
-	if currentItem.PatternID == input.PatternID {
+	if *currentItem.PatternID == *input.PatternID {
 		isSamePatternID = true
 	}
 
