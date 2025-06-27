@@ -180,6 +180,17 @@ func (pu *patternUsecase) UpdatePattern(ctx context.Context, input UpdatePattern
 		return nil, patternDomain.ErrNoDiff
 	}
 
+	if isStepsChanged {
+		hasItemByPatternID := false
+		hasItemByPatternID, err = pu.itemRepo.IsPatternRelatedToItemByPatternID(ctx, input.PatternID, input.UserID)
+		if err != nil {
+			return nil, err
+		}
+		if hasItemByPatternID {
+			return nil, patternDomain.ErrPatternRelatedToItemUpdate
+		}
+	}
+
 	if isPatternChanged {
 		editedAt := time.Now().UTC()
 		err = targetPattern.Set(input.Name, input.TargetWeight, editedAt)
@@ -205,11 +216,10 @@ func (pu *patternUsecase) UpdatePattern(ctx context.Context, input UpdatePattern
 			}
 			newSteps[i] = patternStep
 		}
-	}
-
-	err = patternDomain.ValidateSteps(newSteps)
-	if err != nil {
-		return nil, err
+		err = patternDomain.ValidateSteps(newSteps)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// patternとstepは別テーブルなので同一トランザクションで永続化
@@ -272,7 +282,7 @@ func (pu *patternUsecase) DeletePattern(ctx context.Context, patternID, userID s
 		return err
 	}
 	if isItemRelated {
-		return patternDomain.ErrPatternRelatedToItem
+		return patternDomain.ErrPatternRelatedToItemDelete
 	}
 	// パターンを削除
 	err = pu.patternRepo.DeletePattern(ctx, patternID, userID)
