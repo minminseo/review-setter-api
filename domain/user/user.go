@@ -136,7 +136,7 @@ var allowedThemeColors = map[string]struct{}{
 }
 var allowedLanguages = map[string]struct{}{
 	LanguageJa: {},
-	// LanguageEn: {},
+	LanguageEn: {},
 }
 
 // パスワードハッシュ化
