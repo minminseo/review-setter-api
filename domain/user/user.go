@@ -123,7 +123,7 @@ const (
 
 	// 言語
 	LanguageJa string = "ja"
-	// LanguageEn languageName = "en"
+	LanguageEn string = "en"
 )
 
 var allowedTimeZones = map[string]struct{}{
