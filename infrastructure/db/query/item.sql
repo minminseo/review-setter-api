@@ -137,6 +137,23 @@ WHERE
 AND
     r.user_id = (sqlc.arg(user_id))::uuid;
 
+-- 復習日手動変更機能の副次的な変更に使う
+-- name: UpdateReviewDatesBack :exec
+UPDATE review_dates r
+SET
+    category_id = v.category_id,
+    box_id = v.box_id,
+    scheduled_date = v.scheduled_date,
+    is_completed = v.is_completed
+FROM
+    UNNEST(
+        sqlc.arg(input)::back_reviewdate_input[]
+    ) AS v(id, category_id, box_id, scheduled_date, is_completed)
+WHERE
+    r.id = v.id
+AND
+    r.user_id = (sqlc.arg(user_id))::uuid;
+
 -- name: UpdateItemAsFinished :exec
 UPDATE
     review_items
@@ -633,3 +650,16 @@ AND
     is_Finished = true
 ORDER BY
     registered_at;
+
+
+-- name: GetNextScheduledDateByReviewDateID :one
+SELECT
+    scheduled_date
+FROM
+    review_dates
+WHERE
+    item_id = sqlc.arg(item_id)
+AND
+    step_number = sqlc.arg(step_number)
+AND
+    user_id = sqlc.arg(user_id);
