@@ -168,8 +168,8 @@ type UpdateBackReviewDateInput struct {
 	// 計算用
 	LearnedDate string // 復習物の学習日
 
-	// 復習日再生成用（DBアクセス減らす目的）
-	PatternStepsInReviewDate []PatternStepInReviewDate // 復習物更新のDTO共有（）
+	// 復習日再生成用
+	PatternID string
 }
 
 type UpdateBackReviewDateOutput struct {
