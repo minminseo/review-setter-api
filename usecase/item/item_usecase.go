@@ -566,66 +566,108 @@ func (iu *ItemUsecase) UpdateReviewDates(ctx context.Context, input UpdateBackRe
 		return nil, ItemDomain.ErrNewScheduledDateBeforeInitialScheduledDate
 	}
 
-	// 復習日再生成・IsCompletedのbool値判別ロジック
-	calculatedDuration := int(parsedNewScheduledDate.Sub(parsedInitialScheduledDate).Hours() / 24)
-	parsedLearnedDate, err := time.Parse("2006-01-02", input.LearnedDate)
-	if err != nil {
-		return nil, err
-	}
-	FakeLearnedDate := parsedLearnedDate.AddDate(0, 0, calculatedDuration) // これでFormat〇〇系の関数を使い回せる
-
 	parsedToday, err := time.Parse("2006-01-02", input.Today)
 	if err != nil {
 		return nil, err
 	}
 
-	// input.PatternStepsInReviewDateをFormatWithOverdueMarkedCompletedに渡せるように型変換
-	targetPatternSteps := make([]*PatternDomain.PatternStep, len(input.PatternStepsInReviewDate))
-	for i, step := range input.PatternStepsInReviewDate {
-		targetPatternSteps[i] = &PatternDomain.PatternStep{
-			PatternStepID: step.PatternStepID,
-			UserID:        step.UserID,
-			PatternID:     step.PatternID,
-			StepNumber:    step.StepNumber,
-			IntervalDays:  step.IntervalDays,
-		}
-	}
-
-	var newReviewdates []*ItemDomain.Reviewdate
-
-	reviewDateIDs, err := iu.itemRepo.GetReviewDateIDsByItemID(ctx, input.ItemID, input.UserID)
+	targetPatternSteps, err := iu.patternRepo.GetAllPatternStepsByPatternID(ctx, input.PatternID, input.UserID)
 	if err != nil {
 		return nil, err
 	}
+
+	isLastStep := false
+	lastStepNumber := targetPatternSteps[len(targetPatternSteps)-1].StepNumber
+	if lastStepNumber == input.StepNumber {
+		isLastStep = true
+	} else {
+		isLastStep = false
+	}
+
+	var newReviewdates []*ItemDomain.Reviewdate
 	var isFinished bool
-	if input.IsMarkOverdueAsCompleted {
-		newReviewdates, isFinished, err = FormatWithOverdueMarkedCompletedWithIDs(
-			targetPatternSteps,
-			reviewDateIDs,
-			input.UserID,
+	if isLastStep {
+		// isLastStepがtrueということは最後の復習日なのでインスタンス化させるのは一つのみで良い。
+		newReviewdate, err := ItemDomain.NewReviewdate(
+			input.ReviewDateID,
+			input.UserID, // 使わない
 			input.CategoryID,
 			input.BoxID,
-			input.ItemID,
-			FakeLearnedDate,
-			parsedToday,
+			input.ItemID,               // 使わない
+			input.StepNumber,           // 使わない
+			parsedInitialScheduledDate, // 使わない
+			parsedNewScheduledDate,
+			true,
 		)
 		if err != nil {
 			return nil, err
 		}
-		// isFinishedがtrueの場合、UpdateItemAsFinishedを実行
+		newReviewdates = []*ItemDomain.Reviewdate{newReviewdate}
+		isFinished = true // 最後の復習日を完了済みにするのでisFinishedはtrue
 	} else {
-		newReviewdates, err = FormatWithOverdueMarkedInCompletedWithIDs(
-			targetPatternSteps,
-			reviewDateIDs,
-			input.UserID,
-			input.CategoryID,
-			input.BoxID,
-			input.ItemID,
-			FakeLearnedDate,
-			parsedToday,
-		)
+
+		reviewDateIDs, err := iu.itemRepo.GetReviewDateIDsByItemID(ctx, input.ItemID, input.UserID)
 		if err != nil {
 			return nil, err
+		}
+		parsedLearnedDate, err := time.Parse("2006-01-02", input.LearnedDate)
+		if err != nil {
+			return nil, err
+		}
+
+		if input.IsMarkOverdueAsCompleted {
+			calculatedDuration := int(parsedNewScheduledDate.Sub(parsedInitialScheduledDate).Hours() / 24)
+			FakeLearnedDate := parsedLearnedDate.AddDate(0, 0, calculatedDuration) // これでFormat〇〇系の関数を使い回せる
+
+			newReviewdates, isFinished, err = FormatWithOverdueMarkedCompletedWithIDs(
+				targetPatternSteps,
+				reviewDateIDs,
+				input.UserID,
+				input.CategoryID,
+				input.BoxID,
+				input.ItemID,
+				FakeLearnedDate,
+				parsedToday,
+			)
+			if err != nil {
+				return nil, err
+			}
+			// isFinishedがtrueの場合、UpdateItemAsFinishedを実行
+		} else {
+			var nextIntervalDays int
+			for _, step := range targetPatternSteps {
+				if step.StepNumber == input.StepNumber+1 { // isLastStep=false下での処理なので、ここではinput.StepNumber+1は必ず存在する。
+					nextIntervalDays = step.IntervalDays
+					break
+				}
+			}
+			nextInitialScheduledDate := parsedLearnedDate.AddDate(0, 0, nextIntervalDays)
+			// リクエスト対象の復習日の変更後の日付によらず、nextInitialScheduledDateと今日との差でリクエスト対象よりあとのスケジュールは決まるので、nextInitialScheduledDateと今日の差を算出する。
+			calculatedDuration := int(parsedToday.Sub(nextInitialScheduledDate).Hours() / 24)
+			parsedLearnedDate, err := time.Parse("2006-01-02", input.LearnedDate)
+			if err != nil {
+				return nil, err
+			}
+			FakeLearnedDate := parsedLearnedDate.AddDate(0, 0, calculatedDuration) // これでFormat〇〇系の関数を使い回せる
+			newReviewdates, err = FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(
+				targetPatternSteps,
+				reviewDateIDs,
+				input.UserID,
+				input.CategoryID,
+				input.BoxID,
+				input.ItemID,
+				FakeLearnedDate,
+				parsedToday,
+			)
+			if err != nil {
+				return nil, err
+			}
+			for _, rd := range newReviewdates {
+				if rd.StepNumber == input.StepNumber {
+					rd.ScheduledDate = parsedNewScheduledDate // FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDatesではリクエスト対象よりあとの復習日のフォーマットが目的なのでrd.ScheduledDateはここで上書きする必要がある。
+					rd.IsCompleted = true                     // FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDatesは、全てのisCompletedをfalseにするようになっているのでここでtrueにする必要がある。
+				}
+			}
 		}
 	}
 
@@ -651,7 +693,7 @@ func (iu *ItemUsecase) UpdateReviewDates(ctx context.Context, input UpdateBackRe
 			if err != nil {
 				return err
 			}
-			err = iu.itemRepo.UpdateReviewDates(ctx, filteredReviewdates, input.UserID)
+			err = iu.itemRepo.UpdateReviewDatesBack(ctx, filteredReviewdates, input.UserID)
 			if err != nil {
 				return err
 			}
@@ -661,7 +703,7 @@ func (iu *ItemUsecase) UpdateReviewDates(ctx context.Context, input UpdateBackRe
 			return nil, err
 		}
 	} else {
-		err = iu.itemRepo.UpdateReviewDates(ctx, filteredReviewdates, input.UserID)
+		err = iu.itemRepo.UpdateReviewDatesBack(ctx, filteredReviewdates, input.UserID)
 		if err != nil {
 			return nil, err
 		}
