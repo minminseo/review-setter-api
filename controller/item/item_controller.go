@@ -191,14 +191,6 @@ func (ic *itemController) UpdateReviewDates(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "リクエストの形式が正しくありません: " + err.Error()})
 	}
 
-	steps := make([]itemUsecase.PatternStepInReviewDate, len(req.PatternSteps))
-	for i, s := range req.PatternSteps {
-		steps[i] = itemUsecase.PatternStepInReviewDate{
-			PatternStepID: s.PatternStepID, UserID: s.UserID, PatternID: s.PatternID,
-			StepNumber: s.StepNumber, IntervalDays: s.IntervalDays,
-		}
-	}
-
 	input := itemUsecase.UpdateBackReviewDateInput{
 		ReviewDateID:             reviewDateID,
 		UserID:                   userID,
@@ -211,7 +203,7 @@ func (ic *itemController) UpdateReviewDates(c echo.Context) error {
 		IsMarkOverdueAsCompleted: req.IsMarkOverdueAsCompleted,
 		Today:                    req.Today,
 		LearnedDate:              req.LearnedDate,
-		PatternStepsInReviewDate: steps,
+		PatternID:                req.PatternID,
 	}
 
 	out, err := ic.iu.UpdateReviewDates(ctx, input)
