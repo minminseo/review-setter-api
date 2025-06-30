@@ -1,0 +1,1 @@
+DROP TYPE IF EXISTS back_reviewdate_input;

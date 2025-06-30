@@ -290,6 +290,35 @@ func (r *itemRepository) UpdateReviewDates(ctx context.Context, reviewdates []*i
 	return q.UpdateReviewDates(ctx, params)
 }
 
+func (r *itemRepository) UpdateReviewDatesBack(ctx context.Context, reviewdates []*itemDomain.Reviewdate, userID string) error {
+	q := db.GetQuery(ctx)
+	pgUserID, err := toUUID(userID)
+	if err != nil {
+		return err
+	}
+
+	inputs := make([]string, len(reviewdates))
+	for i, rd := range reviewdates {
+		// UNNESTに渡すための(id,category_id,box_id,scheduled_date,is_completed)形式の文字列を生成
+		var categoryID string
+		if rd.CategoryID != nil {
+			categoryID = *rd.CategoryID
+		}
+		var boxID string
+		if rd.BoxID != nil {
+			boxID = *rd.BoxID
+		}
+		inputs[i] = fmt.Sprintf("(%s,%s,%s,%s,%t)", rd.ReviewdateID, categoryID, boxID, rd.ScheduledDate.Format("2006-01-02"), rd.IsCompleted)
+	}
+
+	params := dbgen.UpdateReviewDatesBackParams{
+		UserID: pgUserID,
+		Input:  inputs,
+	}
+
+	return q.UpdateReviewDatesBack(ctx, params)
+}
+
 func (r *itemRepository) UpdateItemAsFinished(ctx context.Context, itemID string, userID string, editedAt time.Time) error {
 	q := db.GetQuery(ctx)
 	pgItemID, err := toUUID(itemID)
@@ -1097,4 +1126,26 @@ func (r *itemRepository) GetUnclassfiedFinishedItemsByUserID(ctx context.Context
 		}
 	}
 	return results, nil
+}
+
+func (r *itemRepository) GetNextScheduledDateByReviewDateID(ctx context.Context, itemID string, stepNumber int, userID string) (time.Time, error) {
+	q := db.GetQuery(ctx)
+	pgItemID, err := toUUID(itemID)
+	if err != nil {
+		return time.Time{}, err
+	}
+	pgUserID, err := toUUID(userID)
+	if err != nil {
+		return time.Time{}, err
+	}
+	params := dbgen.GetNextScheduledDateByReviewDateIDParams{
+		ItemID:     pgItemID,
+		StepNumber: int16(stepNumber),
+		UserID:     pgUserID,
+	}
+	nextScheduledDate, err := q.GetNextScheduledDateByReviewDateID(ctx, params)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return nextScheduledDate.Time, nil
 }

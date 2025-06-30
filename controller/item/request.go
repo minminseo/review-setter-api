@@ -25,15 +25,15 @@ type UpdateItemRequest struct {
 
 // ReviewDateID、ItemIDはパラメータから取得
 type UpdateReviewDatesRequest struct {
-	RequestScheduledDate     string                  `json:"request_scheduled_date"`
-	IsMarkOverdueAsCompleted bool                    `json:"is_mark_overdue_as_completed"`
-	Today                    string                  `json:"today"`
-	PatternSteps             []PatternStepForRequest `json:"pattern_steps"`
-	LearnedDate              string                  `json:"learned_date"`
-	InitialScheduledDate     string                  `json:"initial_scheduled_date"`
-	StepNumber               int                     `json:"step_number"`
-	CategoryID               *string                 `json:"category_id"`
-	BoxID                    *string                 `json:"box_id"`
+	RequestScheduledDate     string  `json:"request_scheduled_date"`
+	IsMarkOverdueAsCompleted bool    `json:"is_mark_overdue_as_completed"`
+	Today                    string  `json:"today"`
+	PatternID                string  `json:"pattern_id"`
+	LearnedDate              string  `json:"learned_date"`
+	InitialScheduledDate     string  `json:"initial_scheduled_date"`
+	StepNumber               int     `json:"step_number"`
+	CategoryID               *string `json:"category_id"`
+	BoxID                    *string `json:"box_id"`
 }
 
 type UpdateItemAsUnFinishedForceRequest struct {
@@ -42,14 +42,6 @@ type UpdateItemAsUnFinishedForceRequest struct {
 	PatternID   string  `json:"pattern_id"`
 	LearnedDate string  `json:"learned_date"`
 	Today       string  `json:"today"`
-}
-
-type PatternStepForRequest struct {
-	PatternStepID string `json:"pattern_step_id"`
-	UserID        string `json:"user_id"`
-	PatternID     string `json:"pattern_id"`
-	StepNumber    int    `json:"step_number"`
-	IntervalDays  int    `json:"interval_days"`
 }
 
 type UpdateReviewDateAsCompletedRequest struct {

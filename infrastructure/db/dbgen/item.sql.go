@@ -1117,6 +1117,32 @@ func (q *Queries) GetItemByID(ctx context.Context, arg GetItemByIDParams) (GetIt
 	return i, err
 }
 
+const getNextScheduledDateByReviewDateID = `-- name: GetNextScheduledDateByReviewDateID :one
+SELECT
+    scheduled_date
+FROM
+    review_dates
+WHERE
+    item_id = $1
+AND
+    step_number = $2
+AND
+    user_id = $3
+`
+
+type GetNextScheduledDateByReviewDateIDParams struct {
+	ItemID     pgtype.UUID `json:"item_id"`
+	StepNumber int16       `json:"step_number"`
+	UserID     pgtype.UUID `json:"user_id"`
+}
+
+func (q *Queries) GetNextScheduledDateByReviewDateID(ctx context.Context, arg GetNextScheduledDateByReviewDateIDParams) (pgtype.Date, error) {
+	row := q.db.QueryRow(ctx, getNextScheduledDateByReviewDateID, arg.ItemID, arg.StepNumber, arg.UserID)
+	var scheduled_date pgtype.Date
+	err := row.Scan(&scheduled_date)
+	return scheduled_date, err
+}
+
 const getReviewDateIDsByItemID = `-- name: GetReviewDateIDsByItemID :many
 SELECT
     id
@@ -1590,5 +1616,33 @@ type UpdateReviewDatesParams struct {
 // 復習日手動変更、完了、学習日変更機能の副次的な変更に使う
 func (q *Queries) UpdateReviewDates(ctx context.Context, arg UpdateReviewDatesParams) error {
 	_, err := q.db.Exec(ctx, updateReviewDates, arg.UserID, arg.Input)
+	return err
+}
+
+const updateReviewDatesBack = `-- name: UpdateReviewDatesBack :exec
+UPDATE review_dates r
+SET
+    category_id = v.category_id,
+    box_id = v.box_id,
+    scheduled_date = v.scheduled_date,
+    is_completed = v.is_completed
+FROM
+    UNNEST(
+        $2::back_reviewdate_input[]
+    ) AS v(id, category_id, box_id, scheduled_date, is_completed)
+WHERE
+    r.id = v.id
+AND
+    r.user_id = ($1)::uuid
+`
+
+type UpdateReviewDatesBackParams struct {
+	UserID pgtype.UUID `json:"user_id"`
+	Input  []string    `json:"input"`
+}
+
+// 復習日手動変更機能の副次的な変更に使う
+func (q *Queries) UpdateReviewDatesBack(ctx context.Context, arg UpdateReviewDatesBackParams) error {
+	_, err := q.db.Exec(ctx, updateReviewDatesBack, arg.UserID, arg.Input)
 	return err
 }
