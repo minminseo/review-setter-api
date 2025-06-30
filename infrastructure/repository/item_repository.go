@@ -1127,25 +1127,3 @@ func (r *itemRepository) GetUnclassfiedFinishedItemsByUserID(ctx context.Context
 	}
 	return results, nil
 }
-
-func (r *itemRepository) GetNextScheduledDateByReviewDateID(ctx context.Context, itemID string, stepNumber int, userID string) (time.Time, error) {
-	q := db.GetQuery(ctx)
-	pgItemID, err := toUUID(itemID)
-	if err != nil {
-		return time.Time{}, err
-	}
-	pgUserID, err := toUUID(userID)
-	if err != nil {
-		return time.Time{}, err
-	}
-	params := dbgen.GetNextScheduledDateByReviewDateIDParams{
-		ItemID:     pgItemID,
-		StepNumber: int16(stepNumber),
-		UserID:     pgUserID,
-	}
-	nextScheduledDate, err := q.GetNextScheduledDateByReviewDateID(ctx, params)
-	if err != nil {
-		return time.Time{}, err
-	}
-	return nextScheduledDate.Time, nil
-}

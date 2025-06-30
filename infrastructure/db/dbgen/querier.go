@@ -75,7 +75,6 @@ type Querier interface {
 	GetFinishedItemsByBoxID(ctx context.Context, arg GetFinishedItemsByBoxIDParams) ([]GetFinishedItemsByBoxIDRow, error)
 	// 学習日変更など、どういうリクエストなのかを判定するために使う
 	GetItemByID(ctx context.Context, arg GetItemByIDParams) (GetItemByIDRow, error)
-	GetNextScheduledDateByReviewDateID(ctx context.Context, arg GetNextScheduledDateByReviewDateIDParams) (pgtype.Date, error)
 	// 復習パターンそのものが更新対象かどうか判定するために使う
 	GetPatternByID(ctx context.Context, arg GetPatternByIDParams) (GetPatternByIDRow, error)
 	// 復習ステップが更新対象かどうか判定するために使う
