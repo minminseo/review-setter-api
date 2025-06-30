@@ -1117,32 +1117,6 @@ func (q *Queries) GetItemByID(ctx context.Context, arg GetItemByIDParams) (GetIt
 	return i, err
 }
 
-const getNextScheduledDateByReviewDateID = `-- name: GetNextScheduledDateByReviewDateID :one
-SELECT
-    scheduled_date
-FROM
-    review_dates
-WHERE
-    item_id = $1
-AND
-    step_number = $2
-AND
-    user_id = $3
-`
-
-type GetNextScheduledDateByReviewDateIDParams struct {
-	ItemID     pgtype.UUID `json:"item_id"`
-	StepNumber int16       `json:"step_number"`
-	UserID     pgtype.UUID `json:"user_id"`
-}
-
-func (q *Queries) GetNextScheduledDateByReviewDateID(ctx context.Context, arg GetNextScheduledDateByReviewDateIDParams) (pgtype.Date, error) {
-	row := q.db.QueryRow(ctx, getNextScheduledDateByReviewDateID, arg.ItemID, arg.StepNumber, arg.UserID)
-	var scheduled_date pgtype.Date
-	err := row.Scan(&scheduled_date)
-	return scheduled_date, err
-}
-
 const getReviewDateIDsByItemID = `-- name: GetReviewDateIDsByItemID :many
 SELECT
     id

@@ -650,16 +650,3 @@ AND
     is_Finished = true
 ORDER BY
     registered_at;
-
-
--- name: GetNextScheduledDateByReviewDateID :one
-SELECT
-    scheduled_date
-FROM
-    review_dates
-WHERE
-    item_id = sqlc.arg(item_id)
-AND
-    step_number = sqlc.arg(step_number)
-AND
-    user_id = sqlc.arg(user_id);
