@@ -7,6 +7,7 @@ package dbgen
 
 import (
 	"context"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -1568,12 +1569,13 @@ UPDATE review_dates r
 SET
     category_id = v.category_id,
     box_id = v.box_id,
+    initial_scheduled_date = v.initial_scheduled_date,
     scheduled_date = v.scheduled_date,
     is_completed = v.is_completed
 FROM
     UNNEST(
         $2::reviewdate_input[]
-    ) AS v(id, category_id, box_id, scheduled_date, is_completed)
+    ) AS v(id, category_id, box_id, initial_scheduled_date, scheduled_date, is_completed)
 WHERE
     r.id = v.id
 AND
@@ -1588,5 +1590,33 @@ type UpdateReviewDatesParams struct {
 // 復習日手動変更、完了、学習日変更機能の副次的な変更に使う
 func (q *Queries) UpdateReviewDates(ctx context.Context, arg UpdateReviewDatesParams) error {
 	_, err := q.db.Exec(ctx, updateReviewDates, arg.UserID, arg.Input)
+	return err
+}
+
+const updateReviewDatesBack = `-- name: UpdateReviewDatesBack :exec
+UPDATE review_dates r
+SET
+    category_id = v.category_id,
+    box_id = v.box_id,
+    scheduled_date = v.scheduled_date,
+    is_completed = v.is_completed
+FROM
+    UNNEST(
+        $2::back_reviewdate_input[]
+    ) AS v(id, category_id, box_id, scheduled_date, is_completed)
+WHERE
+    r.id = v.id
+AND
+    r.user_id = ($1)::uuid
+`
+
+type UpdateReviewDatesBackParams struct {
+	UserID pgtype.UUID `json:"user_id"`
+	Input  []string    `json:"input"`
+}
+
+// 復習日手動変更機能の副次的な変更に使う
+func (q *Queries) UpdateReviewDatesBack(ctx context.Context, arg UpdateReviewDatesBackParams) error {
+	_, err := q.db.Exec(ctx, updateReviewDatesBack, arg.UserID, arg.Input)
 	return err
 }

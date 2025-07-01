@@ -125,11 +125,29 @@ UPDATE review_dates r
 SET
     category_id = v.category_id,
     box_id = v.box_id,
+    initial_scheduled_date = v.initial_scheduled_date,
     scheduled_date = v.scheduled_date,
     is_completed = v.is_completed
 FROM
     UNNEST(
         sqlc.arg(input)::reviewdate_input[]
+    ) AS v(id, category_id, box_id, initial_scheduled_date, scheduled_date, is_completed)
+WHERE
+    r.id = v.id
+AND
+    r.user_id = (sqlc.arg(user_id))::uuid;
+
+-- 復習日手動変更機能の副次的な変更に使う
+-- name: UpdateReviewDatesBack :exec
+UPDATE review_dates r
+SET
+    category_id = v.category_id,
+    box_id = v.box_id,
+    scheduled_date = v.scheduled_date,
+    is_completed = v.is_completed
+FROM
+    UNNEST(
+        sqlc.arg(input)::back_reviewdate_input[]
     ) AS v(id, category_id, box_id, scheduled_date, is_completed)
 WHERE
     r.id = v.id

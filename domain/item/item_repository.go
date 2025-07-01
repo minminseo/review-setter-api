@@ -61,6 +61,7 @@ type IItemRepository interface {
 	// 復習日の更新。
 	// //この更新には、「復習パターン変更による更新」、「ボックス移動（復習パターン不一致時）による更新」は含まれない（代わりにCreateReviewdatesを使う）
 	UpdateReviewDates(ctx context.Context, reviewdates []*Reviewdate, userID string) error
+	UpdateReviewDatesBack(ctx context.Context, reviewdates []*Reviewdate, userID string) error
 
 	// 復習物の途中完了（手動）の場合 or 復習日巻き戻で全完了した場合 or 通常の復習日完了操作による自動完了
 	UpdateItemAsFinished(ctx context.Context, itemID string, userID string, editedAt time.Time) error

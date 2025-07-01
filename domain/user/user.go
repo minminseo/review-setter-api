@@ -114,8 +114,23 @@ func (u *User) SetPassword(password string) error {
 
 const (
 	// タイムゾーン
-	TimeZoneTokyo string = "Asia/Tokyo"
-	// TimeZoneLondon TimeZoneName = "Europe/London"
+	TimeZoneTokyo      string = "Asia/Tokyo"
+	TimeZoneLondon     string = "Europe/London"
+	TimeZoneUTC        string = "UTC"
+	TimeZoneParis      string = "Europe/Paris"
+	TimeZoneMoscow     string = "Europe/Moscow"
+	TimeZoneDubai      string = "Asia/Dubai"
+	TimeZoneKolkata    string = "Asia/Kolkata"
+	TimeZoneShanghai   string = "Asia/Shanghai"
+	TimeZoneSydney     string = "Australia/Sydney"
+	TimeZoneAuckland   string = "Pacific/Auckland"
+	TimeZoneNewYork    string = "America/New_York"
+	TimeZoneChicago    string = "America/Chicago"
+	TimeZoneDenver     string = "America/Denver"
+	TimeZoneLosAngeles string = "America/Los_Angeles"
+	TimeZoneHonolulu   string = "Pacific/Honolulu"
+	TimeZoneSaoPaulo   string = "America/Sao_Paulo"
+	TimeZoneSantiago   string = "America/Santiago"
 
 	// テーマカラー
 	ThemeColorDark  string = "dark"
@@ -127,8 +142,23 @@ const (
 )
 
 var allowedTimeZones = map[string]struct{}{
-	TimeZoneTokyo: {},
-	// TimeZoneLondon: {},
+	TimeZoneTokyo:      {},
+	TimeZoneLondon:     {},
+	TimeZoneUTC:        {},
+	TimeZoneParis:      {},
+	TimeZoneMoscow:     {},
+	TimeZoneDubai:      {},
+	TimeZoneKolkata:    {},
+	TimeZoneShanghai:   {},
+	TimeZoneSydney:     {},
+	TimeZoneAuckland:   {},
+	TimeZoneNewYork:    {},
+	TimeZoneChicago:    {},
+	TimeZoneDenver:     {},
+	TimeZoneLosAngeles: {},
+	TimeZoneHonolulu:   {},
+	TimeZoneSaoPaulo:   {},
+	TimeZoneSantiago:   {},
 }
 var allowedThemeColors = map[string]struct{}{
 	ThemeColorDark:  {},

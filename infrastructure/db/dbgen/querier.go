@@ -99,12 +99,15 @@ type Querier interface {
 	UpdateItem(ctx context.Context, arg UpdateItemParams) error
 	UpdateItemAsFinished(ctx context.Context, arg UpdateItemAsFinishedParams) error
 	UpdateItemAsUnfinished(ctx context.Context, arg UpdateItemAsUnfinishedParams) error
+	UpdateOverdueScheduledDatesAndSlideFutureDates(ctx context.Context) error
 	// pattern系のリクエストで、更新対象の中に復習パターンそのものが含まれる場合に発行するクエリ
 	UpdatePattern(ctx context.Context, arg UpdatePatternParams) error
 	UpdateReviewDateAsCompleted(ctx context.Context, arg UpdateReviewDateAsCompletedParams) error
 	UpdateReviewDateAsInCompleted(ctx context.Context, arg UpdateReviewDateAsInCompletedParams) error
 	// 復習日手動変更、完了、学習日変更機能の副次的な変更に使う
 	UpdateReviewDates(ctx context.Context, arg UpdateReviewDatesParams) error
+	// 復習日手動変更機能の副次的な変更に使う
+	UpdateReviewDatesBack(ctx context.Context, arg UpdateReviewDatesBackParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) error
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 	UpdateVerifiedAt(ctx context.Context, arg UpdateVerifiedAtParams) error

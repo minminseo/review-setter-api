@@ -158,7 +158,6 @@ func FormatWithOverdueMarkedInCompletedWithIDs(
 
 	for i, step := range targetPatternSteps {
 		calculatedScheduledDate := parsedLearnedDate.AddDate(0, 0, step.IntervalDays+addDuration)
-
 		reviewdate, err := ItemDomain.NewReviewdate(
 			reviewDateIDs[i],
 			userID,
@@ -169,6 +168,45 @@ func FormatWithOverdueMarkedInCompletedWithIDs(
 			calculatedScheduledDate,
 			calculatedScheduledDate,
 			false,
+		)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = reviewdate
+	}
+
+	return result, nil
+}
+
+func FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(
+	targetPatternSteps []*PatternDomain.PatternStep,
+	reviewDateIDs []string,
+	userID string,
+	categoryID *string,
+	boxID *string,
+	itemID string,
+	parsedLearnedDate time.Time,
+	parsedToday time.Time,
+) ([]*ItemDomain.Reviewdate, error) {
+	if len(reviewDateIDs) != len(targetPatternSteps) {
+		return nil, ItemDomain.ErrNewScheduledDateBeforeInitialScheduledDate
+	}
+
+	result := make([]*ItemDomain.Reviewdate, len(targetPatternSteps))
+
+	for i, step := range targetPatternSteps {
+		calculatedScheduledDate := parsedLearnedDate.AddDate(0, 0, step.IntervalDays)
+
+		reviewdate, err := ItemDomain.NewReviewdate(
+			reviewDateIDs[i],
+			userID,
+			categoryID,
+			boxID,
+			itemID,
+			step.StepNumber,
+			calculatedScheduledDate,
+			calculatedScheduledDate,
+			false, // 全部未完了扱い
 		)
 		if err != nil {
 			return nil, err
