@@ -37,7 +37,7 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 			return nil, errors.New("このメールアドレスは既に使用されています")
 		}
 		// 未認証なら、情報を更新して認証コードを再送信
-		return uu.resendVerification(ctx, existingUser, dto.Password)
+		return uu.resendVerification(ctx, existingUser.ID, dto)
 	}
 
 	id := uuid.NewString()
@@ -46,7 +46,6 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 		return nil, err
 	}
 
-	// ユーザーと認証情報をトランザクションで保存
 	err = uu.transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
 		if err := uu.userRepo.Create(ctx, newUser); err != nil {
 			return err
@@ -62,8 +61,7 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 			return err
 		}
 
-		// --- メール送信処理 ---
-		if err := uu.sendVerificationEmail(newUser.Email, code); err != nil {
+		if err := uu.sendVerificationEmail(newUser.Language, newUser.Email, code); err != nil {
 			fmt.Printf("警告: %s への認証メール送信に失敗しました: %v\n", newUser.Email, err)
 		}
 
