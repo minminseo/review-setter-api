@@ -13,7 +13,7 @@ import (
 )
 
 // 認証コードをEメールで送信
-func (uu *userUsecase) sendVerificationEmail(toEmail, code string) error {
+func (uu *userUsecase) sendVerificationEmail(language, toEmail, code string) error {
 	from := os.Getenv("SMTP_USER")
 	password := os.Getenv("SMTP_PASS")
 	smtpHost := os.Getenv("SMTP_HOST")
@@ -22,9 +22,16 @@ func (uu *userUsecase) sendVerificationEmail(toEmail, code string) error {
 	// 認証情報
 	auth := smtp.PlainAuth("", from, password, smtpHost)
 
-	// メール本文の作成
-	subject := "Subject: Review Setter 認証コード\r\n"
-	body := fmt.Sprintf("あなたの認証コードは %s です。\r\n有効期限は10分です。\r\n", code)
+	// メール本文の作成（言語によって切り替え）
+	var subject, body string
+	switch language {
+	case "ja":
+		subject = "Subject: Review Setter 認証コード\r\n"
+		body = fmt.Sprintf("あなたの認証コードは %s です。\r\n有効期限は10分です。\r\n", code)
+	default: // 現状はja以外はenのみ
+		subject = "Subject: Review Setter Verification Code\r\n"
+		body = fmt.Sprintf("Your verification code is %s.\r\nIt is valid for 10 minutes.\r\n", code)
+	}
 	msg := []byte("From: " + from + "\r\n" +
 		"To: " + toEmail + "\r\n" +
 		subject +
@@ -59,23 +66,26 @@ func (uu *userUsecase) createLoginResponse(user *userDomain.User) (*LoginUserOut
 }
 
 // 未認証ユーザーに認証コードを再送信
-func (uu *userUsecase) resendVerification(ctx context.Context, user *userDomain.User, password string) (*CreateUserOutput, error) {
-	// パスワードを更新
-	if err := user.SetPassword(password); err != nil {
+func (uu *userUsecase) resendVerification(ctx context.Context, userID string, dto CreateUserInput) (*CreateUserOutput, error) {
+	newUser, err := userDomain.NewUser(userID, dto.Email, dto.Password, dto.Timezone, dto.ThemeColor, dto.Language)
+	if err != nil {
 		return nil, err
 	}
 
-	err := uu.transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
-		if err := uu.userRepo.Update(ctx, user); err != nil {
+	err = uu.transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
+		if err := uu.userRepo.Update(ctx, newUser); err != nil {
+			return err
+		}
+		if err := uu.userRepo.UpdatePassword(ctx, newUser.ID, newUser.EncryptedPassword); err != nil {
 			return err
 		}
 
 		// 古い認証コードを削除
-		if err := uu.emailVerificationRepo.DeleteByUserID(ctx, user.ID); err != nil {
+		if err := uu.emailVerificationRepo.DeleteByUserID(ctx, newUser.ID); err != nil {
 		}
 
 		verificationID := uuid.NewString()
-		verification, code, err := userDomain.NewEmailVerification(verificationID, user.ID)
+		verification, code, err := userDomain.NewEmailVerification(verificationID, newUser.ID)
 		if err != nil {
 			return err
 		}
@@ -85,8 +95,8 @@ func (uu *userUsecase) resendVerification(ctx context.Context, user *userDomain.
 		}
 
 		// メール送信処理
-		if err := uu.sendVerificationEmail(user.Email, code); err != nil {
-			fmt.Printf("警告: %s への認証メールの再送信に失敗しました: %v\n", user.Email, err)
+		if err := uu.sendVerificationEmail(newUser.Language, newUser.Email, code); err != nil {
+			fmt.Printf("警告: %s への認証メールの再送信に失敗しました: %v\n", newUser.Email, err)
 		}
 
 		return nil
@@ -97,7 +107,7 @@ func (uu *userUsecase) resendVerification(ctx context.Context, user *userDomain.
 	}
 
 	return &CreateUserOutput{
-		ID:    user.ID,
-		Email: user.Email,
+		ID:    newUser.ID,
+		Email: newUser.Email,
 	}, nil
 }
