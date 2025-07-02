@@ -241,14 +241,15 @@ type UnclassifiedDailyDatesCountGroupedByCategoryOutput struct {
 */
 
 type DailyReviewDatesByBoxOutput struct {
-	ReviewDateID      string
-	CategoryID        string // 必ず存在する
-	BoxID             string // 必ず存在する
-	StepNumber        int
-	PrevScheduledDate *string
-	ScheduledDate     string
-	NextScheduledDate *string
-	IsCompleted       bool
+	ReviewDateID         string
+	CategoryID           string // 必ず存在する
+	BoxID                string // 必ず存在する
+	StepNumber           int
+	InitialScheduledDate string
+	PrevScheduledDate    *string
+	ScheduledDate        string
+	NextScheduledDate    *string
+	IsCompleted          bool
 
 	// 復習物の情報
 	ItemID       string
@@ -268,13 +269,14 @@ type DailyReviewDatesGroupedByBoxOutput struct {
 }
 
 type UnclassifiedDailyReviewDatesGroupedByCategoryOutput struct {
-	ReviewDateID      string
-	CategoryID        string // 必ず存在する
-	StepNumber        int
-	PrevScheduledDate *string
-	ScheduledDate     string
-	NextScheduledDate *string
-	IsCompleted       bool
+	ReviewDateID         string
+	CategoryID           string // 必ず存在する
+	StepNumber           int
+	InitialScheduledDate string
+	PrevScheduledDate    *string
+	ScheduledDate        string
+	NextScheduledDate    *string
+	IsCompleted          bool
 
 	// 復習物の情報
 	ItemID       string
@@ -293,12 +295,13 @@ type DailyReviewDatesGroupedByCategoryOutput struct {
 }
 
 type UnclassifiedDailyReviewDatesGroupedByUserOutput struct {
-	ReviewDateID      string
-	StepNumber        int
-	PrevScheduledDate *string
-	ScheduledDate     string
-	NextScheduledDate *string
-	IsCompleted       bool
+	ReviewDateID         string
+	StepNumber           int
+	InitialScheduledDate string
+	PrevScheduledDate    *string
+	ScheduledDate        string
+	NextScheduledDate    *string
+	IsCompleted          bool
 
 	// 復習物の情報
 	ItemID       string
