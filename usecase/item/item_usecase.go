@@ -1439,6 +1439,9 @@ func (iu *ItemUsecase) GetAllDailyReviewDates(ctx context.Context, userID string
 
 	// 8. 一つずつマッピングとグルーピング
 	for _, d := range dailyDates {
+
+		initialSched := d.InitialScheduledDate.Format("2006-01-02")
+
 		var prev, next *string
 		// ScheduledDateのstep_numberが1の時、PrevScheduledDateは存在しないという例を考慮してnil確認
 		if d.PrevScheduledDate != nil {
@@ -1458,18 +1461,19 @@ func (iu *ItemUsecase) GetAllDailyReviewDates(ctx context.Context, userID string
 		if d.CategoryID == nil && d.BoxID == nil {
 			out.DailyReviewDatesGroupedByUser = append(out.DailyReviewDatesGroupedByUser,
 				UnclassifiedDailyReviewDatesGroupedByUserOutput{
-					ReviewDateID:      d.ReviewdateID,
-					StepNumber:        d.StepNumber,
-					PrevScheduledDate: prev,
-					ScheduledDate:     sched,
-					NextScheduledDate: next,
-					IsCompleted:       d.IsCompleted,
-					ItemID:            d.ItemID,
-					ItemName:          d.Name,
-					Detail:            d.Detail,
-					LearnedDate:       learnedDate,
-					RegisteredAt:      d.RegisteredAt,
-					EditedAt:          d.EditedAt,
+					ReviewDateID:         d.ReviewdateID,
+					StepNumber:           d.StepNumber,
+					PrevScheduledDate:    prev,
+					InitialScheduledDate: initialSched,
+					ScheduledDate:        sched,
+					NextScheduledDate:    next,
+					IsCompleted:          d.IsCompleted,
+					ItemID:               d.ItemID,
+					ItemName:             d.Name,
+					Detail:               d.Detail,
+					LearnedDate:          learnedDate,
+					RegisteredAt:         d.RegisteredAt,
+					EditedAt:             d.EditedAt,
 				},
 			)
 			// 未分類の分岐を通った場合、その後のカテゴリー・ボックス振り分け処理は不要なのでcontinue
@@ -1502,19 +1506,20 @@ func (iu *ItemUsecase) GetAllDailyReviewDates(ctx context.Context, userID string
 		if d.BoxID == nil {
 			categoryGroup.UnclassifiedDailyReviewDatesByCategory = append(categoryGroup.UnclassifiedDailyReviewDatesByCategory,
 				UnclassifiedDailyReviewDatesGroupedByCategoryOutput{
-					ReviewDateID:      d.ReviewdateID,
-					CategoryID:        categoryID,
-					StepNumber:        d.StepNumber,
-					PrevScheduledDate: prev,
-					ScheduledDate:     sched,
-					NextScheduledDate: next,
-					IsCompleted:       d.IsCompleted,
-					ItemID:            d.ItemID,
-					ItemName:          d.Name,
-					Detail:            d.Detail,
-					LearnedDate:       learnedDate,
-					RegisteredAt:      d.RegisteredAt,
-					EditedAt:          d.EditedAt,
+					ReviewDateID:         d.ReviewdateID,
+					CategoryID:           categoryID,
+					StepNumber:           d.StepNumber,
+					InitialScheduledDate: initialSched,
+					PrevScheduledDate:    prev,
+					ScheduledDate:        sched,
+					NextScheduledDate:    next,
+					IsCompleted:          d.IsCompleted,
+					ItemID:               d.ItemID,
+					ItemName:             d.Name,
+					Detail:               d.Detail,
+					LearnedDate:          learnedDate,
+					RegisteredAt:         d.RegisteredAt,
+					EditedAt:             d.EditedAt,
 				},
 			)
 			// ボックス未分類の分岐を通った場合、その後のボックスグループ振り分け処理は不要なのでcontinue
@@ -1546,20 +1551,21 @@ func (iu *ItemUsecase) GetAllDailyReviewDates(ctx context.Context, userID string
 		// 今日の復習日データをボックスグループに追加
 		boxGroup.ReviewDates = append(boxGroup.ReviewDates,
 			DailyReviewDatesByBoxOutput{
-				ReviewDateID:      d.ReviewdateID,
-				CategoryID:        categoryID,
-				BoxID:             boxID,
-				StepNumber:        d.StepNumber,
-				PrevScheduledDate: prev,
-				ScheduledDate:     sched,
-				NextScheduledDate: next,
-				IsCompleted:       d.IsCompleted,
-				ItemID:            d.ItemID,
-				ItemName:          d.Name,
-				Detail:            d.Detail,
-				LearnedDate:       learnedDate,
-				RegisteredAt:      d.RegisteredAt,
-				EditedAt:          d.EditedAt,
+				ReviewDateID:         d.ReviewdateID,
+				CategoryID:           categoryID,
+				BoxID:                boxID,
+				StepNumber:           d.StepNumber,
+				InitialScheduledDate: initialSched,
+				PrevScheduledDate:    prev,
+				ScheduledDate:        sched,
+				NextScheduledDate:    next,
+				IsCompleted:          d.IsCompleted,
+				ItemID:               d.ItemID,
+				ItemName:             d.Name,
+				Detail:               d.Detail,
+				LearnedDate:          learnedDate,
+				RegisteredAt:         d.RegisteredAt,
+				EditedAt:             d.EditedAt,
 			},
 		)
 	}
