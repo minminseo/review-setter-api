@@ -902,7 +902,7 @@ func (iu *ItemUsecase) UpdateItemAsUnFinishedForce(ctx context.Context, input Up
 		return nil, err
 	}
 	var newReviewdates []*ItemDomain.Reviewdate
-	if parsedToday.Before(firstInCompletedScheduledDate) {
+	if parsedToday.Before(firstInCompletedScheduledDate) || parsedToday.Equal(firstInCompletedScheduledDate) {
 		shouldUpdateScheduledDates = false
 	} else {
 		shouldUpdateScheduledDates = true
