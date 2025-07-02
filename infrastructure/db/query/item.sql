@@ -524,6 +524,7 @@ SELECT
     rd.category_id,
     rd.box_id,
     rd.step_number,
+    rd.initial_scheduled_date,
     rd.prev_scheduled_date,
     rd.scheduled_date,
     rd.next_scheduled_date,
@@ -541,6 +542,7 @@ FROM (
         box_id,
         item_id,
         step_number,
+        initial_scheduled_date,
         scheduled_date,
         is_completed,
         CAST(

@@ -599,20 +599,21 @@ func (ic *itemController) GetAllDailyReviewDates(c echo.Context) error {
 			reviewDates := make([]DailyReviewDatesByBoxResponse, len(box.ReviewDates))
 			for k, rd := range box.ReviewDates {
 				reviewDates[k] = DailyReviewDatesByBoxResponse{
-					ReviewDateID:      rd.ReviewDateID,
-					CategoryID:        rd.CategoryID,
-					BoxID:             rd.BoxID,
-					StepNumber:        rd.StepNumber,
-					PrevScheduledDate: rd.PrevScheduledDate,
-					ScheduledDate:     rd.ScheduledDate,
-					NextScheduledDate: rd.NextScheduledDate,
-					IsCompleted:       rd.IsCompleted,
-					ItemID:            rd.ItemID,
-					ItemName:          rd.ItemName,
-					Detail:            rd.Detail,
-					LearnedDate:       rd.LearnedDate,
-					RegisteredAt:      rd.RegisteredAt,
-					EditedAt:          rd.EditedAt,
+					ReviewDateID:         rd.ReviewDateID,
+					CategoryID:           rd.CategoryID,
+					BoxID:                rd.BoxID,
+					StepNumber:           rd.StepNumber,
+					InitialScheduledDate: rd.InitialScheduledDate,
+					PrevScheduledDate:    rd.PrevScheduledDate,
+					ScheduledDate:        rd.ScheduledDate,
+					NextScheduledDate:    rd.NextScheduledDate,
+					IsCompleted:          rd.IsCompleted,
+					ItemID:               rd.ItemID,
+					ItemName:             rd.ItemName,
+					Detail:               rd.Detail,
+					LearnedDate:          rd.LearnedDate,
+					RegisteredAt:         rd.RegisteredAt,
+					EditedAt:             rd.EditedAt,
 				}
 			}
 			boxes[j] = DailyReviewDatesGroupedByBoxResponse{
@@ -627,19 +628,20 @@ func (ic *itemController) GetAllDailyReviewDates(c echo.Context) error {
 		unclassified := make([]UnclassifiedDailyReviewDatesGroupedByCategoryResponse, len(cat.UnclassifiedDailyReviewDatesByCategory))
 		for j, rd := range cat.UnclassifiedDailyReviewDatesByCategory {
 			unclassified[j] = UnclassifiedDailyReviewDatesGroupedByCategoryResponse{
-				ReviewDateID:      rd.ReviewDateID,
-				CategoryID:        rd.CategoryID,
-				StepNumber:        rd.StepNumber,
-				PrevScheduledDate: rd.PrevScheduledDate,
-				ScheduledDate:     rd.ScheduledDate,
-				NextScheduledDate: rd.NextScheduledDate,
-				IsCompleted:       rd.IsCompleted,
-				ItemID:            rd.ItemID,
-				ItemName:          rd.ItemName,
-				Detail:            rd.Detail,
-				LearnedDate:       rd.LearnedDate,
-				RegisteredAt:      rd.RegisteredAt,
-				EditedAt:          rd.EditedAt,
+				ReviewDateID:         rd.ReviewDateID,
+				CategoryID:           rd.CategoryID,
+				StepNumber:           rd.StepNumber,
+				InitialScheduledDate: rd.InitialScheduledDate,
+				PrevScheduledDate:    rd.PrevScheduledDate,
+				ScheduledDate:        rd.ScheduledDate,
+				NextScheduledDate:    rd.NextScheduledDate,
+				IsCompleted:          rd.IsCompleted,
+				ItemID:               rd.ItemID,
+				ItemName:             rd.ItemName,
+				Detail:               rd.Detail,
+				LearnedDate:          rd.LearnedDate,
+				RegisteredAt:         rd.RegisteredAt,
+				EditedAt:             rd.EditedAt,
 			}
 		}
 
@@ -655,18 +657,19 @@ func (ic *itemController) GetAllDailyReviewDates(c echo.Context) error {
 	userUnclassified := make([]UnclassifiedDailyReviewDatesGroupedByUserResponse, len(result.DailyReviewDatesGroupedByUser))
 	for i, rd := range result.DailyReviewDatesGroupedByUser {
 		userUnclassified[i] = UnclassifiedDailyReviewDatesGroupedByUserResponse{
-			ReviewDateID:      rd.ReviewDateID,
-			StepNumber:        rd.StepNumber,
-			PrevScheduledDate: rd.PrevScheduledDate,
-			ScheduledDate:     rd.ScheduledDate,
-			NextScheduledDate: rd.NextScheduledDate,
-			IsCompleted:       rd.IsCompleted,
-			ItemID:            rd.ItemID,
-			ItemName:          rd.ItemName,
-			Detail:            rd.Detail,
-			LearnedDate:       rd.LearnedDate,
-			RegisteredAt:      rd.RegisteredAt,
-			EditedAt:          rd.EditedAt,
+			ReviewDateID:         rd.ReviewDateID,
+			StepNumber:           rd.StepNumber,
+			InitialScheduledDate: rd.InitialScheduledDate,
+			PrevScheduledDate:    rd.PrevScheduledDate,
+			ScheduledDate:        rd.ScheduledDate,
+			NextScheduledDate:    rd.NextScheduledDate,
+			IsCompleted:          rd.IsCompleted,
+			ItemID:               rd.ItemID,
+			ItemName:             rd.ItemName,
+			Detail:               rd.Detail,
+			LearnedDate:          rd.LearnedDate,
+			RegisteredAt:         rd.RegisteredAt,
+			EditedAt:             rd.EditedAt,
 		}
 	}
 	res.DailyReviewDatesGroupedByUser = userUnclassified

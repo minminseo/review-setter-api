@@ -412,6 +412,7 @@ SELECT
     rd.category_id,
     rd.box_id,
     rd.step_number,
+    rd.initial_scheduled_date,
     rd.prev_scheduled_date,
     rd.scheduled_date,
     rd.next_scheduled_date,
@@ -429,6 +430,7 @@ FROM (
         box_id,
         item_id,
         step_number,
+        initial_scheduled_date,
         scheduled_date,
         is_completed,
         CAST(
@@ -466,20 +468,21 @@ type GetAllDailyReviewDatesParams struct {
 }
 
 type GetAllDailyReviewDatesRow struct {
-	ID                pgtype.UUID        `json:"id"`
-	CategoryID        pgtype.UUID        `json:"category_id"`
-	BoxID             pgtype.UUID        `json:"box_id"`
-	StepNumber        int16              `json:"step_number"`
-	PrevScheduledDate pgtype.Date        `json:"prev_scheduled_date"`
-	ScheduledDate     pgtype.Date        `json:"scheduled_date"`
-	NextScheduledDate pgtype.Date        `json:"next_scheduled_date"`
-	IsCompleted       bool               `json:"is_completed"`
-	ItemID            pgtype.UUID        `json:"item_id"`
-	Name              string             `json:"name"`
-	Detail            pgtype.Text        `json:"detail"`
-	LearnedDate       pgtype.Date        `json:"learned_date"`
-	RegisteredAt      pgtype.Timestamptz `json:"registered_at"`
-	EditedAt          pgtype.Timestamptz `json:"edited_at"`
+	ID                   pgtype.UUID        `json:"id"`
+	CategoryID           pgtype.UUID        `json:"category_id"`
+	BoxID                pgtype.UUID        `json:"box_id"`
+	StepNumber           int16              `json:"step_number"`
+	InitialScheduledDate pgtype.Date        `json:"initial_scheduled_date"`
+	PrevScheduledDate    pgtype.Date        `json:"prev_scheduled_date"`
+	ScheduledDate        pgtype.Date        `json:"scheduled_date"`
+	NextScheduledDate    pgtype.Date        `json:"next_scheduled_date"`
+	IsCompleted          bool               `json:"is_completed"`
+	ItemID               pgtype.UUID        `json:"item_id"`
+	Name                 string             `json:"name"`
+	Detail               pgtype.Text        `json:"detail"`
+	LearnedDate          pgtype.Date        `json:"learned_date"`
+	RegisteredAt         pgtype.Timestamptz `json:"registered_at"`
+	EditedAt             pgtype.Timestamptz `json:"edited_at"`
 }
 
 // LAG→item_idごとにstep_numberの昇順で並べた時、scheduled_dateが持つstep_numberより一個前のstep_numberのscheduled_dateを取得
@@ -499,6 +502,7 @@ func (q *Queries) GetAllDailyReviewDates(ctx context.Context, arg GetAllDailyRev
 			&i.CategoryID,
 			&i.BoxID,
 			&i.StepNumber,
+			&i.InitialScheduledDate,
 			&i.PrevScheduledDate,
 			&i.ScheduledDate,
 			&i.NextScheduledDate,

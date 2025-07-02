@@ -95,20 +95,21 @@ type UnclassifiedDailyDatesCountGroupedByCategoryResponse struct {
 }
 
 type DailyReviewDatesByBoxResponse struct {
-	ReviewDateID      string    `json:"review_date_id"`
-	CategoryID        string    `json:"category_id"`
-	BoxID             string    `json:"box_id"`
-	StepNumber        int       `json:"step_number"`
-	PrevScheduledDate *string   `json:"prev_scheduled_date"`
-	ScheduledDate     string    `json:"scheduled_date"`
-	NextScheduledDate *string   `json:"next_scheduled_date"`
-	IsCompleted       bool      `json:"is_completed"`
-	ItemID            string    `json:"item_id"`
-	ItemName          string    `json:"item_name"`
-	Detail            string    `json:"detail"`
-	LearnedDate       string    `json:"learned_date"`
-	RegisteredAt      time.Time `json:"registered_at"`
-	EditedAt          time.Time `json:"edited_at"`
+	ReviewDateID         string    `json:"review_date_id"`
+	CategoryID           string    `json:"category_id"`
+	BoxID                string    `json:"box_id"`
+	StepNumber           int       `json:"step_number"`
+	InitialScheduledDate string    `json:"initial_scheduled_date"`
+	PrevScheduledDate    *string   `json:"prev_scheduled_date"`
+	ScheduledDate        string    `json:"scheduled_date"`
+	NextScheduledDate    *string   `json:"next_scheduled_date"`
+	IsCompleted          bool      `json:"is_completed"`
+	ItemID               string    `json:"item_id"`
+	ItemName             string    `json:"item_name"`
+	Detail               string    `json:"detail"`
+	LearnedDate          string    `json:"learned_date"`
+	RegisteredAt         time.Time `json:"registered_at"`
+	EditedAt             time.Time `json:"edited_at"`
 }
 
 type DailyReviewDatesGroupedByBoxResponse struct {
@@ -120,19 +121,20 @@ type DailyReviewDatesGroupedByBoxResponse struct {
 }
 
 type UnclassifiedDailyReviewDatesGroupedByCategoryResponse struct {
-	ReviewDateID      string    `json:"review_date_id"`
-	CategoryID        string    `json:"category_id"`
-	StepNumber        int       `json:"step_number"`
-	PrevScheduledDate *string   `json:"prev_scheduled_date"`
-	ScheduledDate     string    `json:"scheduled_date"`
-	NextScheduledDate *string   `json:"next_scheduled_date"`
-	IsCompleted       bool      `json:"is_completed"`
-	ItemID            string    `json:"item_id"`
-	ItemName          string    `json:"item_name"`
-	Detail            string    `json:"detail"`
-	LearnedDate       string    `json:"learned_date"`
-	RegisteredAt      time.Time `json:"registered_at"`
-	EditedAt          time.Time `json:"edited_at"`
+	ReviewDateID         string    `json:"review_date_id"`
+	CategoryID           string    `json:"category_id"`
+	StepNumber           int       `json:"step_number"`
+	InitialScheduledDate string    `json:"initial_scheduled_date"`
+	PrevScheduledDate    *string   `json:"prev_scheduled_date"`
+	ScheduledDate        string    `json:"scheduled_date"`
+	NextScheduledDate    *string   `json:"next_scheduled_date"`
+	IsCompleted          bool      `json:"is_completed"`
+	ItemID               string    `json:"item_id"`
+	ItemName             string    `json:"item_name"`
+	Detail               string    `json:"detail"`
+	LearnedDate          string    `json:"learned_date"`
+	RegisteredAt         time.Time `json:"registered_at"`
+	EditedAt             time.Time `json:"edited_at"`
 }
 
 type DailyReviewDatesGroupedByCategoryResponse struct {
@@ -143,18 +145,19 @@ type DailyReviewDatesGroupedByCategoryResponse struct {
 }
 
 type UnclassifiedDailyReviewDatesGroupedByUserResponse struct {
-	ReviewDateID      string    `json:"review_date_id"`
-	StepNumber        int       `json:"step_number"`
-	PrevScheduledDate *string   `json:"prev_scheduled_date"`
-	ScheduledDate     string    `json:"scheduled_date"`
-	NextScheduledDate *string   `json:"next_scheduled_date"`
-	IsCompleted       bool      `json:"is_completed"`
-	ItemID            string    `json:"item_id"`
-	ItemName          string    `json:"item_name"`
-	Detail            string    `json:"detail"`
-	LearnedDate       string    `json:"learned_date"`
-	RegisteredAt      time.Time `json:"registered_at"`
-	EditedAt          time.Time `json:"edited_at"`
+	ReviewDateID         string    `json:"review_date_id"`
+	StepNumber           int       `json:"step_number"`
+	InitialScheduledDate string    `json:"initial_scheduled_date"`
+	PrevScheduledDate    *string   `json:"prev_scheduled_date"`
+	ScheduledDate        string    `json:"scheduled_date"`
+	NextScheduledDate    *string   `json:"next_scheduled_date"`
+	IsCompleted          bool      `json:"is_completed"`
+	ItemID               string    `json:"item_id"`
+	ItemName             string    `json:"item_name"`
+	Detail               string    `json:"detail"`
+	LearnedDate          string    `json:"learned_date"`
+	RegisteredAt         time.Time `json:"registered_at"`
+	EditedAt             time.Time `json:"edited_at"`
 }
 
 type GetDailyReviewDatesResponse struct {
