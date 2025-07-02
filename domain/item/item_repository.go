@@ -27,20 +27,21 @@ type UnclassifiedDailyDatesCountGroupedByCategory struct {
 }
 
 type DailyReviewDate struct {
-	ReviewdateID      string
-	CategoryID        *string
-	BoxID             *string
-	StepNumber        int
-	PrevScheduledDate *time.Time
-	ScheduledDate     time.Time
-	NextScheduledDate *time.Time
-	IsCompleted       bool
-	ItemID            string
-	Name              string
-	Detail            string
-	LearnedDate       time.Time
-	RegisteredAt      time.Time
-	EditedAt          time.Time
+	ReviewdateID         string
+	CategoryID           *string
+	BoxID                *string
+	StepNumber           int
+	InitialScheduledDate time.Time
+	PrevScheduledDate    *time.Time
+	ScheduledDate        time.Time
+	NextScheduledDate    *time.Time
+	IsCompleted          bool
+	ItemID               string
+	Name                 string
+	Detail               string
+	LearnedDate          time.Time
+	RegisteredAt         time.Time
+	EditedAt             time.Time
 }
 
 type IItemRepository interface {
