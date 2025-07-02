@@ -950,6 +950,8 @@ func (r *itemRepository) GetAllDailyReviewDates(ctx context.Context, userID stri
 			boxID = &s
 		}
 
+		initialScheduledDate := row.InitialScheduledDate.Time
+
 		var prev *time.Time
 		if row.PrevScheduledDate.Valid {
 			t := row.PrevScheduledDate.Time
@@ -971,20 +973,21 @@ func (r *itemRepository) GetAllDailyReviewDates(ctx context.Context, userID stri
 		detail := row.Detail.String
 
 		results[i] = &itemDomain.DailyReviewDate{
-			ReviewdateID:      idStr,
-			CategoryID:        categoryID,
-			BoxID:             boxID,
-			StepNumber:        int(row.StepNumber),
-			PrevScheduledDate: prev,
-			ScheduledDate:     scheduled,
-			NextScheduledDate: next,
-			IsCompleted:       row.IsCompleted,
-			ItemID:            itemID,
-			Name:              row.Name,
-			Detail:            detail,
-			LearnedDate:       learnedDate,
-			RegisteredAt:      row.RegisteredAt.Time,
-			EditedAt:          row.EditedAt.Time,
+			ReviewdateID:         idStr,
+			CategoryID:           categoryID,
+			BoxID:                boxID,
+			StepNumber:           int(row.StepNumber),
+			InitialScheduledDate: initialScheduledDate,
+			PrevScheduledDate:    prev,
+			ScheduledDate:        scheduled,
+			NextScheduledDate:    next,
+			IsCompleted:          row.IsCompleted,
+			ItemID:               itemID,
+			Name:                 row.Name,
+			Detail:               detail,
+			LearnedDate:          learnedDate,
+			RegisteredAt:         row.RegisteredAt.Time,
+			EditedAt:             row.EditedAt.Time,
 		}
 	}
 
