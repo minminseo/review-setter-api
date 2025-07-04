@@ -29,21 +29,22 @@ func (r *userRepository) Create(ctx context.Context, u *userDomain.User) error {
 	pgID := pgtype.UUID{Bytes: parsed, Valid: true}
 
 	params := dbgen.CreateUserParams{
-		ID:         pgID,
-		Email:      u.Email,
-		Password:   u.EncryptedPassword,
-		Timezone:   u.Timezone,
-		ThemeColor: dbgen.ThemeColorEnum(u.ThemeColor),
-		Language:   u.Language,
+		ID:             pgID,
+		EmailSearchKey: u.EmailSearchKey,
+		Email:          u.EncryptedEmail,
+		Password:       u.EncryptedPassword,
+		Timezone:       u.Timezone,
+		ThemeColor:     dbgen.ThemeColorEnum(u.ThemeColor),
+		Language:       u.Language,
 	}
 
 	return q.CreateUser(ctx, params)
 }
 
-func (r *userRepository) FindByEmail(ctx context.Context, email string) (*userDomain.User, error) {
+func (r *userRepository) FindByEmailSearchKey(ctx context.Context, searchKey string) (*userDomain.User, error) {
 	q := db.GetQuery(ctx)
 
-	row, err := q.FindUserByEmail(ctx, email)
+	row, err := q.FindUserByEmailSearchKey(ctx, searchKey)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +62,7 @@ func (r *userRepository) FindByEmail(ctx context.Context, email string) (*userDo
 
 	return &userDomain.User{
 		ID:                id,
-		Email:             email,
+		EncryptedEmail:    row.Email,
 		EncryptedPassword: row.Password,
 		ThemeColor:        string(row.ThemeColor),
 		Language:          row.Language,
@@ -107,11 +108,12 @@ func (r *userRepository) Update(ctx context.Context, u *userDomain.User) error {
 	pgID := pgtype.UUID{Bytes: parsed, Valid: true}
 
 	params := dbgen.UpdateUserParams{
-		Email:      u.Email,
-		Timezone:   u.Timezone,
-		ThemeColor: dbgen.ThemeColorEnum(u.ThemeColor),
-		Language:   u.Language,
-		ID:         pgID,
+		EmailSearchKey: u.EmailSearchKey,
+		Email:          u.EncryptedEmail,
+		Timezone:       u.Timezone,
+		ThemeColor:     dbgen.ThemeColorEnum(u.ThemeColor),
+		Language:       u.Language,
+		ID:             pgID,
 	}
 
 	return q.UpdateUser(ctx, params)
