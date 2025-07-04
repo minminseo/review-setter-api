@@ -180,13 +180,14 @@ type ReviewPattern struct {
 }
 
 type User struct {
-	ID         pgtype.UUID        `json:"id"`
-	Email      string             `json:"email"`
-	Password   string             `json:"password"`
-	Timezone   string             `json:"timezone"`
-	ThemeColor ThemeColorEnum     `json:"theme_color"`
-	Language   string             `json:"language"`
-	VerifiedAt pgtype.Timestamptz `json:"verified_at"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	ID             pgtype.UUID        `json:"id"`
+	EmailSearchKey string             `json:"email_search_key"`
+	Email          string             `json:"email"`
+	Password       string             `json:"password"`
+	Timezone       string             `json:"timezone"`
+	ThemeColor     ThemeColorEnum     `json:"theme_color"`
+	Language       string             `json:"language"`
+	VerifiedAt     pgtype.Timestamptz `json:"verified_at"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
 }

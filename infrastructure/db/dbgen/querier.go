@@ -41,7 +41,7 @@ type Querier interface {
 	// 復習日のパターンIDがnilに変更されたとき
 	DeleteReviewDates(ctx context.Context, arg DeleteReviewDatesParams) error
 	FindEmailVerificationByUserID(ctx context.Context, userID pgtype.UUID) (FindEmailVerificationByUserIDRow, error)
-	FindUserByEmail(ctx context.Context, email string) (FindUserByEmailRow, error)
+	FindUserByEmailSearchKey(ctx context.Context, emailSearchKey string) (FindUserByEmailSearchKeyRow, error)
 	GetAllBoxesByCategoryID(ctx context.Context, arg GetAllBoxesByCategoryIDParams) ([]GetAllBoxesByCategoryIDRow, error)
 	GetAllCategoriesByUserID(ctx context.Context, userID pgtype.UUID) ([]GetAllCategoriesByUserIDRow, error)
 	// LAG→item_idごとにstep_numberの昇順で並べた時、scheduled_dateが持つstep_numberより一個前のstep_numberのscheduled_dateを取得

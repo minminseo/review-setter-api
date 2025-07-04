@@ -3,7 +3,10 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 	"time"
+
+	userDomain "github.com/minminseo/recall-setter/domain/user"
 
 	userController "github.com/minminseo/recall-setter/controller/user"
 	userUsecase "github.com/minminseo/recall-setter/usecase/user"
@@ -35,6 +38,28 @@ func main() {
 	}
 	defer pool.Close()
 
+	encKey := os.Getenv("ENCRYPTION_KEY")
+	if encKey == "" {
+		log.Fatal("ENCRYPTION_KEYが設定されていません")
+	}
+
+	//暗号化と復号化のメソッドを持つcryptoServiceをインスタンス化
+	cryptoService, err := userDomain.NewCryptoService(encKey)
+	if err != nil {
+		log.Fatalf("暗号化用の鍵の生成に失敗しました: %v", err)
+	}
+
+	hmacKey := os.Getenv("HMAC_SECRET_KEY")
+	if hmacKey == "" {
+		log.Fatal("HMAC_SECRET_KEYが設定されていません")
+	}
+
+	// 検索用のキー生成（ハッシュ値）のメソッドを持つhasherをインスタンス化
+	hasher, err := userDomain.NewHasher(hmacKey)
+	if err != nil {
+		log.Fatalf("ハッシュ用のキーの生成に失敗しました: %v", err)
+	}
+
 	transactionManager := repository.NewTransactionManager(pool)
 
 	// リポジトリ
@@ -46,7 +71,7 @@ func main() {
 	itemRepository := repository.NewItemRepository()
 
 	// ユースケース
-	userUsecase := userUsecase.NewUserUsecase(userRepository, emailVerificationRepository, transactionManager)
+	userUsecase := userUsecase.NewUserUsecase(userRepository, emailVerificationRepository, transactionManager, cryptoService, hasher)
 	categoryUsecase := categoryUsecase.NewCategoryUsecase(categoryRepository)
 	boxUsecase := boxUsecase.NewBoxUsecase(boxRepository)
 	patternUsecase := patternUsecase.NewPatternUsecase(patternRepository, itemRepository, transactionManager)

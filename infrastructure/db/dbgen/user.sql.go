@@ -15,6 +15,7 @@ const createUser = `-- name: CreateUser :exec
 INSERT INTO 
     users (
         id,
+        email_search_key,
         email,
         password,
         timezone,
@@ -26,22 +27,25 @@ INSERT INTO
         $3,
         $4,
         $5,
-        $6
+        $6,
+        $7
     )
 `
 
 type CreateUserParams struct {
-	ID         pgtype.UUID    `json:"id"`
-	Email      string         `json:"email"`
-	Password   string         `json:"password"`
-	Timezone   string         `json:"timezone"`
-	ThemeColor ThemeColorEnum `json:"theme_color"`
-	Language   string         `json:"language"`
+	ID             pgtype.UUID    `json:"id"`
+	EmailSearchKey string         `json:"email_search_key"`
+	Email          string         `json:"email"`
+	Password       string         `json:"password"`
+	Timezone       string         `json:"timezone"`
+	ThemeColor     ThemeColorEnum `json:"theme_color"`
+	Language       string         `json:"language"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 	_, err := q.db.Exec(ctx, createUser,
 		arg.ID,
+		arg.EmailSearchKey,
 		arg.Email,
 		arg.Password,
 		arg.Timezone,
@@ -51,9 +55,10 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 	return err
 }
 
-const findUserByEmail = `-- name: FindUserByEmail :one
+const findUserByEmailSearchKey = `-- name: FindUserByEmailSearchKey :one
 SELECT
     id,
+    email,
     password,
     theme_color,
     language,
@@ -61,22 +66,24 @@ SELECT
 FROM
     users
 WHERE
-    email = $1
+    email_search_key = $1
 `
 
-type FindUserByEmailRow struct {
+type FindUserByEmailSearchKeyRow struct {
 	ID         pgtype.UUID        `json:"id"`
+	Email      string             `json:"email"`
 	Password   string             `json:"password"`
 	ThemeColor ThemeColorEnum     `json:"theme_color"`
 	Language   string             `json:"language"`
 	VerifiedAt pgtype.Timestamptz `json:"verified_at"`
 }
 
-func (q *Queries) FindUserByEmail(ctx context.Context, email string) (FindUserByEmailRow, error) {
-	row := q.db.QueryRow(ctx, findUserByEmail, email)
-	var i FindUserByEmailRow
+func (q *Queries) FindUserByEmailSearchKey(ctx context.Context, emailSearchKey string) (FindUserByEmailSearchKeyRow, error) {
+	row := q.db.QueryRow(ctx, findUserByEmailSearchKey, emailSearchKey)
+	var i FindUserByEmailSearchKeyRow
 	err := row.Scan(
 		&i.ID,
+		&i.Email,
 		&i.Password,
 		&i.ThemeColor,
 		&i.Language,
@@ -120,24 +127,27 @@ const updateUser = `-- name: UpdateUser :exec
 UPDATE
     users
 SET
-    email = $1,
-    timezone = $2,
-    theme_color = $3,
-    language = $4
+    email_search_key = $1,
+    email = $2,
+    timezone = $3,
+    theme_color = $4,
+    language = $5
 WHERE
-    id = $5
+    id = $6
 `
 
 type UpdateUserParams struct {
-	Email      string         `json:"email"`
-	Timezone   string         `json:"timezone"`
-	ThemeColor ThemeColorEnum `json:"theme_color"`
-	Language   string         `json:"language"`
-	ID         pgtype.UUID    `json:"id"`
+	EmailSearchKey string         `json:"email_search_key"`
+	Email          string         `json:"email"`
+	Timezone       string         `json:"timezone"`
+	ThemeColor     ThemeColorEnum `json:"theme_color"`
+	Language       string         `json:"language"`
+	ID             pgtype.UUID    `json:"id"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 	_, err := q.db.Exec(ctx, updateUser,
+		arg.EmailSearchKey,
 		arg.Email,
 		arg.Timezone,
 		arg.ThemeColor,

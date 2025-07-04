@@ -11,7 +11,8 @@ import (
 
 type User struct {
 	ID                string
-	Email             string
+	EmailSearchKey    string
+	EncryptedEmail    string
 	EncryptedPassword string
 	Timezone          string
 	ThemeColor        string
@@ -26,6 +27,9 @@ func NewUser(
 	timezone string,
 	themeColor string,
 	language string,
+	cryptoService *CryptoService,
+	hasher *Hasher,
+
 ) (*User, error) {
 
 	if err := validateEmail(email); err != nil {
@@ -44,11 +48,17 @@ func NewUser(
 		return nil, err
 	}
 
+	encryptedEmail, err := cryptoService.Encrypt(email)
+	if err != nil {
+		return nil, err
+	}
+	searchKey := hasher.GenerateSearchKey(email)
 	encryptedPassword := encrypt(password)
 
 	u := &User{
 		ID:                id,
-		Email:             email,
+		EmailSearchKey:    searchKey,
+		EncryptedEmail:    encryptedEmail,
 		EncryptedPassword: encryptedPassword,
 		Timezone:          timezone,
 		ThemeColor:        themeColor,
@@ -62,24 +72,31 @@ func NewUser(
 
 func ReconstructUser(
 	id string,
-	email string,
+	encryptedEmail string,
 	timezone string,
 	themeColor string,
 	language string,
 	verifiedAt *time.Time,
 ) (*User, error) {
 	u := &User{
-		ID:         id,
-		Email:      email,
-		Timezone:   timezone,
-		ThemeColor: themeColor,
-		Language:   language,
-		VerifiedAt: verifiedAt,
+		ID:             id,
+		EncryptedEmail: encryptedEmail,
+		Timezone:       timezone,
+		ThemeColor:     themeColor,
+		Language:       language,
+		VerifiedAt:     verifiedAt,
 	}
 	return u, nil
 }
 
-func (u *User) Set(email string, timezone string, themeColor string, language string) error {
+func (u *User) Set(
+	email string,
+	timezone string,
+	themeColor string,
+	language string,
+	cryptoService *CryptoService,
+	hasher *Hasher,
+) error {
 	if err := validateEmail(email); err != nil {
 		return err
 	}
@@ -93,12 +110,24 @@ func (u *User) Set(email string, timezone string, themeColor string, language st
 		return err
 	}
 
-	u.Email = email
+	encryptedEmail, err := cryptoService.Encrypt(email)
+	if err != nil {
+		return err
+	}
+	searchKey := hasher.GenerateSearchKey(email)
+
+	u.EmailSearchKey = searchKey
+	u.EncryptedEmail = encryptedEmail
 	u.Timezone = timezone
 	u.ThemeColor = themeColor
 	u.Language = language
 
 	return nil
+}
+
+// 複合
+func (u *User) GetEmail(cryptoService *CryptoService) (string, error) {
+	return cryptoService.Decrypt(u.EncryptedEmail)
 }
 
 func (u *User) SetPassword(password string) error {

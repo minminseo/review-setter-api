@@ -2,6 +2,7 @@
 INSERT INTO 
     users (
         id,
+        email_search_key,
         email,
         password,
         timezone,
@@ -9,6 +10,7 @@ INSERT INTO
         language
     ) VALUES (
         sqlc.arg(id),
+        sqlc.arg(email_search_key),
         sqlc.arg(email),
         sqlc.arg(password),
         sqlc.arg(timezone),
@@ -16,9 +18,10 @@ INSERT INTO
         sqlc.arg(language)
     );
 
--- name: FindUserByEmail :one
+-- name: FindUserByEmailSearchKey :one
 SELECT
     id,
+    email,
     password,
     theme_color,
     language,
@@ -26,7 +29,7 @@ SELECT
 FROM
     users
 WHERE
-    email = sqlc.arg(email);
+    email_search_key = sqlc.arg(email_search_key);
 
 -- name: GetUserSettingByID :one
 SELECT
@@ -43,6 +46,7 @@ WHERE
 UPDATE
     users
 SET
+    email_search_key = sqlc.arg(email_search_key),
     email = sqlc.arg(email),
     timezone = sqlc.arg(timezone),
     theme_color = sqlc.arg(theme_color),

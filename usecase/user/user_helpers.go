@@ -67,7 +67,7 @@ func (uu *userUsecase) createLoginResponse(user *userDomain.User) (*LoginUserOut
 
 // 未認証ユーザーに認証コードを再送信
 func (uu *userUsecase) resendVerification(ctx context.Context, userID string, dto CreateUserInput) (*CreateUserOutput, error) {
-	newUser, err := userDomain.NewUser(userID, dto.Email, dto.Password, dto.Timezone, dto.ThemeColor, dto.Language)
+	newUser, err := userDomain.NewUser(userID, dto.Email, dto.Password, dto.Timezone, dto.ThemeColor, dto.Language, uu.cryptoService, uu.hasher)
 	if err != nil {
 		return nil, err
 	}
@@ -95,8 +95,8 @@ func (uu *userUsecase) resendVerification(ctx context.Context, userID string, dt
 		}
 
 		// メール送信処理
-		if err := uu.sendVerificationEmail(newUser.Language, newUser.Email, code); err != nil {
-			fmt.Printf("警告: %s への認証メールの再送信に失敗しました: %v\n", newUser.Email, err)
+		if err := uu.sendVerificationEmail(newUser.Language, dto.Email, code); err != nil {
+			fmt.Printf("警告: %s への認証メールの再送信に失敗しました: %v\n", dto.Email, err)
 		}
 
 		return nil
@@ -108,6 +108,6 @@ func (uu *userUsecase) resendVerification(ctx context.Context, userID string, dt
 
 	return &CreateUserOutput{
 		ID:    newUser.ID,
-		Email: newUser.Email,
+		Email: dto.Email,
 	}, nil
 }

@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
 	userDomain "github.com/minminseo/recall-setter/domain/user"
@@ -14,38 +13,46 @@ type userUsecase struct {
 	userRepo              userDomain.UserRepository
 	emailVerificationRepo userDomain.EmailVerificationRepository
 	transactionManager    transaction.ITransactionManager
+	cryptoService         *userDomain.CryptoService
+	hasher                *userDomain.Hasher
 }
 
 func NewUserUsecase(
 	userRepo userDomain.UserRepository,
 	emailVerificationRepo userDomain.EmailVerificationRepository,
 	transactionManager transaction.ITransactionManager,
+	cryptoService *userDomain.CryptoService,
+	hasher *userDomain.Hasher,
 ) IUserUsecase {
+
 	return &userUsecase{
 		userRepo:              userRepo,
 		emailVerificationRepo: emailVerificationRepo,
 		transactionManager:    transactionManager,
+		cryptoService:         cryptoService,
+		hasher:                hasher,
 	}
 }
 
 func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*CreateUserOutput, error) {
-	// 既存ユーザーかチェック
-	existingUser, err := uu.userRepo.FindByEmail(ctx, dto.Email)
+	// 検索キーを生成して既存ユーザーかチェック
+	searchKey := uu.hasher.GenerateSearchKey(dto.Email)
+	existingUser, err := uu.userRepo.FindByEmailSearchKey(ctx, searchKey)
 	if err == nil && existingUser != nil {
 		// 認証済みならエラー
 		if existingUser.IsVerified() {
 			return nil, errors.New("このメールアドレスは既に使用されています")
 		}
-		// 未認証なら、情報を更新して認証コードを再送信
+
+		// 未認証なら認証コードを再送信
 		return uu.resendVerification(ctx, existingUser.ID, dto)
 	}
 
 	id := uuid.NewString()
-	newUser, err := userDomain.NewUser(id, dto.Email, dto.Password, dto.Timezone, dto.ThemeColor, dto.Language)
+	newUser, err := userDomain.NewUser(id, dto.Email, dto.Password, dto.Timezone, dto.ThemeColor, dto.Language, uu.cryptoService, uu.hasher)
 	if err != nil {
 		return nil, err
 	}
-
 	err = uu.transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
 		if err := uu.userRepo.Create(ctx, newUser); err != nil {
 			return err
@@ -56,13 +63,12 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 		if err != nil {
 			return err
 		}
-
 		if err := uu.emailVerificationRepo.Create(ctx, verification); err != nil {
 			return err
 		}
 
-		if err := uu.sendVerificationEmail(newUser.Language, newUser.Email, code); err != nil {
-			fmt.Printf("警告: %s への認証メール送信に失敗しました: %v\n", newUser.Email, err)
+		if err := uu.sendVerificationEmail(newUser.Language, dto.Email, code); err != nil {
+			return err
 		}
 
 		return nil
@@ -72,9 +78,13 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 		return nil, err
 	}
 
+	decryptedEmail, err := newUser.GetEmail(uu.cryptoService)
+	if err != nil {
+		return nil, err
+	}
 	resUser := &CreateUserOutput{
 		ID:    newUser.ID,
-		Email: newUser.Email,
+		Email: decryptedEmail,
 	}
 
 	return resUser, nil
@@ -82,7 +92,8 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 
 // VerifyEmail は認証コードを検証し、ユーザーを有効化します。
 func (uu *userUsecase) VerifyEmail(ctx context.Context, dto VerifyEmailInput) (*LoginUserOutput, error) {
-	user, err := uu.userRepo.FindByEmail(ctx, dto.Email)
+	searchKey := uu.hasher.GenerateSearchKey(dto.Email)
+	user, err := uu.userRepo.FindByEmailSearchKey(ctx, searchKey)
 	if err != nil {
 		return nil, errors.New("ユーザーが見つかりません")
 	}
@@ -124,7 +135,8 @@ func (uu *userUsecase) VerifyEmail(ctx context.Context, dto VerifyEmailInput) (*
 }
 
 func (uu *userUsecase) LogIn(ctx context.Context, dto LoginUserInput) (*LoginUserOutput, error) {
-	user, err := uu.userRepo.FindByEmail(ctx, dto.Email)
+	searchKey := uu.hasher.GenerateSearchKey(dto.Email)
+	user, err := uu.userRepo.FindByEmailSearchKey(ctx, searchKey)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +151,6 @@ func (uu *userUsecase) LogIn(ctx context.Context, dto LoginUserInput) (*LoginUse
 	}
 
 	return uu.createLoginResponse(user)
-
 }
 
 func (uu *userUsecase) GetUserSetting(ctx context.Context, userID string) (*GetUserOutput, error) {
@@ -147,8 +158,14 @@ func (uu *userUsecase) GetUserSetting(ctx context.Context, userID string) (*GetU
 	if err != nil {
 		return nil, err
 	}
+
+	email, err := user.GetEmail(uu.cryptoService)
+	if err != nil {
+		return nil, err
+	}
+
 	resUser := &GetUserOutput{
-		Email:      user.Email,
+		Email:      email,
 		Timezone:   user.Timezone,
 		ThemeColor: user.ThemeColor,
 		Language:   user.Language,
@@ -162,7 +179,7 @@ func (uu *userUsecase) UpdateSetting(ctx context.Context, user UpdateUserInput) 
 		return nil, err
 	}
 
-	err = targetUser.Set(user.Email, user.Timezone, user.ThemeColor, user.Language)
+	err = targetUser.Set(user.Email, user.Timezone, user.ThemeColor, user.Language, uu.cryptoService, uu.hasher)
 	if err != nil {
 		return nil, err
 	}
@@ -172,8 +189,13 @@ func (uu *userUsecase) UpdateSetting(ctx context.Context, user UpdateUserInput) 
 		return nil, err
 	}
 
+	decryptedEmail, err := targetUser.GetEmail(uu.cryptoService)
+	if err != nil {
+		return nil, err
+	}
+
 	resUser := &UpdateUserOutput{
-		Email:      targetUser.Email,
+		Email:      decryptedEmail,
 		Timezone:   targetUser.Timezone,
 		ThemeColor: targetUser.ThemeColor,
 		Language:   targetUser.Language,
