@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
 	userDomain "github.com/minminseo/recall-setter/domain/user"
@@ -40,34 +39,20 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 	searchKey := uu.hasher.GenerateSearchKey(dto.Email)
 	existingUser, err := uu.userRepo.FindByEmailSearchKey(ctx, searchKey)
 	if err == nil && existingUser != nil {
-		fmt.Println("ここは8")
 		// 認証済みならエラー
 		if existingUser.IsVerified() {
-			fmt.Printf("警告: %s は既に認証済みのユーザーです\n", dto.Email)
 			return nil, errors.New("このメールアドレスは既に使用されています")
 		}
 
-		// 未認証なら、情報を更新して認証コードを再送信
-		email, err := existingUser.GetEmail(uu.cryptoService)
-
-		fmt.Println("ここは7")
-		if err != nil {
-			return nil, err
-		}
-
-		fmt.Println("ここは6")
-		// resendVerificationに渡すdtoのEmailを復号したものに差し替える
-		dto.Email = email
+		// 未認証なら認証コードを再送信
 		return uu.resendVerification(ctx, existingUser.ID, dto)
 	}
 
-	fmt.Println("ここは9")
 	id := uuid.NewString()
 	newUser, err := userDomain.NewUser(id, dto.Email, dto.Password, dto.Timezone, dto.ThemeColor, dto.Language, uu.cryptoService, uu.hasher)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("ここは10")
 	err = uu.transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
 		if err := uu.userRepo.Create(ctx, newUser); err != nil {
 			return err
@@ -77,19 +62,13 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 		verification, code, err := userDomain.NewEmailVerification(verificationID, newUser.ID)
 		if err != nil {
 			return err
-
 		}
-		fmt.Println("verification:", verification)
 		if err := uu.emailVerificationRepo.Create(ctx, verification); err != nil {
 			return err
 		}
 
-		decryptedEmail, err := newUser.GetEmail(uu.cryptoService)
-		if err != nil {
+		if err := uu.sendVerificationEmail(newUser.Language, dto.Email, code); err != nil {
 			return err
-		}
-		if err := uu.sendVerificationEmail(newUser.Language, decryptedEmail, code); err != nil {
-			fmt.Printf("警告: %s への認証メール送信に失敗しました: %v\n", decryptedEmail, err)
 		}
 
 		return nil
@@ -182,7 +161,7 @@ func (uu *userUsecase) GetUserSetting(ctx context.Context, userID string) (*GetU
 
 	email, err := user.GetEmail(uu.cryptoService)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decrypt email: %w", err)
+		return nil, err
 	}
 
 	resUser := &GetUserOutput{
