@@ -18,6 +18,7 @@ type ItemUsecase struct {
 	itemRepo           ItemDomain.IItemRepository
 	patternRepo        PatternDomain.IPatternRepository
 	transactionManager transaction.ITransactionManager
+	scheduler          ItemDomain.IScheduler
 }
 
 func NewItemUsecase(
@@ -26,6 +27,7 @@ func NewItemUsecase(
 	itemRepo ItemDomain.IItemRepository,
 	patternRepo PatternDomain.IPatternRepository,
 	transactionManager transaction.ITransactionManager,
+	scheduler ItemDomain.IScheduler,
 ) *ItemUsecase {
 	return &ItemUsecase{
 		categoryRepo:       categoryRepo,
@@ -33,6 +35,7 @@ func NewItemUsecase(
 		itemRepo:           itemRepo,
 		patternRepo:        patternRepo,
 		transactionManager: transactionManager,
+		scheduler:          scheduler,
 	}
 }
 
@@ -99,7 +102,7 @@ func (iu *ItemUsecase) CreateItem(ctx context.Context, in CreateItemInput) (*Cre
 
 		if in.IsMarkOverdueAsCompleted {
 			var isFinished bool
-			newReviewdates, isFinished, err = FormatWithOverdueMarkedCompleted(
+			newReviewdates, isFinished, err = iu.scheduler.FormatWithOverdueMarkedCompleted(
 				targetPatternSteps,
 				in.UserID,
 				in.CategoryID,
@@ -116,7 +119,7 @@ func (iu *ItemUsecase) CreateItem(ctx context.Context, in CreateItemInput) (*Cre
 				newItem.IsFinished = true
 			}
 		} else {
-			newReviewdates, err = FormatWithOverdueMarkedInCompleted(
+			newReviewdates, err = iu.scheduler.FormatWithOverdueMarkedInCompleted(
 				targetPatternSteps,
 				in.UserID,
 				in.CategoryID,
@@ -378,7 +381,7 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 		//　IDを新規作成
 		if input.IsMarkOverdueAsCompleted {
 			var isFinished bool
-			newReviewdates, isFinished, err = FormatWithOverdueMarkedCompleted(
+			newReviewdates, isFinished, err = iu.scheduler.FormatWithOverdueMarkedCompleted(
 				requstedSelectedPatternSteps,
 				input.UserID,
 				input.CategoryID,
@@ -395,7 +398,7 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 				currentItem.IsFinished = true
 			}
 		} else {
-			newReviewdates, err = FormatWithOverdueMarkedInCompleted(
+			newReviewdates, err = iu.scheduler.FormatWithOverdueMarkedInCompleted(
 				requstedSelectedPatternSteps,
 				input.UserID,
 				input.CategoryID,
@@ -421,7 +424,7 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 		}
 		var isFinished bool
 		if input.IsMarkOverdueAsCompleted {
-			newReviewdates, isFinished, err = FormatWithOverdueMarkedCompletedWithIDs(
+			newReviewdates, isFinished, err = iu.scheduler.FormatWithOverdueMarkedCompletedWithIDs(
 				requstedSelectedPatternSteps,
 				reviewDateIDs,
 				input.UserID,
@@ -439,7 +442,7 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 				currentItem.IsFinished = true
 			}
 		} else {
-			newReviewdates, err = FormatWithOverdueMarkedInCompletedWithIDs(
+			newReviewdates, err = iu.scheduler.FormatWithOverdueMarkedInCompletedWithIDs(
 				requstedSelectedPatternSteps,
 				reviewDateIDs,
 				input.UserID,
@@ -619,7 +622,7 @@ func (iu *ItemUsecase) UpdateReviewDates(ctx context.Context, input UpdateBackRe
 			calculatedDuration := int(parsedNewScheduledDate.Sub(parsedInitialScheduledDate).Hours() / 24)
 			FakeLearnedDate := parsedLearnedDate.AddDate(0, 0, calculatedDuration) // これでFormat〇〇系の関数を使い回せる
 
-			newReviewdates, isFinished, err = FormatWithOverdueMarkedCompletedWithIDs(
+			newReviewdates, isFinished, err = iu.scheduler.FormatWithOverdueMarkedCompletedWithIDs(
 				targetPatternSteps,
 				reviewDateIDs,
 				input.UserID,
@@ -649,7 +652,7 @@ func (iu *ItemUsecase) UpdateReviewDates(ctx context.Context, input UpdateBackRe
 				return nil, err
 			}
 			FakeLearnedDate := parsedLearnedDate.AddDate(0, 0, calculatedDuration) // これでFormat〇〇系の関数を使い回せる
-			newReviewdates, err = FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(
+			newReviewdates, err = iu.scheduler.FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(
 				targetPatternSteps,
 				reviewDateIDs,
 				input.UserID,
@@ -921,7 +924,7 @@ func (iu *ItemUsecase) UpdateItemAsUnFinishedForce(ctx context.Context, input Up
 			reviewDateIDs[i] = rd.ReviewdateID
 		}
 
-		newReviewdates, err = FormatWithOverdueMarkedInCompletedWithIDs(
+		newReviewdates, err = iu.scheduler.FormatWithOverdueMarkedInCompletedWithIDs(
 			patternSteps,
 			reviewDateIDs,
 			input.UserID,
