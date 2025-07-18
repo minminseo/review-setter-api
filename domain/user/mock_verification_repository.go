@@ -54,20 +54,6 @@ func (mr *MockEmailVerificationRepositoryMockRecorder) Create(ctx, ev any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockEmailVerificationRepository)(nil).Create), ctx, ev)
 }
 
-// Delete mocks base method.
-func (m *MockEmailVerificationRepository) Delete(ctx context.Context, id string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx, id)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Delete indicates an expected call of Delete.
-func (mr *MockEmailVerificationRepositoryMockRecorder) Delete(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockEmailVerificationRepository)(nil).Delete), ctx, id)
-}
-
 // DeleteByUserID mocks base method.
 func (m *MockEmailVerificationRepository) DeleteByUserID(ctx context.Context, userID string) error {
 	m.ctrl.T.Helper()
