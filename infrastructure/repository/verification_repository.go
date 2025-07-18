@@ -59,15 +59,6 @@ func (r *emailVerificationRepository) FindByUserID(ctx context.Context, userID s
 	}, nil
 }
 
-func (r *emailVerificationRepository) Delete(ctx context.Context, id string) error {
-	q := db.GetQuery(ctx)
-	pgID, err := toUUID(id)
-	if err != nil {
-		return err
-	}
-	return q.DeleteEmailVerification(ctx, pgID)
-}
-
 func (r *emailVerificationRepository) DeleteByUserID(ctx context.Context, userID string) error {
 	q := db.GetQuery(ctx)
 	pgUserID, err := toUUID(userID)
