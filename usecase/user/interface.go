@@ -10,3 +10,11 @@ type IUserUsecase interface {
 	UpdatePassword(ctx context.Context, userID, password string) error
 	VerifyEmail(ctx context.Context, input VerifyEmailInput) (*LoginUserOutput, error)
 }
+
+type iEmailSender interface {
+	SendVerificationEmail(language, toEmail, code string) error
+}
+
+type iTokenGenerator interface {
+	GenerateToken(userID string) (string, error)
+}
