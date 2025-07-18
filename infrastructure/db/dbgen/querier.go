@@ -32,7 +32,6 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	DeleteBox(ctx context.Context, arg DeleteBoxParams) error
 	DeleteCategory(ctx context.Context, arg DeleteCategoryParams) error
-	DeleteEmailVerification(ctx context.Context, id pgtype.UUID) error
 	DeleteEmailVerificationByUserID(ctx context.Context, userID pgtype.UUID) error
 	DeleteItem(ctx context.Context, arg DeleteItemParams) error
 	DeletePattern(ctx context.Context, arg DeletePatternParams) error
