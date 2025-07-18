@@ -145,8 +145,15 @@ func (r *userRepository) UpdateVerifiedAt(ctx context.Context, verifiedAt *time.
 	}
 	pgID := pgtype.UUID{Bytes: parsed, Valid: true}
 
+	var verifiedAtPg pgtype.Timestamptz
+	if verifiedAt != nil {
+		verifiedAtPg = pgtype.Timestamptz{Time: *verifiedAt, Valid: true}
+	} else {
+		verifiedAtPg = pgtype.Timestamptz{Valid: false}
+	}
+
 	params := dbgen.UpdateVerifiedAtParams{
-		VerifiedAt: pgtype.Timestamptz{Time: *verifiedAt, Valid: true},
+		VerifiedAt: verifiedAtPg,
 		ID:         pgID,
 	}
 	return q.UpdateVerifiedAt(ctx, params)
