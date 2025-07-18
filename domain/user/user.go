@@ -28,7 +28,7 @@ func NewUser(
 	themeColor string,
 	language string,
 	cryptoService *CryptoService,
-	hasher *Hasher,
+	searchKey string,
 
 ) (*User, error) {
 
@@ -52,7 +52,6 @@ func NewUser(
 	if err != nil {
 		return nil, err
 	}
-	searchKey := hasher.GenerateSearchKey(email)
 	encryptedPassword := encrypt(password)
 
 	u := &User{
@@ -95,7 +94,7 @@ func (u *User) Set(
 	themeColor string,
 	language string,
 	cryptoService *CryptoService,
-	hasher *Hasher,
+	searchKey string,
 ) error {
 	if err := validateEmail(email); err != nil {
 		return err
@@ -114,7 +113,6 @@ func (u *User) Set(
 	if err != nil {
 		return err
 	}
-	searchKey := hasher.GenerateSearchKey(email)
 
 	u.EmailSearchKey = searchKey
 	u.EncryptedEmail = encryptedEmail
@@ -285,4 +283,8 @@ func (u *User) IsVerified() bool {
 func (u *User) SetVerified() {
 	now := time.Now()
 	u.VerifiedAt = &now
+}
+
+type IHasher interface {
+	GenerateSearchKey(email string) string
 }

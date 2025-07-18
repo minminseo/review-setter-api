@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 )
@@ -38,6 +39,10 @@ func (s *CryptoService) Encrypt(plaintext string) (string, error) {
 	nonce := make([]byte, gcm.NonceSize())
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
 		return "", err
+	}
+
+	if plaintext == "" {
+		return "", errors.New("暗号化する文字列が空です")
 	}
 
 	ciphertext := gcm.Seal(nonce, nonce, []byte(plaintext), nil)

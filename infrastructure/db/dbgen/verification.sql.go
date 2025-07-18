@@ -42,18 +42,6 @@ func (q *Queries) CreateEmailVerification(ctx context.Context, arg CreateEmailVe
 	return err
 }
 
-const deleteEmailVerification = `-- name: DeleteEmailVerification :exec
-DELETE FROM
-    email_verifications
-WHERE
-    id = $1
-`
-
-func (q *Queries) DeleteEmailVerification(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteEmailVerification, id)
-	return err
-}
-
 const deleteEmailVerificationByUserID = `-- name: DeleteEmailVerificationByUserID :exec
 DELETE FROM
     email_verifications

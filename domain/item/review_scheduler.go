@@ -4,12 +4,18 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	ItemDomain "github.com/minminseo/recall-setter/domain/item"
 	PatternDomain "github.com/minminseo/recall-setter/domain/pattern"
 )
 
+// 復習日の計算を担うドメインサービス
+type scheduler struct{}
+
+func NewScheduler() IScheduler {
+	return &scheduler{}
+}
+
 // 作成
-func FormatWithOverdueMarkedCompleted(
+func (s *scheduler) FormatWithOverdueMarkedCompleted(
 	targetPatternSteps []*PatternDomain.PatternStep,
 	userID string,
 	categoryID *string,
@@ -17,15 +23,15 @@ func FormatWithOverdueMarkedCompleted(
 	itemID string,
 	parsedLearnedDate time.Time,
 	parsedToday time.Time,
-) ([]*ItemDomain.Reviewdate, bool, error) {
+) ([]*Reviewdate, bool, error) {
 
-	result := make([]*ItemDomain.Reviewdate, len(targetPatternSteps))
+	result := make([]*Reviewdate, len(targetPatternSteps))
 
 	for i, step := range targetPatternSteps {
 		reviewDateID := uuid.NewString()
 		calculatedScheduledDate := parsedLearnedDate.AddDate(0, 0, step.IntervalDays)
 
-		reviewdate, err := ItemDomain.NewReviewdate(
+		reviewdate, err := NewReviewdate(
 			reviewDateID,
 			userID,
 			categoryID,
@@ -43,12 +49,15 @@ func FormatWithOverdueMarkedCompleted(
 	}
 
 	// もし最後のステップが今日より前なら（復習物作成の時点で全復習日完了扱いなら）、すべてを完了扱い
-	lastScheduled := result[len(targetPatternSteps)-1].ScheduledDate
-	isFinished := lastScheduled.Before(parsedToday)
+	isFinished := false
+	if len(targetPatternSteps) > 0 {
+		lastScheduled := result[len(targetPatternSteps)-1].ScheduledDate
+		isFinished = lastScheduled.Before(parsedToday)
+	}
 	return result, isFinished, nil
 }
 
-func FormatWithOverdueMarkedInCompleted(
+func (s *scheduler) FormatWithOverdueMarkedInCompleted(
 	targetPatternSteps []*PatternDomain.PatternStep,
 	userID string,
 	categoryID *string,
@@ -56,21 +65,24 @@ func FormatWithOverdueMarkedInCompleted(
 	itemID string,
 	parsedLearnedDate time.Time,
 	parsedToday time.Time,
-) ([]*ItemDomain.Reviewdate, error) {
-	result := make([]*ItemDomain.Reviewdate, len(targetPatternSteps))
-	firstScheduled := parsedLearnedDate.AddDate(0, 0, targetPatternSteps[0].IntervalDays)
+) ([]*Reviewdate, error) {
+	result := make([]*Reviewdate, len(targetPatternSteps))
+
 	var addDuration int
-	if firstScheduled.Before(parsedToday) {
-		addDuration = int(parsedToday.Sub(firstScheduled).Hours() / 24)
-	} else {
-		addDuration = 0
+	if len(targetPatternSteps) > 0 {
+		firstScheduled := parsedLearnedDate.AddDate(0, 0, targetPatternSteps[0].IntervalDays)
+		if firstScheduled.Before(parsedToday) {
+			addDuration = int(parsedToday.Sub(firstScheduled).Hours() / 24)
+		} else {
+			addDuration = 0
+		}
 	}
 
 	for i, step := range targetPatternSteps {
 		reviewDateID := uuid.NewString()
 		calculatedScheduledDate := parsedLearnedDate.AddDate(0, 0, step.IntervalDays+addDuration)
 
-		reviewdate, err := ItemDomain.NewReviewdate(
+		reviewdate, err := NewReviewdate(
 			reviewDateID,
 			userID,
 			categoryID,
@@ -91,7 +103,7 @@ func FormatWithOverdueMarkedInCompleted(
 }
 
 // 更新
-func FormatWithOverdueMarkedCompletedWithIDs(
+func (s *scheduler) FormatWithOverdueMarkedCompletedWithIDs(
 	targetPatternSteps []*PatternDomain.PatternStep,
 	reviewDateIDs []string,
 	userID string,
@@ -100,18 +112,18 @@ func FormatWithOverdueMarkedCompletedWithIDs(
 	itemID string,
 	parsedLearnedDate time.Time,
 	parsedToday time.Time,
-) ([]*ItemDomain.Reviewdate, bool, error) {
+) ([]*Reviewdate, bool, error) {
 
 	if len(reviewDateIDs) != len(targetPatternSteps) {
-		return nil, false, ItemDomain.ErrNewScheduledDateBeforeInitialScheduledDate
+		return nil, false, ErrNewScheduledDateBeforeInitialScheduledDate
 	}
 
-	result := make([]*ItemDomain.Reviewdate, len(targetPatternSteps))
+	result := make([]*Reviewdate, len(targetPatternSteps))
 
 	for i, step := range targetPatternSteps {
 		calculatedScheduledDate := parsedLearnedDate.AddDate(0, 0, step.IntervalDays)
 
-		reviewdate, err := ItemDomain.NewReviewdate(
+		reviewdate, err := NewReviewdate(
 			reviewDateIDs[i],
 			userID,
 			categoryID,
@@ -128,12 +140,15 @@ func FormatWithOverdueMarkedCompletedWithIDs(
 		result[i] = reviewdate
 	}
 
-	lastScheduled := result[len(targetPatternSteps)-1].ScheduledDate
-	isFinished := lastScheduled.Before(parsedToday)
+	isFinished := false
+	if len(targetPatternSteps) > 0 {
+		lastScheduled := result[len(targetPatternSteps)-1].ScheduledDate
+		isFinished = lastScheduled.Before(parsedToday)
+	}
 	return result, isFinished, nil
 }
 
-func FormatWithOverdueMarkedInCompletedWithIDs(
+func (s *scheduler) FormatWithOverdueMarkedInCompletedWithIDs(
 	targetPatternSteps []*PatternDomain.PatternStep,
 	reviewDateIDs []string,
 	userID string,
@@ -142,23 +157,26 @@ func FormatWithOverdueMarkedInCompletedWithIDs(
 	itemID string,
 	parsedLearnedDate time.Time,
 	parsedToday time.Time,
-) ([]*ItemDomain.Reviewdate, error) {
+) ([]*Reviewdate, error) {
 	if len(reviewDateIDs) != len(targetPatternSteps) {
-		return nil, ItemDomain.ErrNewScheduledDateBeforeInitialScheduledDate
+		return nil, ErrNewScheduledDateBeforeInitialScheduledDate
 	}
 
-	result := make([]*ItemDomain.Reviewdate, len(targetPatternSteps))
-	firstScheduled := parsedLearnedDate.AddDate(0, 0, targetPatternSteps[0].IntervalDays)
+	result := make([]*Reviewdate, len(targetPatternSteps))
+
 	var addDuration int
-	if firstScheduled.Before(parsedToday) {
-		addDuration = int(parsedToday.Sub(firstScheduled).Hours() / 24)
-	} else {
-		addDuration = 0
+	if len(targetPatternSteps) > 0 {
+		firstScheduled := parsedLearnedDate.AddDate(0, 0, targetPatternSteps[0].IntervalDays)
+		if firstScheduled.Before(parsedToday) {
+			addDuration = int(parsedToday.Sub(firstScheduled).Hours() / 24)
+		} else {
+			addDuration = 0
+		}
 	}
 
 	for i, step := range targetPatternSteps {
 		calculatedScheduledDate := parsedLearnedDate.AddDate(0, 0, step.IntervalDays+addDuration)
-		reviewdate, err := ItemDomain.NewReviewdate(
+		reviewdate, err := NewReviewdate(
 			reviewDateIDs[i],
 			userID,
 			categoryID,
@@ -178,7 +196,7 @@ func FormatWithOverdueMarkedInCompletedWithIDs(
 	return result, nil
 }
 
-func FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(
+func (s *scheduler) FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(
 	targetPatternSteps []*PatternDomain.PatternStep,
 	reviewDateIDs []string,
 	userID string,
@@ -187,17 +205,17 @@ func FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(
 	itemID string,
 	parsedLearnedDate time.Time,
 	parsedToday time.Time,
-) ([]*ItemDomain.Reviewdate, error) {
+) ([]*Reviewdate, error) {
 	if len(reviewDateIDs) != len(targetPatternSteps) {
-		return nil, ItemDomain.ErrNewScheduledDateBeforeInitialScheduledDate
+		return nil, ErrNewScheduledDateBeforeInitialScheduledDate
 	}
 
-	result := make([]*ItemDomain.Reviewdate, len(targetPatternSteps))
+	result := make([]*Reviewdate, len(targetPatternSteps))
 
 	for i, step := range targetPatternSteps {
 		calculatedScheduledDate := parsedLearnedDate.AddDate(0, 0, step.IntervalDays)
 
-		reviewdate, err := ItemDomain.NewReviewdate(
+		reviewdate, err := NewReviewdate(
 			reviewDateIDs[i],
 			userID,
 			categoryID,

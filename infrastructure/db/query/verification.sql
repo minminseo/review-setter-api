@@ -23,12 +23,6 @@ WHERE
     user_id = sqlc.arg(user_id)
 LIMIT 1;
 
--- name: DeleteEmailVerification :exec
-DELETE FROM
-    email_verifications
-WHERE
-    id = sqlc.arg(id);
-
 -- name: DeleteEmailVerificationByUserID :exec
 DELETE FROM
     email_verifications

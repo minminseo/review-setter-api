@@ -22,6 +22,14 @@ type EmailVerification struct {
 
 // 認証情報の生成
 func NewEmailVerification(verificationID string, userID string) (*EmailVerification, string, error) {
+
+	if verificationID == "" {
+		return nil, "", fmt.Errorf("認証IDが空です")
+	}
+	if userID == "" {
+		return nil, "", fmt.Errorf("ユーザーIDが空です")
+	}
+
 	code, err := generateVerificationCode(VerificationCodeLength)
 	if err != nil {
 		return nil, "", fmt.Errorf("認証コードの生成に失敗しました: %w", err)
@@ -65,4 +73,9 @@ func generateVerificationCode(length int) (string, error) {
 func hashVerificationCode(code string) string {
 	hash := sha256.Sum256([]byte(code))
 	return hex.EncodeToString(hash[:])
+}
+
+// テスト用にハッシュ関数をエクスポート
+func HashVerificationCodeForTest(code string) string {
+	return hashVerificationCode(code)
 }

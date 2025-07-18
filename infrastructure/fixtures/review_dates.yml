@@ -1,0 +1,85 @@
+- id: "b50e8400-e29b-41d4-a716-446655440001"
+  user_id: "550e8400-e29b-41d4-a716-446655440001"
+  category_id: "650e8400-e29b-41d4-a716-446655440001"
+  box_id: "950e8400-e29b-41d4-a716-446655440001"
+  item_id: "a50e8400-e29b-41d4-a716-446655440001"
+  step_number: 1
+  initial_scheduled_date: "2024-01-02"
+  scheduled_date: "2024-01-02"
+  is_completed: false
+  created_at: "2024-01-01T12:00:00Z"
+  updated_at: "2024-01-01T12:00:00Z"
+
+- id: "b50e8400-e29b-41d4-a716-446655440002"
+  user_id: "550e8400-e29b-41d4-a716-446655440001"
+  category_id: "650e8400-e29b-41d4-a716-446655440001"
+  box_id: "950e8400-e29b-41d4-a716-446655440001"
+  item_id: "a50e8400-e29b-41d4-a716-446655440001"
+  step_number: 2
+  initial_scheduled_date: "2024-01-04"
+  scheduled_date: "2024-01-04"
+  is_completed: false
+  created_at: "2024-01-01T12:00:00Z"
+  updated_at: "2024-01-01T12:00:00Z"
+
+- id: "b50e8400-e29b-41d4-a716-446655440003"
+  user_id: "550e8400-e29b-41d4-a716-446655440001"
+  category_id: "650e8400-e29b-41d4-a716-446655440001"
+  box_id: "950e8400-e29b-41d4-a716-446655440002"
+  item_id: "a50e8400-e29b-41d4-a716-446655440002"
+  step_number: 1
+  initial_scheduled_date: "2024-01-03"
+  scheduled_date: "2024-01-03"
+  is_completed: true
+  created_at: "2024-01-01T12:30:00Z"
+  updated_at: "2024-01-01T12:30:00Z"
+
+- id: "b50e8400-e29b-41d4-a716-446655440004"
+  user_id: "550e8400-e29b-41d4-a716-446655440001"
+  category_id: "650e8400-e29b-41d4-a716-446655440002"
+  box_id: "950e8400-e29b-41d4-a716-446655440003"
+  item_id: "a50e8400-e29b-41d4-a716-446655440003"
+  step_number: 1
+  initial_scheduled_date: "2024-01-04"
+  scheduled_date: "2024-01-06"
+  is_completed: false
+  created_at: "2024-01-01T13:00:00Z"
+  updated_at: "2024-01-01T13:00:00Z"
+
+- id: "b50e8400-e29b-41d4-a716-446655440005"
+  user_id: "550e8400-e29b-41d4-a716-446655440002"
+  category_id: "650e8400-e29b-41d4-a716-446655440003"
+  box_id: "950e8400-e29b-41d4-a716-446655440004"
+  item_id: "a50e8400-e29b-41d4-a716-446655440004"
+  step_number: 1
+  initial_scheduled_date: "2024-01-05"
+  scheduled_date: "2024-01-05"
+  is_completed: false
+  created_at: "2024-01-01T13:30:00Z"
+  updated_at: "2024-01-01T13:30:00Z"
+
+# テスト用の真の未分類復習日 (category_id = null, box_id = null)
+- id: "b50e8400-e29b-41d4-a716-446655440006"
+  user_id: "550e8400-e29b-41d4-a716-446655440002"
+  category_id: null
+  box_id: null
+  item_id: "a50e8400-e29b-41d4-a716-446655440006"
+  step_number: 1
+  initial_scheduled_date: "2024-01-07"
+  scheduled_date: "2024-01-07"
+  is_completed: false
+  created_at: "2024-01-01T15:00:00Z"
+  updated_at: "2024-01-01T15:00:00Z"
+
+# テスト用のカテゴリ未分類復習日 (category_id指定, box_id = null)
+- id: "b50e8400-e29b-41d4-a716-446655440007"
+  user_id: "550e8400-e29b-41d4-a716-446655440002"
+  category_id: "650e8400-e29b-41d4-a716-446655440004"
+  box_id: null
+  item_id: "a50e8400-e29b-41d4-a716-446655440005"
+  step_number: 1
+  initial_scheduled_date: "2024-01-06"
+  scheduled_date: "2024-01-06"
+  is_completed: false
+  created_at: "2024-01-01T14:00:00Z"
+  updated_at: "2024-01-01T14:00:00Z"

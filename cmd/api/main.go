@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	itemDomain "github.com/minminseo/recall-setter/domain/item"
 	userDomain "github.com/minminseo/recall-setter/domain/user"
 
 	userController "github.com/minminseo/recall-setter/controller/user"
@@ -23,7 +24,9 @@ import (
 	itemController "github.com/minminseo/recall-setter/controller/item"
 	itemUsecase "github.com/minminseo/recall-setter/usecase/item"
 
+	"github.com/minminseo/recall-setter/infrastructure/auth"
 	"github.com/minminseo/recall-setter/infrastructure/db"
+	"github.com/minminseo/recall-setter/infrastructure/mailer"
 	"github.com/minminseo/recall-setter/infrastructure/repository"
 	"github.com/minminseo/recall-setter/router"
 )
@@ -62,6 +65,15 @@ func main() {
 
 	transactionManager := repository.NewTransactionManager(pool)
 
+	// メール送信
+	emailSender := mailer.NewSMTPEmailSender()
+
+	// JWTトークン生成のためのサービス
+	tokenGenerator := auth.NewJWTGenerator()
+
+	// ドメインサービス
+	scheduler := itemDomain.NewScheduler()
+
 	// リポジトリ
 	userRepository := repository.NewUserRepository()
 	emailVerificationRepository := repository.NewEmailVerificationRepository()
@@ -71,11 +83,11 @@ func main() {
 	itemRepository := repository.NewItemRepository()
 
 	// ユースケース
-	userUsecase := userUsecase.NewUserUsecase(userRepository, emailVerificationRepository, transactionManager, cryptoService, hasher)
+	userUsecase := userUsecase.NewUserUsecase(userRepository, emailVerificationRepository, transactionManager, cryptoService, hasher, emailSender, tokenGenerator)
 	categoryUsecase := categoryUsecase.NewCategoryUsecase(categoryRepository)
 	boxUsecase := boxUsecase.NewBoxUsecase(boxRepository)
 	patternUsecase := patternUsecase.NewPatternUsecase(patternRepository, itemRepository, transactionManager)
-	itemUsecase := itemUsecase.NewItemUsecase(categoryRepository, boxRepository, itemRepository, patternRepository, transactionManager)
+	itemUsecase := itemUsecase.NewItemUsecase(categoryRepository, boxRepository, itemRepository, patternRepository, transactionManager, scheduler)
 
 	// コントローラー
 	userController := userController.NewUserController(userUsecase)
