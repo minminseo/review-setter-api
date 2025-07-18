@@ -268,7 +268,7 @@ func TestUserUsecase_VerifyEmail(t *testing.T) {
 						Times(1),
 
 					mockEmailVerificationRepo.EXPECT().
-						Delete(gomock.Any(), "verification-id").
+						DeleteByUserID(gomock.Any(), "test-id").
 						Return(nil).
 						Times(1),
 
