@@ -52,7 +52,7 @@ func TestTransactionManager(t *testing.T) {
 
 		want1, _ := userRepo.FindByEmailSearchKey(ctx, user1.EmailSearchKey)
 		want2, _ := userRepo.FindByEmailSearchKey(ctx, user2.EmailSearchKey)
-		
+
 		if diff := cmp.Diff(want1.ID, user1.ID); diff != "" {
 			t.Errorf("FindByEmailSearchKey() mismatch (-want +got):\n%s", diff)
 		}
@@ -140,4 +140,3 @@ func TestTransactionManager(t *testing.T) {
 func errorRepositoryOperation(ctx context.Context, u *userDomain.User) error {
 	return errors.New("明示的なエラー")
 }
-
