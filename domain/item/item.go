@@ -4,6 +4,7 @@ import (
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	PatternDomain "github.com/minminseo/recall-setter/domain/pattern"
 )
 
 type Item struct {
@@ -88,7 +89,7 @@ func ReconstructItem(
 func validateName(name string) error {
 	return validation.Validate(
 		name,
-		validation.Required.Error("アイテム名は必須です"),
+		validation.Required.Error("復習物名は必須です"),
 	)
 }
 
@@ -216,4 +217,59 @@ func (s *Reviewdate) SetOnlyIDs(
 	s.CategoryID = categoryID
 	s.BoxID = boxID
 	return nil
+}
+
+type IScheduler interface {
+	FormatWithOverdueMarkedCompleted(
+		targetPatternSteps []*PatternDomain.PatternStep,
+		userID string,
+		categoryID *string,
+		boxID *string,
+		itemID string,
+		parsedLearnedDate time.Time,
+		parsedToday time.Time,
+	) ([]*Reviewdate, bool, error)
+
+	FormatWithOverdueMarkedInCompleted(
+		targetPatternSteps []*PatternDomain.PatternStep,
+		userID string,
+		categoryID *string,
+		boxID *string,
+		itemID string,
+		parsedLearnedDate time.Time,
+		parsedToday time.Time,
+	) ([]*Reviewdate, error)
+
+	FormatWithOverdueMarkedCompletedWithIDs(
+		targetPatternSteps []*PatternDomain.PatternStep,
+		reviewDateIDs []string,
+		userID string,
+		categoryID *string,
+		boxID *string,
+		itemID string,
+		parsedLearnedDate time.Time,
+		parsedToday time.Time,
+	) ([]*Reviewdate, bool, error)
+
+	FormatWithOverdueMarkedInCompletedWithIDs(
+		targetPatternSteps []*PatternDomain.PatternStep,
+		reviewDateIDs []string,
+		userID string,
+		categoryID *string,
+		boxID *string,
+		itemID string,
+		parsedLearnedDate time.Time,
+		parsedToday time.Time,
+	) ([]*Reviewdate, error)
+
+	FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(
+		targetPatternSteps []*PatternDomain.PatternStep,
+		reviewDateIDs []string,
+		userID string,
+		categoryID *string,
+		boxID *string,
+		itemID string,
+		parsedLearnedDate time.Time,
+		parsedToday time.Time,
+	) ([]*Reviewdate, error)
 }
