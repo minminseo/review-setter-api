@@ -10,7 +10,7 @@ type Hasher struct {
 	key []byte
 }
 
-func NewHasher(hexKey string) (*Hasher, error) {
+func NewHasher(hexKey string) (IHasher, error) {
 	key, err := hex.DecodeString(hexKey) // 秘密鍵をバイト列に変換
 	if err != nil {
 		return nil, err
