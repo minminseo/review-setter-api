@@ -157,6 +157,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 	return err
 }
 
+// #nosec G101
 const updateUserPassword = `-- name: UpdateUserPassword :exec
 UPDATE
     users
