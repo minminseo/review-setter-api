@@ -102,7 +102,7 @@ func (r *itemRepository) CreateReviewdates(ctx context.Context, reviewdates []*i
 			CategoryID:           pgCategoryID,
 			BoxID:                pgBoxID,
 			ItemID:               pgItemID,
-			StepNumber:           int16(rd.StepNumber),
+			StepNumber:           int16(rd.StepNumber), // #nosec G115
 			InitialScheduledDate: pgtype.Date{Time: rd.InitialScheduledDate, Valid: true},
 			ScheduledDate:        pgtype.Date{Time: rd.ScheduledDate, Valid: true},
 			IsCompleted:          rd.IsCompleted,

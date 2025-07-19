@@ -51,8 +51,8 @@ func (r *patternRepository) CreatePatternSteps(ctx context.Context, steps []*pat
 			ID:           pgStepID,
 			UserID:       pgUserID,
 			PatternID:    pgPatternID,
-			StepNumber:   int16(s.StepNumber),
-			IntervalDays: int16(s.IntervalDays),
+			StepNumber:   int16(s.StepNumber),   // #nosec G115
+			IntervalDays: int16(s.IntervalDays), // #nosec G115
 		}
 		rows[i] = []any{
 			cps[i].ID,
