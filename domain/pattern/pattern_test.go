@@ -3,9 +3,18 @@ package pattern
 import (
 	"testing"
 	"time"
+
+	"github.com/google/go-cmp/cmp"
 )
 
-var Debug bool = false
+var Debug = false
+
+const (
+	testUserID     = "user1"
+	testCategoryID = "category1"
+	testPatternID  = "pattern1"
+	testBoxID      = "box1"
+)
 
 func TestNewPattern(t *testing.T) {
 	now := time.Now()
@@ -18,70 +27,105 @@ func TestNewPattern(t *testing.T) {
 		targetWeight string
 		registeredAt time.Time
 		editedAt     time.Time
+		want         *Pattern
 		wantErr      bool
 		errMsg       string
 	}{
 		{
 			name:         "有効なパターン（正常系）",
-			patternID:    "pattern1",
-			userID:       "user1",
+			patternID:    testPatternID,
+			userID:       testUserID,
 			patternName:  "Standard Review",
 			targetWeight: TargetWeightNormal,
 			registeredAt: now,
 			editedAt:     now,
-			wantErr:      false,
+			want: &Pattern{
+				PatternID:    testPatternID,
+				UserID:       testUserID,
+				Name:         "Standard Review",
+				TargetWeight: TargetWeightNormal,
+				RegisteredAt: now,
+				EditedAt:     now,
+			},
+			wantErr: false,
 		},
 		{
 			name:         "パターン名が空（異常系）",
 			patternID:    "pattern2",
-			userID:       "user1",
+			userID:       testUserID,
 			patternName:  "",
 			targetWeight: TargetWeightNormal,
 			registeredAt: now,
 			editedAt:     now,
+			want:         nil,
 			wantErr:      true,
 			errMsg:       "名前は必須です",
 		},
 		{
 			name:         "重みが不正（異常系）",
 			patternID:    "pattern3",
-			userID:       "user1",
+			userID:       testUserID,
 			patternName:  "Test Pattern",
 			targetWeight: "invalid",
 			registeredAt: now,
 			editedAt:     now,
+			want:         nil,
 			wantErr:      true,
 			errMsg:       "重みの値が不正です",
 		},
 		{
 			name:         "重みがHeavy（正常系）",
 			patternID:    "pattern4",
-			userID:       "user1",
+			userID:       testUserID,
 			patternName:  "Heavy Pattern",
 			targetWeight: TargetWeightHeavy,
 			registeredAt: now,
 			editedAt:     now,
-			wantErr:      false,
+			want: &Pattern{
+				PatternID:    "pattern4",
+				UserID:       testUserID,
+				Name:         "Heavy Pattern",
+				TargetWeight: TargetWeightHeavy,
+				RegisteredAt: now,
+				EditedAt:     now,
+			},
+			wantErr: false,
 		},
 		{
 			name:         "重みがLight（正常系）",
 			patternID:    "pattern5",
-			userID:       "user1",
+			userID:       testUserID,
 			patternName:  "Light Pattern",
 			targetWeight: TargetWeightLight,
 			registeredAt: now,
 			editedAt:     now,
-			wantErr:      false,
+			want: &Pattern{
+				PatternID:    "pattern5",
+				UserID:       testUserID,
+				Name:         "Light Pattern",
+				TargetWeight: TargetWeightLight,
+				RegisteredAt: now,
+				EditedAt:     now,
+			},
+			wantErr: false,
 		},
 		{
 			name:         "重みがUnset（正常系）",
 			patternID:    "pattern6",
-			userID:       "user1",
+			userID:       testUserID,
 			patternName:  "Unset Pattern",
 			targetWeight: TargetWeightUnset,
 			registeredAt: now,
 			editedAt:     now,
-			wantErr:      false,
+			want: &Pattern{
+				PatternID:    "pattern6",
+				UserID:       testUserID,
+				Name:         "Unset Pattern",
+				TargetWeight: TargetWeightUnset,
+				RegisteredAt: now,
+				EditedAt:     now,
+			},
+			wantErr: false,
 		},
 	}
 
@@ -94,7 +138,7 @@ func TestNewPattern(t *testing.T) {
 
 			if tc.wantErr {
 				if err == nil {
-					t.Fatalf("expected error but got nil")
+					t.Fatal("expected error but got nil")
 				}
 				if err.Error() != tc.errMsg {
 					t.Errorf("unexpected error message: got %q, want %q", err.Error(), tc.errMsg)
@@ -106,23 +150,8 @@ func TestNewPattern(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
-			if pattern.PatternID != tc.patternID {
-				t.Errorf("PatternID: got %q, want %q", pattern.PatternID, tc.patternID)
-			}
-			if pattern.UserID != tc.userID {
-				t.Errorf("UserID: got %q, want %q", pattern.UserID, tc.userID)
-			}
-			if pattern.Name != tc.patternName {
-				t.Errorf("Name: got %q, want %q", pattern.Name, tc.patternName)
-			}
-			if pattern.TargetWeight != tc.targetWeight {
-				t.Errorf("TargetWeight: got %q, want %q", pattern.TargetWeight, tc.targetWeight)
-			}
-			if !pattern.RegisteredAt.Equal(tc.registeredAt) {
-				t.Errorf("RegisteredAt: got %v, want %v", pattern.RegisteredAt, tc.registeredAt)
-			}
-			if !pattern.EditedAt.Equal(tc.editedAt) {
-				t.Errorf("EditedAt: got %v, want %v", pattern.EditedAt, tc.editedAt)
+			if diff := cmp.Diff(tc.want, pattern); diff != "" {
+				t.Errorf("Pattern mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -130,7 +159,7 @@ func TestNewPattern(t *testing.T) {
 
 func TestPattern_Set(t *testing.T) {
 	now := time.Now()
-	pattern, err := NewPattern("pattern1", "user1", "Original", TargetWeightNormal, now, now)
+	pattern, err := NewPattern(testPatternID, testUserID, "Original", TargetWeightNormal, now, now)
 	if err != nil {
 		t.Fatalf("failed to create pattern: %v", err)
 	}
@@ -142,6 +171,7 @@ func TestPattern_Set(t *testing.T) {
 		newName      string
 		targetWeight string
 		editedAt     time.Time
+		wantPattern  *Pattern
 		wantErr      bool
 		errMsg       string
 	}{
@@ -150,23 +180,47 @@ func TestPattern_Set(t *testing.T) {
 			newName:      "Updated Pattern",
 			targetWeight: TargetWeightHeavy,
 			editedAt:     newTime,
-			wantErr:      false,
+			wantPattern: &Pattern{
+				PatternID:    testPatternID,
+				UserID:       testUserID,
+				Name:         "Updated Pattern",
+				TargetWeight: TargetWeightHeavy,
+				RegisteredAt: now,
+				EditedAt:     newTime,
+			},
+			wantErr: false,
 		},
 		{
 			name:         "パターン名が空（異常系）",
 			newName:      "",
 			targetWeight: TargetWeightNormal,
 			editedAt:     newTime,
-			wantErr:      true,
-			errMsg:       "名前は必須です",
+			wantPattern: &Pattern{
+				PatternID:    testPatternID,
+				UserID:       testUserID,
+				Name:         "Original",
+				TargetWeight: TargetWeightNormal,
+				RegisteredAt: now,
+				EditedAt:     now,
+			},
+			wantErr: true,
+			errMsg:  "名前は必須です",
 		},
 		{
 			name:         "重みが不正（異常系）",
 			newName:      "Valid Name",
 			targetWeight: "invalid",
 			editedAt:     newTime,
-			wantErr:      true,
-			errMsg:       "重みの値が不正です",
+			wantPattern: &Pattern{
+				PatternID:    testPatternID,
+				UserID:       testUserID,
+				Name:         "Original",
+				TargetWeight: TargetWeightNormal,
+				RegisteredAt: now,
+				EditedAt:     now,
+			},
+			wantErr: true,
+			errMsg:  "重みの値が不正です",
 		},
 	}
 
@@ -180,10 +234,13 @@ func TestPattern_Set(t *testing.T) {
 
 			if tc.wantErr {
 				if err == nil {
-					t.Fatalf("expected error but got nil")
+					t.Fatal("expected error but got nil")
 				}
 				if err.Error() != tc.errMsg {
 					t.Errorf("unexpected error message: got %q, want %q", err.Error(), tc.errMsg)
+				}
+				if diff := cmp.Diff(tc.wantPattern, &testPattern); diff != "" {
+					t.Errorf("Pattern mismatch (-want +got):\n%s", diff)
 				}
 				return
 			}
@@ -192,14 +249,8 @@ func TestPattern_Set(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
-			if testPattern.Name != tc.newName {
-				t.Errorf("Name: got %q, want %q", testPattern.Name, tc.newName)
-			}
-			if testPattern.TargetWeight != tc.targetWeight {
-				t.Errorf("TargetWeight: got %q, want %q", testPattern.TargetWeight, tc.targetWeight)
-			}
-			if !testPattern.EditedAt.Equal(tc.editedAt) {
-				t.Errorf("EditedAt: got %v, want %v", testPattern.EditedAt, tc.editedAt)
+			if diff := cmp.Diff(tc.wantPattern, &testPattern); diff != "" {
+				t.Errorf("Pattern mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -213,55 +264,67 @@ func TestNewPatternStep(t *testing.T) {
 		patternID     string
 		stepNumber    int
 		intervalDays  int
+		want          *PatternStep
 		wantErr       bool
 		errMsg        string
 	}{
 		{
 			name:          "有効なパターンステップ（正常系）",
 			patternStepID: "step1",
-			userID:        "user1",
-			patternID:     "pattern1",
+			userID:        testUserID,
+			patternID:     testPatternID,
 			stepNumber:    1,
 			intervalDays:  1,
-			wantErr:       false,
+			want: &PatternStep{
+				PatternStepID: "step1",
+				UserID:        testUserID,
+				PatternID:     testPatternID,
+				StepNumber:    1,
+				IntervalDays:  1,
+			},
+			wantErr: false,
 		},
 		{
 			name:          "順序番号が0（異常系）",
 			patternStepID: "step2",
-			userID:        "user1",
-			patternID:     "pattern1",
+			userID:        testUserID,
+			patternID:     testPatternID,
 			stepNumber:    0,
 			intervalDays:  1,
+			want:          nil,
 			wantErr:       true,
 			errMsg:        "順序番号は必須です",
 		},
 		{
 			name:          "復習日間隔数が0（異常系）",
 			patternStepID: "step3",
-			userID:        "user1",
-			patternID:     "pattern1",
+			userID:        testUserID,
+			patternID:     testPatternID,
 			stepNumber:    1,
 			intervalDays:  0,
+			want:          nil,
 			wantErr:       true,
 			errMsg:        "復習日間隔数は必須です",
 		},
 		{
 			name:          "順序番号が負数（異常系）",
 			patternStepID: "step4",
-			userID:        "user1",
-			patternID:     "pattern1",
+			userID:        testUserID,
+			patternID:     testPatternID,
 			stepNumber:    -1,
 			intervalDays:  1,
+			want:          nil,
 			wantErr:       true,
 			errMsg:        "順序番号の値が不正です",
 		},
 		{
 			name:          "復習日間隔数が負数（異常系）",
 			patternStepID: "step5",
-			userID:        "user1",
-			patternID:     "pattern1",
+			userID:        testUserID,
+			patternID:     testPatternID,
 			stepNumber:    1,
 			intervalDays:  -1,
+			want:          nil,
 			wantErr:       true,
 			errMsg:        "復習日間隔数は1以上で指定してください",
 		},
@@ -276,7 +339,7 @@ func TestNewPatternStep(t *testing.T) {
 
 			if tc.wantErr {
 				if err == nil {
-					t.Fatalf("expected error but got nil")
+					t.Fatal("expected error but got nil")
 				}
 				if err.Error() != tc.errMsg {
 					t.Errorf("unexpected error message: got %q, want %q", err.Error(), tc.errMsg)
@@ -288,20 +351,8 @@ func TestNewPatternStep(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
-			if step.PatternStepID != tc.patternStepID {
-				t.Errorf("PatternStepID: got %q, want %q", step.PatternStepID, tc.patternStepID)
-			}
-			if step.UserID != tc.userID {
-				t.Errorf("UserID: got %q, want %q", step.UserID, tc.userID)
-			}
-			if step.PatternID != tc.patternID {
-				t.Errorf("PatternID: got %q, want %q", step.PatternID, tc.patternID)
-			}
-			if step.StepNumber != tc.stepNumber {
-				t.Errorf("StepNumber: got %d, want %d", step.StepNumber, tc.stepNumber)
-			}
-			if step.IntervalDays != tc.intervalDays {
-				t.Errorf("IntervalDays: got %d, want %d", step.IntervalDays, tc.intervalDays)
+			if diff := cmp.Diff(tc.want, step); diff != "" {
+				t.Errorf("PatternStep mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
