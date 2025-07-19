@@ -213,24 +213,15 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 
 	// pattern_idが「NULLからNOT NULL」か
 	// 1, 2, 4
-	isPatternNilToNotNil := false
-	if currentItem.PatternID == nil && input.PatternID != nil {
-		isPatternNilToNotNil = true
-	}
+	isPatternNilToNotNil := currentItem.PatternID == nil && input.PatternID != nil
 
 	// pattern_idが「NOT NULLからNULL」か
 	// 4
-	isPatternNotNilToNil := false
-	if currentItem.PatternID != nil && input.PatternID == nil {
-		isPatternNotNilToNil = true
-	}
+	isPatternNotNilToNil := currentItem.PatternID != nil && input.PatternID == nil
 
 	// pattern_idが「NOT NULLからNOT NULL」か
 	// 2, 4
-	isPatternNotNilToNotNil := false
-	if currentItem.PatternID != nil && input.PatternID != nil {
-		isPatternNotNilToNotNil = true
-	}
+	isPatternNotNilToNotNil := currentItem.PatternID != nil && input.PatternID != nil
 
 	// pettern_idが一致するか
 	// 1, 2, 4
@@ -243,22 +234,13 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 
 	// category_idが「NULLからNOT NULL」か
 	// 3
-	isCategoryNilToNotNil := false
-	if currentItem.CategoryID == nil && input.CategoryID != nil {
-		isCategoryNilToNotNil = true
-	}
+	isCategoryNilToNotNil := currentItem.CategoryID == nil && input.CategoryID != nil
 	// category_idが「NOT NULLからNULL」か
 	// 3
-	isCategoryNotNilToNil := false
-	if currentItem.CategoryID != nil && input.CategoryID == nil {
-		isCategoryNotNilToNil = true
-	}
+	isCategoryNotNilToNil := currentItem.CategoryID != nil && input.CategoryID == nil
 	// category_idが「NOT NULLからNOT NULL」か
 	// 3
-	isCategoryNotNilToNotNil := false
-	if currentItem.CategoryID != nil && input.CategoryID != nil {
-		isCategoryNotNilToNotNil = true
-	}
+	isCategoryNotNilToNotNil := currentItem.CategoryID != nil && input.CategoryID != nil
 
 	// category_idが一致するか
 	// 3
@@ -271,22 +253,13 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 
 	// box_idが「NULLからNOT NULL」か
 	// 3
-	isBoxNilToNotNil := false
-	if currentItem.BoxID == nil && input.BoxID != nil {
-		isBoxNilToNotNil = true
-	}
+	isBoxNilToNotNil := currentItem.BoxID == nil && input.BoxID != nil
 	// box_idが「NOT NULLからNULL」か
 	// 3
-	isBoxNotNilToNil := false
-	if currentItem.BoxID != nil && input.BoxID == nil {
-		isBoxNotNilToNil = true
-	}
+	isBoxNotNilToNil := currentItem.BoxID != nil && input.BoxID == nil
 	// box_idが「NOT NULLからNOT NULL」か
 	// 3
-	isBoxNotNilToNotNil := false
-	if currentItem.BoxID != nil && input.BoxID != nil {
-		isBoxNotNilToNotNil = true
-	}
+	isBoxNotNilToNotNil := currentItem.BoxID != nil && input.BoxID != nil
 
 	// box_idが一致するか
 	// 3
@@ -523,6 +496,9 @@ func (iu *ItemUsecase) UpdateItem(ctx context.Context, input UpdateItemInput) (*
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	resItem := &UpdateItemOutput{
 		ItemID:      currentItem.ItemID,
@@ -660,7 +636,6 @@ func (iu *ItemUsecase) UpdateReviewDates(ctx context.Context, input UpdateBackRe
 				input.BoxID,
 				input.ItemID,
 				FakeLearnedDate,
-				parsedToday,
 			)
 			if err != nil {
 				return nil, err
