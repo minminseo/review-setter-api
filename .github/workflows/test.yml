@@ -1,0 +1,30 @@
+name: Go CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Goをセットアップ
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: 依存関係を取得
+        run: go mod tidy
+
+      - name: テストの実行
+        run: go test -v ./...
+
+      - name: golangci-lintを実行
+        uses: golangci/golangci-lint-action@v6
+        with:
+          args: --timeout=3m
