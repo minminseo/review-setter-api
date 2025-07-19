@@ -41,8 +41,8 @@ func executeBatch(uc batchUsecase.IBatchUsecase, t time.Time) {
 	defer cancel()
 
 	if err := uc.ExecuteUpdateOverdueScheduledDates(ctx); err != nil {
-		// エラーハンドリングはユースケース層に委譲されており、ここではエラーの発生を検知するのみです。
-		// 必要に応じて、リトライ処理や、監視システムへの通知などをここに追加することもできます。
+		slog.Error("バッチ処理中にエラーが発生しました。", "error", err)
+		return
 	}
 }
 

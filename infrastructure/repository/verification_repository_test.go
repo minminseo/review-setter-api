@@ -205,11 +205,7 @@ func TestEmailVerificationRepository_DeleteByUserID(t *testing.T) {
 			}
 
 			// 削除後に本当に削除されたかを確認
-			verification, err := repo.FindByUserID(ctx, tc.userID)
-			if err != nil {
-				// 削除成功の場合はレコードが見つからないエラーが発生する可能性がある
-				// これは期待される動作なので、エラー内容をチェックしない
-			}
+			verification, _ := repo.FindByUserID(ctx, tc.userID)
 
 			if verification != nil {
 				t.Error("認証情報が削除されていません")

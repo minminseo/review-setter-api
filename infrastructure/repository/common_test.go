@@ -71,7 +71,10 @@ func TestMain(m *testing.M) {
 		testPool.Close()
 	}
 	if testDB != nil {
-		testDB.Close()
+		if err := testDB.Close(); err != nil {
+			panic(err)
+		}
+
 	}
 
 	dbTest.CloseContainer(resource, dockerPool)
