@@ -109,9 +109,9 @@ func TestBoxRepository_Create(t *testing.T) {
 				}
 
 				// 期待値に動的な値を設定
-				tc.want.ID = tc.box.ID
-				tc.want.RegisteredAt = tc.box.RegisteredAt
-				tc.want.EditedAt = tc.box.EditedAt
+				tc.want.ID = createdBox.ID
+				tc.want.RegisteredAt = createdBox.RegisteredAt
+				tc.want.EditedAt = createdBox.EditedAt
 
 				// 期待値との比較
 				if diff := cmp.Diff(tc.want, createdBox); diff != "" {

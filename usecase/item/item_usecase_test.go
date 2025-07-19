@@ -1053,125 +1053,180 @@ func TestItemUsecase_UpdateItem_PatternNotNilToNil(t *testing.T) {
 }
 
 func TestItemUsecase_UpdateItem_PatternNilToNotNil(t *testing.T) {
-	ctx := context.Background()
-	userID := uuid.NewString()
-	itemID := uuid.NewString()
-	categoryID := uuid.NewString()
-	boxID := uuid.NewString()
-	patternID := uuid.NewString()
-	learnedDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-
-	currentItem := &ItemDomain.Item{
-		ItemID:      itemID,
-		UserID:      userID,
-		CategoryID:  &categoryID,
-		BoxID:       &boxID,
-		PatternID:   nil,
-		Name:        "Original Item",
-		Detail:      "Original Detail",
-		LearnedDate: learnedDate,
-		IsFinished:  false,
-	}
-
-	testPatternSteps := []*PatternDomain.PatternStep{
-		{StepNumber: 1, IntervalDays: 1},
-		{StepNumber: 2, IntervalDays: 3},
-	}
-
-	testNewReviewdates := []*ItemDomain.Reviewdate{
-		{
-			ReviewdateID:         uuid.NewString(),
-			UserID:               userID,
-			CategoryID:           &categoryID,
-			BoxID:                &boxID,
-			ItemID:               itemID,
-			StepNumber:           1,
-			InitialScheduledDate: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-			ScheduledDate:        time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-			IsCompleted:          false,
-		},
-		{
-			ReviewdateID:         uuid.NewString(),
-			UserID:               userID,
-			CategoryID:           &categoryID,
-			BoxID:                &boxID,
-			ItemID:               itemID,
-			StepNumber:           2,
-			InitialScheduledDate: time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
-			ScheduledDate:        time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
-			IsCompleted:          false,
-		},
-	}
-
 	tests := []struct {
 		name      string
-		input     UpdateItemInput
-		setupMock func(*CategoryDomain.MockICategoryRepository, *BoxDomain.MockIBoxRepository, *ItemDomain.MockIItemRepository, *PatternDomain.MockIPatternRepository, *transaction.MockITransactionManager, *ItemDomain.MockIScheduler)
+		setupMock func(*CategoryDomain.MockICategoryRepository, *BoxDomain.MockIBoxRepository, *ItemDomain.MockIItemRepository, *PatternDomain.MockIPatternRepository, *transaction.MockITransactionManager, *ItemDomain.MockIScheduler) (context.Context, UpdateItemInput)
 		wantErr   bool
 	}{
 		{
 			name: "PatternNilToNotNil_未完了で上書きマーク無し",
-			input: UpdateItemInput{
-				ItemID:                   itemID,
-				UserID:                   userID,
-				CategoryID:               &categoryID,
-				BoxID:                    &boxID,
-				PatternID:                &patternID,
-				Name:                     "Updated Item",
-				Detail:                   "Updated Detail",
-				LearnedDate:              "2024-01-01",
-				IsMarkOverdueAsCompleted: false,
-				Today:                    "2024-01-10",
-			},
-			setupMock: func(mockCategoryRepo *CategoryDomain.MockICategoryRepository, mockBoxRepo *BoxDomain.MockIBoxRepository, mockItemRepo *ItemDomain.MockIItemRepository, mockPatternRepo *PatternDomain.MockIPatternRepository, mockTransactionManager *transaction.MockITransactionManager, mockScheduler *ItemDomain.MockIScheduler) {
+			setupMock: func(mockCategoryRepo *CategoryDomain.MockICategoryRepository, mockBoxRepo *BoxDomain.MockIBoxRepository, mockItemRepo *ItemDomain.MockIItemRepository, mockPatternRepo *PatternDomain.MockIPatternRepository, mockTransactionManager *transaction.MockITransactionManager, mockScheduler *ItemDomain.MockIScheduler) (context.Context, UpdateItemInput) {
+				ctx := context.Background()
+				userID := uuid.NewString()
+				itemID := uuid.NewString()
+				categoryID := uuid.NewString()
+				boxID := uuid.NewString()
+				patternID := uuid.NewString()
+				learnedDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+
+				currentItem := &ItemDomain.Item{
+					ItemID:      itemID,
+					UserID:      userID,
+					CategoryID:  &categoryID,
+					BoxID:       &boxID,
+					PatternID:   nil,
+					Name:        "Original Item",
+					Detail:      "Original Detail",
+					LearnedDate: learnedDate,
+					IsFinished:  false,
+				}
+
+				testPatternSteps := []*PatternDomain.PatternStep{
+					{StepNumber: 1, IntervalDays: 1},
+					{StepNumber: 2, IntervalDays: 3},
+				}
+
+				testNewReviewdates1 := []*ItemDomain.Reviewdate{
+					{
+						ReviewdateID:         uuid.NewString(),
+						UserID:               userID,
+						CategoryID:           &categoryID,
+						BoxID:                &boxID,
+						ItemID:               itemID,
+						StepNumber:           1,
+						InitialScheduledDate: time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+						ScheduledDate:        time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+						IsCompleted:          false,
+					},
+					{
+						ReviewdateID:         uuid.NewString(),
+						UserID:               userID,
+						CategoryID:           &categoryID,
+						BoxID:                &boxID,
+						ItemID:               itemID,
+						StepNumber:           2,
+						InitialScheduledDate: time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC),
+						ScheduledDate:        time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC),
+						IsCompleted:          false,
+					},
+				}
+
+				input := UpdateItemInput{
+					ItemID:                   itemID,
+					UserID:                   userID,
+					CategoryID:               &categoryID,
+					BoxID:                    &boxID,
+					PatternID:                &patternID,
+					Name:                     "Updated Item",
+					Detail:                   "Updated Detail",
+					LearnedDate:              "2024-01-01",
+					IsMarkOverdueAsCompleted: false,
+					Today:                    "2024-01-10",
+				}
+
 				gomock.InOrder(
 					mockItemRepo.EXPECT().GetItemByID(ctx, itemID, userID).Return(currentItem, nil).Times(1),
 					mockPatternRepo.EXPECT().GetAllPatternStepsByPatternID(ctx, patternID, userID).Return(testPatternSteps, nil).Times(1),
 					mockItemRepo.EXPECT().HasCompletedReviewDateByItemID(ctx, itemID, userID).Return(false, nil).Times(1),
 					mockScheduler.EXPECT().FormatWithOverdueMarkedInCompleted(
 						testPatternSteps, userID, &categoryID, &boxID, itemID, learnedDate, gomock.Any(),
-					).Return(testNewReviewdates, nil).Times(1),
+					).Return(testNewReviewdates1, nil).Times(1),
 					mockTransactionManager.EXPECT().RunInTransaction(ctx, gomock.Any()).DoAndReturn(
 						func(ctx context.Context, fn func(context.Context) error) error {
 							return fn(ctx)
 						},
 					).Times(1),
 					mockItemRepo.EXPECT().UpdateItem(ctx, gomock.Any()).Return(nil).Times(1),
-					mockItemRepo.EXPECT().CreateReviewdates(ctx, testNewReviewdates).Return(int64(0), nil).Times(1),
+					mockItemRepo.EXPECT().CreateReviewdates(ctx, testNewReviewdates1).Return(int64(0), nil).Times(1),
 				)
+
+				return ctx, input
 			},
 			wantErr: false,
 		},
 		{
 			name: "PatternNilToNotNil_未完了で上書きマーク有り",
-			input: UpdateItemInput{
-				ItemID:                   itemID,
-				UserID:                   userID,
-				CategoryID:               &categoryID,
-				BoxID:                    &boxID,
-				PatternID:                &patternID,
-				Name:                     "Updated Item",
-				Detail:                   "Updated Detail",
-				LearnedDate:              "2024-01-01",
-				IsMarkOverdueAsCompleted: true,
-				Today:                    "2024-01-10",
-			},
-			setupMock: func(mockCategoryRepo *CategoryDomain.MockICategoryRepository, mockBoxRepo *BoxDomain.MockIBoxRepository, mockItemRepo *ItemDomain.MockIItemRepository, mockPatternRepo *PatternDomain.MockIPatternRepository, mockTransactionManager *transaction.MockITransactionManager, mockScheduler *ItemDomain.MockIScheduler) {
+			setupMock: func(mockCategoryRepo *CategoryDomain.MockICategoryRepository, mockBoxRepo *BoxDomain.MockIBoxRepository, mockItemRepo *ItemDomain.MockIItemRepository, mockPatternRepo *PatternDomain.MockIPatternRepository, mockTransactionManager *transaction.MockITransactionManager, mockScheduler *ItemDomain.MockIScheduler) (context.Context, UpdateItemInput) {
+				ctx := context.Background()
+				userID := uuid.NewString()
+				itemID := uuid.NewString()
+				categoryID := uuid.NewString()
+				boxID := uuid.NewString()
+				patternID := uuid.NewString()
+				learnedDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+
+				currentItem := &ItemDomain.Item{
+					ItemID:      itemID,
+					UserID:      userID,
+					CategoryID:  &categoryID,
+					BoxID:       &boxID,
+					PatternID:   nil,
+					Name:        "Original Item",
+					Detail:      "Original Detail",
+					LearnedDate: learnedDate,
+					IsFinished:  false,
+				}
+
+				testPatternSteps := []*PatternDomain.PatternStep{
+					{StepNumber: 1, IntervalDays: 1},
+					{StepNumber: 2, IntervalDays: 3},
+				}
+
+				testNewReviewdates2 := []*ItemDomain.Reviewdate{
+					{
+						ReviewdateID:         uuid.NewString(),
+						UserID:               userID,
+						CategoryID:           &categoryID,
+						BoxID:                &boxID,
+						ItemID:               itemID,
+						StepNumber:           1,
+						InitialScheduledDate: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+						ScheduledDate:        time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+						IsCompleted:          true,
+					},
+					{
+						ReviewdateID:         uuid.NewString(),
+						UserID:               userID,
+						CategoryID:           &categoryID,
+						BoxID:                &boxID,
+						ItemID:               itemID,
+						StepNumber:           2,
+						InitialScheduledDate: time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
+						ScheduledDate:        time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
+						IsCompleted:          true,
+					},
+				}
+
+				input := UpdateItemInput{
+					ItemID:                   itemID,
+					UserID:                   userID,
+					CategoryID:               &categoryID,
+					BoxID:                    &boxID,
+					PatternID:                &patternID,
+					Name:                     "Updated Item",
+					Detail:                   "Updated Detail",
+					LearnedDate:              "2024-01-01",
+					IsMarkOverdueAsCompleted: true,
+					Today:                    "2024-01-10",
+				}
+
 				gomock.InOrder(
 					mockItemRepo.EXPECT().GetItemByID(ctx, itemID, userID).Return(currentItem, nil).Times(1),
 					mockPatternRepo.EXPECT().GetAllPatternStepsByPatternID(ctx, patternID, userID).Return(testPatternSteps, nil).Times(1),
 					mockItemRepo.EXPECT().HasCompletedReviewDateByItemID(ctx, itemID, userID).Return(false, nil).Times(1),
 					mockScheduler.EXPECT().FormatWithOverdueMarkedCompleted(
 						testPatternSteps, userID, &categoryID, &boxID, itemID, learnedDate, gomock.Any(),
-					).Return(testNewReviewdates, false, nil).Times(1),
+					).Return(testNewReviewdates2, false, nil).Times(1),
 					mockTransactionManager.EXPECT().RunInTransaction(ctx, gomock.Any()).DoAndReturn(
 						func(ctx context.Context, fn func(context.Context) error) error {
 							return fn(ctx)
 						},
 					).Times(1),
 					mockItemRepo.EXPECT().UpdateItem(ctx, gomock.Any()).Return(nil).Times(1),
-					mockItemRepo.EXPECT().CreateReviewdates(ctx, testNewReviewdates).Return(int64(0), nil).Times(1),
+					mockItemRepo.EXPECT().CreateReviewdates(ctx, testNewReviewdates2).Return(int64(0), nil).Times(1),
 				)
+
+				return ctx, input
 			},
 			wantErr: false,
 		},
@@ -1200,9 +1255,9 @@ func TestItemUsecase_UpdateItem_PatternNilToNotNil(t *testing.T) {
 				mockScheduler,
 			)
 
-			tc.setupMock(mockCategoryRepo, mockBoxRepo, mockItemRepo, mockPatternRepo, mockTransactionManager, mockScheduler)
+			ctx, input := tc.setupMock(mockCategoryRepo, mockBoxRepo, mockItemRepo, mockPatternRepo, mockTransactionManager, mockScheduler)
 
-			_, err := usecase.UpdateItem(ctx, tc.input)
+			_, err := usecase.UpdateItem(ctx, input)
 
 			if (err != nil) != tc.wantErr {
 				t.Errorf("UpdateItem() error = %v, wantErr %v", err, tc.wantErr)
@@ -1743,79 +1798,80 @@ func TestItemUsecase_UpdateItem_PatternNotNilToNotNil_IntervalDaysDiff(t *testin
 }
 
 func TestItemUsecase_UpdateItem_LearnedDateChanged(t *testing.T) {
-	ctx := context.Background()
-	userID := uuid.NewString()
-	itemID := uuid.NewString()
-	categoryID := uuid.NewString()
-	boxID := uuid.NewString()
-	patternID := uuid.NewString()
-	learnedDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-
-	currentItem := &ItemDomain.Item{
-		ItemID:      itemID,
-		UserID:      userID,
-		CategoryID:  &categoryID,
-		BoxID:       &boxID,
-		PatternID:   &patternID,
-		Name:        "Original Item",
-		Detail:      "Original Detail",
-		LearnedDate: learnedDate,
-		IsFinished:  false,
-	}
-
-	patternSteps := []*PatternDomain.PatternStep{
-		{StepNumber: 1, IntervalDays: 1},
-		{StepNumber: 2, IntervalDays: 3},
-	}
-
-	reviewDateIDs := []string{uuid.NewString(), uuid.NewString()}
-
-	testNewReviewdates := []*ItemDomain.Reviewdate{
-		{
-			ReviewdateID:         reviewDateIDs[0],
-			UserID:               userID,
-			CategoryID:           &categoryID,
-			BoxID:                &boxID,
-			ItemID:               itemID,
-			StepNumber:           1,
-			InitialScheduledDate: time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
-			ScheduledDate:        time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
-			IsCompleted:          false,
-		},
-		{
-			ReviewdateID:         reviewDateIDs[1],
-			UserID:               userID,
-			CategoryID:           &categoryID,
-			BoxID:                &boxID,
-			ItemID:               itemID,
-			StepNumber:           2,
-			InitialScheduledDate: time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
-			ScheduledDate:        time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
-			IsCompleted:          false,
-		},
-	}
 
 	tests := []struct {
 		name      string
-		input     UpdateItemInput
-		setupMock func(*CategoryDomain.MockICategoryRepository, *BoxDomain.MockIBoxRepository, *ItemDomain.MockIItemRepository, *PatternDomain.MockIPatternRepository, *transaction.MockITransactionManager, *ItemDomain.MockIScheduler)
+		setupMock func(*CategoryDomain.MockICategoryRepository, *BoxDomain.MockIBoxRepository, *ItemDomain.MockIItemRepository, *PatternDomain.MockIPatternRepository, *transaction.MockITransactionManager, *ItemDomain.MockIScheduler) (context.Context, UpdateItemInput)
 		wantErr   bool
 	}{
 		{
 			name: "LearnedDate変更_SamePatternID",
-			input: UpdateItemInput{
-				ItemID:                   itemID,
-				UserID:                   userID,
-				CategoryID:               &categoryID,
-				BoxID:                    &boxID,
-				PatternID:                &patternID,
-				Name:                     "Updated Item",
-				Detail:                   "Updated Detail",
-				LearnedDate:              "2024-01-02",
-				IsMarkOverdueAsCompleted: false,
-				Today:                    "2024-01-10",
-			},
-			setupMock: func(mockCategoryRepo *CategoryDomain.MockICategoryRepository, mockBoxRepo *BoxDomain.MockIBoxRepository, mockItemRepo *ItemDomain.MockIItemRepository, mockPatternRepo *PatternDomain.MockIPatternRepository, mockTransactionManager *transaction.MockITransactionManager, mockScheduler *ItemDomain.MockIScheduler) {
+			setupMock: func(mockCategoryRepo *CategoryDomain.MockICategoryRepository, mockBoxRepo *BoxDomain.MockIBoxRepository, mockItemRepo *ItemDomain.MockIItemRepository, mockPatternRepo *PatternDomain.MockIPatternRepository, mockTransactionManager *transaction.MockITransactionManager, mockScheduler *ItemDomain.MockIScheduler) (context.Context, UpdateItemInput) {
+				ctx := context.Background()
+				userID := uuid.NewString()
+				itemID := uuid.NewString()
+				categoryID := uuid.NewString()
+				boxID := uuid.NewString()
+				patternID := uuid.NewString()
+				learnedDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+
+				currentItem := &ItemDomain.Item{
+					ItemID:      itemID,
+					UserID:      userID,
+					CategoryID:  &categoryID,
+					BoxID:       &boxID,
+					PatternID:   &patternID,
+					Name:        "Original Item",
+					Detail:      "Original Detail",
+					LearnedDate: learnedDate,
+					IsFinished:  false,
+				}
+
+				patternSteps := []*PatternDomain.PatternStep{
+					{StepNumber: 1, IntervalDays: 1},
+					{StepNumber: 2, IntervalDays: 3},
+				}
+
+				reviewDateIDs := []string{uuid.NewString(), uuid.NewString()}
+
+				testNewReviewdates := []*ItemDomain.Reviewdate{
+					{
+						ReviewdateID:         reviewDateIDs[0],
+						UserID:               userID,
+						CategoryID:           &categoryID,
+						BoxID:                &boxID,
+						ItemID:               itemID,
+						StepNumber:           1,
+						InitialScheduledDate: time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
+						ScheduledDate:        time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
+						IsCompleted:          false,
+					},
+					{
+						ReviewdateID:         reviewDateIDs[1],
+						UserID:               userID,
+						CategoryID:           &categoryID,
+						BoxID:                &boxID,
+						ItemID:               itemID,
+						StepNumber:           2,
+						InitialScheduledDate: time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
+						ScheduledDate:        time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
+						IsCompleted:          false,
+					},
+				}
+
+				input := UpdateItemInput{
+					ItemID:                   itemID,
+					UserID:                   userID,
+					CategoryID:               &categoryID,
+					BoxID:                    &boxID,
+					PatternID:                &patternID,
+					Name:                     "Updated Item",
+					Detail:                   "Updated Detail",
+					LearnedDate:              "2024-01-02",
+					IsMarkOverdueAsCompleted: false,
+					Today:                    "2024-01-10",
+				}
+
 				gomock.InOrder(
 					mockItemRepo.EXPECT().GetItemByID(ctx, itemID, userID).Return(currentItem, nil).Times(1),
 					mockPatternRepo.EXPECT().GetAllPatternStepsByPatternID(ctx, patternID, userID).Return(patternSteps, nil).Times(1),
@@ -1833,30 +1889,58 @@ func TestItemUsecase_UpdateItem_LearnedDateChanged(t *testing.T) {
 					mockItemRepo.EXPECT().UpdateItem(ctx, gomock.Any()).Return(nil).Times(1),
 					mockItemRepo.EXPECT().UpdateReviewDates(ctx, testNewReviewdates, userID).Return(nil).Times(1),
 				)
+				return ctx, input
 			},
 			wantErr: false,
 		},
 		{
 			name: "LearnedDate変更_HasCompletedReviewDateエラー",
-			input: UpdateItemInput{
-				ItemID:                   itemID,
-				UserID:                   userID,
-				CategoryID:               &categoryID,
-				BoxID:                    &boxID,
-				PatternID:                &patternID,
-				Name:                     "Updated Item",
-				Detail:                   "Updated Detail",
-				LearnedDate:              "2024-01-02",
-				IsMarkOverdueAsCompleted: false,
-				Today:                    "2024-01-10",
-			},
-			setupMock: func(mockCategoryRepo *CategoryDomain.MockICategoryRepository, mockBoxRepo *BoxDomain.MockIBoxRepository, mockItemRepo *ItemDomain.MockIItemRepository, mockPatternRepo *PatternDomain.MockIPatternRepository, mockTransactionManager *transaction.MockITransactionManager, mockScheduler *ItemDomain.MockIScheduler) {
+			setupMock: func(mockCategoryRepo *CategoryDomain.MockICategoryRepository, mockBoxRepo *BoxDomain.MockIBoxRepository, mockItemRepo *ItemDomain.MockIItemRepository, mockPatternRepo *PatternDomain.MockIPatternRepository, mockTransactionManager *transaction.MockITransactionManager, mockScheduler *ItemDomain.MockIScheduler) (context.Context, UpdateItemInput) {
+				ctx := context.Background()
+				userID := uuid.NewString()
+				itemID := uuid.NewString()
+				categoryID := uuid.NewString()
+				boxID := uuid.NewString()
+				patternID := uuid.NewString()
+				learnedDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+
+				currentItem := &ItemDomain.Item{
+					ItemID:      itemID,
+					UserID:      userID,
+					CategoryID:  &categoryID,
+					BoxID:       &boxID,
+					PatternID:   &patternID,
+					Name:        "Original Item",
+					Detail:      "Original Detail",
+					LearnedDate: learnedDate,
+					IsFinished:  false,
+				}
+
+				patternSteps := []*PatternDomain.PatternStep{
+					{StepNumber: 1, IntervalDays: 1},
+					{StepNumber: 2, IntervalDays: 3},
+				}
+
+				input := UpdateItemInput{
+					ItemID:                   itemID,
+					UserID:                   userID,
+					CategoryID:               &categoryID,
+					BoxID:                    &boxID,
+					PatternID:                &patternID,
+					Name:                     "Updated Item",
+					Detail:                   "Updated Detail",
+					LearnedDate:              "2024-01-02",
+					IsMarkOverdueAsCompleted: false,
+					Today:                    "2024-01-10",
+				}
+
 				gomock.InOrder(
 					mockItemRepo.EXPECT().GetItemByID(ctx, itemID, userID).Return(currentItem, nil).Times(1),
 					mockPatternRepo.EXPECT().GetAllPatternStepsByPatternID(ctx, patternID, userID).Return(patternSteps, nil).Times(1),
 					mockPatternRepo.EXPECT().GetAllPatternStepsByPatternID(ctx, patternID, userID).Return(patternSteps, nil).Times(1),
 					mockItemRepo.EXPECT().HasCompletedReviewDateByItemID(ctx, itemID, userID).Return(true, nil).Times(1),
 				)
+				return ctx, input
 			},
 			wantErr: true,
 		},
@@ -1885,9 +1969,9 @@ func TestItemUsecase_UpdateItem_LearnedDateChanged(t *testing.T) {
 				mockScheduler,
 			)
 
-			tc.setupMock(mockCategoryRepo, mockBoxRepo, mockItemRepo, mockPatternRepo, mockTransactionManager, mockScheduler)
+			ctx, input := tc.setupMock(mockCategoryRepo, mockBoxRepo, mockItemRepo, mockPatternRepo, mockTransactionManager, mockScheduler)
 
-			_, err := usecase.UpdateItem(ctx, tc.input)
+			_, err := usecase.UpdateItem(ctx, input)
 
 			if (err != nil) != tc.wantErr {
 				t.Errorf("UpdateItem() error = %v, wantErr %v", err, tc.wantErr)
