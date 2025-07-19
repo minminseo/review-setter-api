@@ -25,7 +25,6 @@ func NewBox(
 	registeredAt time.Time,
 	editedAt time.Time,
 ) (*Box, error) {
-
 	if err := validateName(name); err != nil {
 		return nil, err
 	}
