@@ -46,7 +46,7 @@ func TestNewEmailVerification(t *testing.T) {
 
 			if tc.wantErr {
 				if err == nil {
-					t.Fatalf("エラーが発生することを期待しましたが、nilでした")
+					t.Fatal("エラーが発生することを期待しましたが、nilでした")
 				}
 				return
 			}

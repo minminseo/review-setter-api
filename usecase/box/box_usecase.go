@@ -118,6 +118,6 @@ func (bu *boxUsecase) UpdateBox(ctx context.Context, input UpdateBoxInput) (*Upd
 	return resBox, nil
 }
 
-func (uc *boxUsecase) DeleteBox(ctx context.Context, boxID string, categoryID string, userID string) error {
-	return uc.boxRepo.Delete(ctx, boxID, categoryID, userID)
+func (bu *boxUsecase) DeleteBox(ctx context.Context, boxID string, categoryID string, userID string) error {
+	return bu.boxRepo.Delete(ctx, boxID, categoryID, userID)
 }

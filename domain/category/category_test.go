@@ -3,6 +3,13 @@ package category
 import (
 	"testing"
 	"time"
+
+	"github.com/google/go-cmp/cmp"
+)
+
+const (
+	testUserID     = "user1"
+	testCategoryID = "category1"
 )
 
 func TestNewCategory(t *testing.T) {
@@ -15,25 +22,34 @@ func TestNewCategory(t *testing.T) {
 		categoryName string
 		registeredAt time.Time
 		editedAt     time.Time
+		want         *Category
 		wantErr      bool
 		errMsg       string
 	}{
 		{
 			name:         "有効なカテゴリー（正常系）",
-			id:           "category1",
-			userID:       "user1",
+			id:           testCategoryID,
+			userID:       testUserID,
 			categoryName: "英語",
 			registeredAt: now,
 			editedAt:     now,
-			wantErr:      false,
+			want: &Category{
+				ID:           testCategoryID,
+				UserID:       testUserID,
+				Name:         "英語",
+				RegisteredAt: now,
+				EditedAt:     now,
+			},
+			wantErr: false,
 		},
 		{
 			name:         "カテゴリー名が空（異常系）",
 			id:           "category2",
-			userID:       "user1",
+			userID:       testUserID,
 			categoryName: "",
 			registeredAt: now,
 			editedAt:     now,
+			want:         nil,
 			wantErr:      true,
 			errMsg:       "カテゴリー名は必須です",
 		},
@@ -48,7 +64,7 @@ func TestNewCategory(t *testing.T) {
 
 			if tc.wantErr {
 				if err == nil {
-					t.Fatalf("エラーが発生することを期待しましたが、nilでした")
+					t.Fatal("エラーが発生することを期待しましたが、nilでした")
 				}
 				if err.Error() != tc.errMsg {
 					t.Errorf("エラーメッセージが一致しません: got %q, want %q", err.Error(), tc.errMsg)
@@ -60,20 +76,8 @@ func TestNewCategory(t *testing.T) {
 				t.Fatalf("予期しないエラー: %v", err)
 			}
 
-			if category.ID != tc.id {
-				t.Errorf("IDが一致しません: got %q, want %q", category.ID, tc.id)
-			}
-			if category.UserID != tc.userID {
-				t.Errorf("ユーザーIDが一致しません: got %q, want %q", category.UserID, tc.userID)
-			}
-			if category.Name != tc.categoryName {
-				t.Errorf("カテゴリー名が一致しません: got %q, want %q", category.Name, tc.categoryName)
-			}
-			if !category.RegisteredAt.Equal(tc.registeredAt) {
-				t.Errorf("登録日時が一致しません: got %v, want %v", category.RegisteredAt, tc.registeredAt)
-			}
-			if !category.EditedAt.Equal(tc.editedAt) {
-				t.Errorf("編集日時が一致しません: got %v, want %v", category.EditedAt, tc.editedAt)
+			if diff := cmp.Diff(tc.want, category); diff != "" {
+				t.Errorf("Category mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -81,7 +85,7 @@ func TestNewCategory(t *testing.T) {
 
 func TestCategory_Set(t *testing.T) {
 	now := time.Now()
-	category, err := NewCategory("category1", "user1", "Original Name", now, now)
+	category, err := NewCategory(testCategoryID, testUserID, "Original Name", now, now)
 	if err != nil {
 		t.Fatalf("カテゴリーの生成に失敗しました: %v", err)
 	}
@@ -89,24 +93,39 @@ func TestCategory_Set(t *testing.T) {
 	newTime := now.Add(time.Hour)
 
 	tests := []struct {
-		name     string
-		newName  string
-		editedAt time.Time
-		wantErr  bool
-		errMsg   string
+		name         string
+		newName      string
+		editedAt     time.Time
+		wantCategory *Category
+		wantErr      bool
+		errMsg       string
 	}{
 		{
 			name:     "カテゴリー名を更新（正常系）",
 			newName:  "Updated Category Name",
 			editedAt: newTime,
-			wantErr:  false,
+			wantCategory: &Category{
+				ID:           testCategoryID,
+				UserID:       testUserID,
+				Name:         "Updated Category Name",
+				RegisteredAt: now,
+				EditedAt:     newTime,
+			},
+			wantErr: false,
 		},
 		{
 			name:     "カテゴリー名が空で更新（異常系）",
 			newName:  "",
 			editedAt: newTime,
-			wantErr:  true,
-			errMsg:   "カテゴリー名は必須です",
+			wantCategory: &Category{
+				ID:           testCategoryID,
+				UserID:       testUserID,
+				Name:         "Original Name",
+				RegisteredAt: now,
+				EditedAt:     now,
+			},
+			wantErr: true,
+			errMsg:  "カテゴリー名は必須です",
 		},
 	}
 
@@ -120,10 +139,13 @@ func TestCategory_Set(t *testing.T) {
 
 			if tc.wantErr {
 				if err == nil {
-					t.Fatalf("エラーが発生することを期待しましたが、nilでした")
+					t.Fatal("エラーが発生することを期待しましたが、nilでした")
 				}
 				if err.Error() != tc.errMsg {
 					t.Errorf("エラーメッセージが一致しません: got %q, want %q", err.Error(), tc.errMsg)
+				}
+				if diff := cmp.Diff(tc.wantCategory, &testCategory); diff != "" {
+					t.Errorf("Category mismatch (-want +got):\n%s", diff)
 				}
 				return
 			}
@@ -132,11 +154,8 @@ func TestCategory_Set(t *testing.T) {
 				t.Fatalf("予期しないエラー: %v", err)
 			}
 
-			if testCategory.Name != tc.newName {
-				t.Errorf("カテゴリー名: got %q, want %q", testCategory.Name, tc.newName)
-			}
-			if !testCategory.EditedAt.Equal(tc.editedAt) {
-				t.Errorf("編集日時: got %v, want %v", testCategory.EditedAt, tc.editedAt)
+			if diff := cmp.Diff(tc.wantCategory, &testCategory); diff != "" {
+				t.Errorf("Category mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}

@@ -65,6 +65,7 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 
 			// 古い認証コードを削除
 			if err := uu.emailVerificationRepo.DeleteByUserID(ctx, newUser.ID); err != nil {
+				return err
 			}
 
 			verificationID := uuid.NewString()

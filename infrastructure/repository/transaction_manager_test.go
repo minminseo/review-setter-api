@@ -44,11 +44,18 @@ func TestTransactionManager(t *testing.T) {
 			Language:          "en",
 		}
 
-		transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
-			userRepo.Create(ctx, user1)
-			userRepo.Create(ctx, user2)
+		err := transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
+			if err := userRepo.Create(ctx, user1); err != nil {
+				t.Fatalf("userRepo.Create failed: %v", err)
+			}
+			if err := userRepo.Create(ctx, user2); err != nil {
+				t.Fatalf("userRepo.Create failed: %v", err)
+			}
 			return nil
 		})
+		if err != nil {
+			t.Fatalf("トランザクション内でエラーが発生: %v", err)
+		}
 
 		want1, _ := userRepo.FindByEmailSearchKey(ctx, user1.EmailSearchKey)
 		want2, _ := userRepo.FindByEmailSearchKey(ctx, user2.EmailSearchKey)
@@ -81,9 +88,13 @@ func TestTransactionManager(t *testing.T) {
 			Language:          "en",
 		}
 
-		transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
-			userRepo.Create(ctx, user1)
-			userRepo.Create(ctx, user2)
+		_ = transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
+			if err := userRepo.Create(ctx, user1); err != nil {
+				t.Fatalf("userRepo.Create failed: %v", err)
+			}
+			if err := userRepo.Create(ctx, user2); err != nil {
+				t.Fatalf("userRepo.Create failed: %v", err)
+			}
 			err := errorRepositoryOperation(ctx, user1)
 			if err != nil {
 				return err
@@ -119,11 +130,18 @@ func TestTransactionManager(t *testing.T) {
 			ExpiresAt: time.Now().Add(15 * time.Minute),
 		}
 
-		transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
-			userRepo.Create(ctx, user)
-			verificationRepo.Create(ctx, verification)
+		err := transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
+			if err := userRepo.Create(ctx, user); err != nil {
+				return err
+			}
+			if err := verificationRepo.Create(ctx, verification); err != nil {
+				return err
+			}
 			return nil
 		})
+		if err != nil {
+			t.Fatalf("トランザクション内でエラーが発生: %v", err)
+		}
 
 		savedUser, _ := userRepo.FindByEmailSearchKey(ctx, user.EmailSearchKey)
 		savedVerification, _ := verificationRepo.FindByUserID(ctx, userID)

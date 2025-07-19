@@ -80,10 +80,10 @@ func ConnectDB(resource *dockertest.Resource, pool *dockertest.Pool) *sql.DB {
 		if err != nil {
 			return err
 		}
-		
-		dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", 
+
+		dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
 			username, password, hostname, portStr, dbName)
-		
+
 		db, err = sql.Open("pgx", dbURL)
 		if err != nil {
 			return err

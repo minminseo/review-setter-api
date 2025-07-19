@@ -3,6 +3,15 @@ package box
 import (
 	"testing"
 	"time"
+
+	"github.com/google/go-cmp/cmp"
+)
+
+const (
+	testUserID     = "user1"
+	testCategoryID = "category1"
+	testPatternID  = "pattern1"
+	testBoxID      = "box1"
 )
 
 func TestNewBox(t *testing.T) {
@@ -17,29 +26,40 @@ func TestNewBox(t *testing.T) {
 		boxName      string
 		registeredAt time.Time
 		editedAt     time.Time
+		want         *Box
 		wantErr      bool
 		errMsg       string
 	}{
 		{
 			name:         "有効なボックスの場合（正常系）",
-			id:           "box1",
-			userID:       "user1",
-			categoryID:   "category1",
-			patternID:    "pattern1",
+			id:           testBoxID,
+			userID:       testUserID,
+			categoryID:   testCategoryID,
+			patternID:    testPatternID,
 			boxName:      "英単語",
 			registeredAt: now,
 			editedAt:     now,
-			wantErr:      false,
+			want: &Box{
+				ID:           testBoxID,
+				UserID:       testUserID,
+				CategoryID:   testCategoryID,
+				PatternID:    testPatternID,
+				Name:         "英単語",
+				RegisteredAt: now,
+				EditedAt:     now,
+			},
+			wantErr: false,
 		},
 		{
 			name:         "名前が空の場合（異常系）",
 			id:           "box2",
-			userID:       "user1",
-			categoryID:   "category1",
-			patternID:    "pattern1",
+			userID:       testUserID,
+			categoryID:   testCategoryID,
+			patternID:    testPatternID,
 			boxName:      "",
 			registeredAt: now,
 			editedAt:     now,
+			want:         nil,
 			wantErr:      true,
 			errMsg:       "カテゴリー名は必須です",
 		},
@@ -54,7 +74,7 @@ func TestNewBox(t *testing.T) {
 
 			if tc.wantErr {
 				if err == nil {
-					t.Fatalf("エラーが発生するはずですが、発生しませんでした")
+					t.Fatal("エラーが発生するはずですが、発生しませんでした")
 				}
 				if err.Error() != tc.errMsg {
 					t.Errorf("エラーメッセージが一致しません: got %q, want %q", err.Error(), tc.errMsg)
@@ -66,26 +86,8 @@ func TestNewBox(t *testing.T) {
 				t.Fatalf("予期しないエラー: %v", err)
 			}
 
-			if box.ID != tc.id {
-				t.Errorf("ID: got %q, want %q", box.ID, tc.id)
-			}
-			if box.UserID != tc.userID {
-				t.Errorf("ユーザーID: got %q, want %q", box.UserID, tc.userID)
-			}
-			if box.CategoryID != tc.categoryID {
-				t.Errorf("カテゴリID: got %q, want %q", box.CategoryID, tc.categoryID)
-			}
-			if box.PatternID != tc.patternID {
-				t.Errorf("パターンID: got %q, want %q", box.PatternID, tc.patternID)
-			}
-			if box.Name != tc.boxName {
-				t.Errorf("ボックス名: got %q, want %q", box.Name, tc.boxName)
-			}
-			if !box.RegisteredAt.Equal(tc.registeredAt) {
-				t.Errorf("登録日時: got %v, want %v", box.RegisteredAt, tc.registeredAt)
-			}
-			if !box.EditedAt.Equal(tc.editedAt) {
-				t.Errorf("編集日時: got %v, want %v", box.EditedAt, tc.editedAt)
+			if diff := cmp.Diff(tc.want, box); diff != "" {
+				t.Errorf("Box mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -93,7 +95,7 @@ func TestNewBox(t *testing.T) {
 
 func TestBox_Set(t *testing.T) {
 	now := time.Now()
-	box, err := NewBox("box1", "user1", "category1", "pattern1", "Original Box", now, now)
+	box, err := NewBox(testBoxID, testUserID, testCategoryID, testPatternID, "Original Box", now, now)
 	if err != nil {
 		t.Fatalf("failed to create box: %v", err)
 	}
@@ -105,34 +107,62 @@ func TestBox_Set(t *testing.T) {
 		newPatternID    string
 		newName         string
 		editedAt        time.Time
+		wantBox         *Box
+		wantSamePattern bool
 		wantErr         bool
 		errMsg          string
-		wantSamePattern bool
 	}{
 		{
-			name:            "同じパターンで有効な更新",
-			newPatternID:    "pattern1",
-			newName:         "Updated Box Name",
-			editedAt:        newTime,
-			wantErr:         false,
+			name:         "同じパターンで有効な更新",
+			newPatternID: testPatternID,
+			newName:      "Updated Box Name",
+			editedAt:     newTime,
+			wantBox: &Box{
+				ID:           testBoxID,
+				UserID:       testUserID,
+				CategoryID:   testCategoryID,
+				PatternID:    testPatternID,
+				Name:         "Updated Box Name",
+				RegisteredAt: now,
+				EditedAt:     newTime,
+			},
 			wantSamePattern: true,
-		},
-		{
-			name:            "異なるパターンで有効な更新",
-			newPatternID:    "pattern2",
-			newName:         "Updated Box Name",
-			editedAt:        newTime,
 			wantErr:         false,
-			wantSamePattern: false,
 		},
 		{
-			name:            "名前が空の場合",
-			newPatternID:    "pattern1",
-			newName:         "",
-			editedAt:        newTime,
+			name:         "異なるパターンで有効な更新",
+			newPatternID: "pattern2",
+			newName:      "Updated Box Name",
+			editedAt:     newTime,
+			wantBox: &Box{
+				ID:           testBoxID,
+				UserID:       testUserID,
+				CategoryID:   testCategoryID,
+				PatternID:    "pattern2",
+				Name:         "Updated Box Name",
+				RegisteredAt: now,
+				EditedAt:     newTime,
+			},
+			wantSamePattern: false,
+			wantErr:         false,
+		},
+		{
+			name:         "名前が空の場合",
+			newPatternID: testPatternID,
+			newName:      "",
+			editedAt:     newTime,
+			wantBox: &Box{
+				ID:           testBoxID,
+				UserID:       testUserID,
+				CategoryID:   testCategoryID,
+				PatternID:    testPatternID,
+				Name:         "Original Box",
+				RegisteredAt: now,
+				EditedAt:     now,
+			},
+			wantSamePattern: true,
 			wantErr:         true,
 			errMsg:          "カテゴリー名は必須です",
-			wantSamePattern: true,
 		},
 	}
 
@@ -146,13 +176,16 @@ func TestBox_Set(t *testing.T) {
 
 			if tc.wantErr {
 				if err == nil {
-					t.Fatalf("エラーが発生するはずですが、発生しませんでした")
+					t.Fatal("エラーが発生するはずですが、発生しませんでした")
 				}
 				if err.Error() != tc.errMsg {
 					t.Errorf("エラーメッセージが一致しません: got %q, want %q", err.Error(), tc.errMsg)
 				}
 				if isSamePattern != tc.wantSamePattern {
 					t.Errorf("isSamePattern: got %v, want %v", isSamePattern, tc.wantSamePattern)
+				}
+				if diff := cmp.Diff(tc.wantBox, &testBox); diff != "" {
+					t.Errorf("Box mismatch (-want +got):\n%s", diff)
 				}
 				return
 			}
@@ -164,14 +197,9 @@ func TestBox_Set(t *testing.T) {
 			if isSamePattern != tc.wantSamePattern {
 				t.Errorf("isSamePattern: got %v, want %v", isSamePattern, tc.wantSamePattern)
 			}
-			if testBox.PatternID != tc.newPatternID {
-				t.Errorf("パターンID: got %q, want %q", testBox.PatternID, tc.newPatternID)
-			}
-			if testBox.Name != tc.newName {
-				t.Errorf("ボックス名: got %q, want %q", testBox.Name, tc.newName)
-			}
-			if !testBox.EditedAt.Equal(tc.editedAt) {
-				t.Errorf("編集日時: got %v, want %v", testBox.EditedAt, tc.editedAt)
+
+			if diff := cmp.Diff(tc.wantBox, &testBox); diff != "" {
+				t.Errorf("Box mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}

@@ -165,10 +165,7 @@ func (pu *patternUsecase) UpdatePattern(ctx context.Context, input UpdatePattern
 	isPatternChanged := targetPattern.Name != input.Name || targetPattern.TargetWeight != input.TargetWeight
 
 	// steps
-	isStepsChanged := false
-	if len(targetPatternSteps) != len(input.Steps) {
-		isStepsChanged = true
-	}
+	isStepsChanged := len(targetPatternSteps) != len(input.Steps)
 	for i := range targetPatternSteps {
 		if targetPatternSteps[i].IntervalDays != input.Steps[i].IntervalDays {
 			isStepsChanged = true

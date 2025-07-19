@@ -5,6 +5,8 @@ import (
 	"testing"
 )
 
+const testEmail = "test@example.com"
+
 func TestNewCryptoService(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -52,7 +54,7 @@ func TestNewCryptoService(t *testing.T) {
 
 			if tc.wantErr {
 				if err == nil {
-					t.Fatalf("エラーが発生することを期待しましたが、nilでした")
+					t.Fatal("エラーが発生することを期待しましたが、nilでした")
 				}
 				if !strings.Contains(err.Error(), tc.errMsg) {
 					t.Errorf("エラーメッセージが一致しません: got %q, want to contain %q", err.Error(), tc.errMsg)
@@ -89,7 +91,7 @@ func TestCryptoService_Encrypt(t *testing.T) {
 	}{
 		{
 			name:      "有効なメールアドレス（正常系）",
-			plaintext: "test@example.com",
+			plaintext: testEmail,
 			wantErr:   false,
 		},
 		{
@@ -108,7 +110,7 @@ func TestCryptoService_Encrypt(t *testing.T) {
 			encrypted, err := service.Encrypt(tc.plaintext)
 			if tc.wantErr {
 				if err == nil {
-					t.Fatalf("エラーが発生することを期待しましたが、nilでした")
+					t.Fatal("エラーが発生することを期待しましたが、nilでした")
 				}
 				if !strings.Contains(err.Error(), tc.errMsg) {
 					t.Errorf("エラーメッセージが一致しません: got %q, want to contain %q", err.Error(), tc.errMsg)
@@ -143,7 +145,7 @@ func TestCryptoService_Decrypt(t *testing.T) {
 	}{
 		{
 			name:      "有効なメールアドレス（正常系）",
-			plaintext: "test@example.com",
+			plaintext: testEmail,
 		},
 	}
 
@@ -175,7 +177,7 @@ func TestCryptoService_Encrypt_Randomness(t *testing.T) {
 		t.Fatalf("暗号化サービスの作成に失敗しました: %v", err)
 	}
 
-	plaintext := "test@example.com"
+	plaintext := testEmail
 
 	// 同じ平文を複数回暗号化して、異なる暗号文が生成されることを確認
 	encrypted1, err := service.Encrypt(plaintext)

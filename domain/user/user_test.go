@@ -121,7 +121,7 @@ func TestNewUser(t *testing.T) {
 			u, err := NewUser(tc.id, tc.email, tc.password, tc.timezone, tc.themeColor, tc.language, cryptoService, searchKey)
 			if tc.wantErr {
 				if err == nil {
-					t.Fatalf("エラーが発生することを期待しましたが、nilでした")
+					t.Fatal("エラーが発生することを期待しましたが、nilでした")
 				}
 				if err.Error() != tc.errMsg {
 					t.Errorf("エラーメッセージが一致しません: got %q, want %q", err.Error(), tc.errMsg)

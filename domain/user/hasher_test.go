@@ -51,7 +51,7 @@ func TestNewHasher(t *testing.T) {
 
 			if tc.wantErr {
 				if err == nil {
-					t.Fatalf("エラーが発生することを期待しましたが、nilでした")
+					t.Fatal("エラーが発生することを期待しましたが、nilでした")
 				}
 				return
 			}
@@ -267,7 +267,7 @@ func TestHasher_GenerateSearchKey_SpecialCases(t *testing.T) {
 // ヘルパー関数: 有効な16進数文字列かチェック
 func isValidHex(s string) bool {
 	for _, r := range s {
-		if !((r >= '0' && r <= '9') || (r >= 'a' && r <= 'f') || (r >= 'A' && r <= 'F')) {
+		if (r < '0' || r > '9') && (r < 'a' || r > 'f') && (r < 'A' || r > 'F') {
 			return false
 		}
 	}
