@@ -54,8 +54,8 @@ func TestCreateBox(t *testing.T) {
 				PatternID:  "33333333-3333-3333-3333-333333333333",
 				Name:       "",
 			},
-			setupMock: func(m *boxDomain.MockIBoxRepository) {
-				// Create() should not be called
+			setupMock: func(_ *boxDomain.MockIBoxRepository) {
+				// 名前が空文字の場合はリポジトリのCreateメソッドは呼ばれない
 			},
 			want:    nil,
 			wantErr: true,
