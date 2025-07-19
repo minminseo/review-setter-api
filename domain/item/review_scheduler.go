@@ -204,7 +204,6 @@ func (s *scheduler) FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(
 	boxID *string,
 	itemID string,
 	parsedLearnedDate time.Time,
-	parsedToday time.Time,
 ) ([]*Reviewdate, error) {
 	if len(reviewDateIDs) != len(targetPatternSteps) {
 		return nil, ErrNewScheduledDateBeforeInitialScheduledDate

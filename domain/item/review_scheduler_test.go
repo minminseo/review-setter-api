@@ -615,7 +615,6 @@ func TestFormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(t *testing.
 				tt.boxID,
 				tt.itemID,
 				tt.parsedLearnedDate,
-				tt.parsedToday,
 			)
 
 			if (err != nil) != tt.wantError {
