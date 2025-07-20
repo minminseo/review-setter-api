@@ -40,6 +40,7 @@ func NewRouter(
 		CookiePath:     "/",
 		CookieDomain:   os.Getenv("API_DOMAIN"),
 		CookieHTTPOnly: true,
+		CookieSecure:   true,
 		CookieSameSite: http.SameSiteNoneMode, // Postmanの動作確認ができたらこのモード
 		// CookieSameSite: http.SameSiteDefaultMode, // Postmanで動作確認する時はこのモード（セキュア属性をFalseにする）
 		// CookieSameSite: http.SameSiteNoneMode,
