@@ -97,5 +97,7 @@ func main() {
 	itemController := itemController.NewItemController(itemUsecase)
 
 	e := router.NewRouter(userController, categoryController, boxController, patternController, itemController)
-	e.Logger.Fatal(e.Start(":8080"))
+
+	port := os.Getenv("PORT")
+	e.Logger.Fatal(e.Start(":" + port))
 }
