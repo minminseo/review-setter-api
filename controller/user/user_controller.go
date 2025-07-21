@@ -73,7 +73,7 @@ func (uc *userController) VerifyEmail(c echo.Context) error {
 	cookie.Domain = os.Getenv("API_DOMAIN")
 	cookie.Secure = true
 	cookie.HttpOnly = true
-	cookie.SameSite = http.SameSiteStrictMode
+	cookie.SameSite = http.SameSiteLaxMode
 	c.SetCookie(cookie)
 
 	res := VerifyEmailResponse{
@@ -109,7 +109,7 @@ func (uc *userController) LogIn(c echo.Context) error {
 	cookie.Domain = os.Getenv("API_DOMAIN")
 	cookie.Secure = true
 	cookie.HttpOnly = true
-	cookie.SameSite = http.SameSiteStrictMode
+	cookie.SameSite = http.SameSiteLaxMode
 	c.SetCookie(cookie)
 
 	res := LoginResponse{
@@ -129,7 +129,7 @@ func (uc *userController) LogOut(c echo.Context) error {
 	cookie.Domain = os.Getenv("API_DOMAIN")
 	cookie.Secure = true
 	cookie.HttpOnly = true
-	cookie.SameSite = http.SameSiteStrictMode
+	cookie.SameSite = http.SameSiteLaxMode
 	c.SetCookie(cookie)
 	return c.NoContent(http.StatusOK)
 }
