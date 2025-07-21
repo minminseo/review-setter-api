@@ -71,9 +71,9 @@ func (uc *userController) VerifyEmail(c echo.Context) error {
 	cookie.Expires = time.Now().Add(24 * time.Hour)
 	cookie.Path = "/"
 	cookie.Domain = os.Getenv("API_DOMAIN")
-	cookie.Secure = true // Postmanで動作確認する時はFalseにする
+	cookie.Secure = true
 	cookie.HttpOnly = true
-	cookie.SameSite = http.SameSiteNoneMode
+	cookie.SameSite = http.SameSiteStrictMode
 	c.SetCookie(cookie)
 
 	res := VerifyEmailResponse{
@@ -107,9 +107,9 @@ func (uc *userController) LogIn(c echo.Context) error {
 	cookie.Expires = time.Now().Add(24 * time.Hour)
 	cookie.Path = "/"
 	cookie.Domain = os.Getenv("API_DOMAIN")
-	cookie.Secure = true // Postmanで動作確認する時はFalseにする
+	cookie.Secure = true
 	cookie.HttpOnly = true
-	cookie.SameSite = http.SameSiteNoneMode
+	cookie.SameSite = http.SameSiteStrictMode
 	c.SetCookie(cookie)
 
 	res := LoginResponse{
@@ -127,9 +127,9 @@ func (uc *userController) LogOut(c echo.Context) error {
 	cookie.Expires = time.Now()
 	cookie.Path = "/"
 	cookie.Domain = os.Getenv("API_DOMAIN")
-	cookie.Secure = true // Postmanで動作確認する時はFalseにする
+	cookie.Secure = true
 	cookie.HttpOnly = true
-	cookie.SameSite = http.SameSiteNoneMode
+	cookie.SameSite = http.SameSiteStrictMode
 	c.SetCookie(cookie)
 	return c.NoContent(http.StatusOK)
 }

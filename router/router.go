@@ -41,7 +41,7 @@ func NewRouter(
 		CookieDomain:   os.Getenv("API_DOMAIN"),
 		CookieHTTPOnly: true,
 		CookieSecure:   true,
-		CookieSameSite: http.SameSiteNoneMode, // Postmanの動作確認ができたらこのモード
+		CookieSameSite: http.SameSiteStrictMode,
 		// CookieSameSite: http.SameSiteDefaultMode, // Postmanで動作確認する時はこのモード（セキュア属性をFalseにする）
 		// CookieSameSite: http.SameSiteNoneMode,
 		//CookieMaxAge:   60,Cookieの有効期限を設定するならこれ
