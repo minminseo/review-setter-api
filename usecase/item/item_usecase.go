@@ -623,8 +623,9 @@ func (iu *ItemUsecase) UpdateReviewDates(ctx context.Context, input UpdateBackRe
 				}
 			}
 			calculatedNextScheduledDate := FakeLearnedDate.AddDate(0, 0, nextIntervalDays)
+			var diff time.Duration
 			if calculatedNextScheduledDate.Before(parsedToday) {
-				diff := parsedToday.Sub(calculatedNextScheduledDate)
+				diff = parsedToday.Sub(calculatedNextScheduledDate)
 				FakeLearnedDate = FakeLearnedDate.AddDate(0, 0, int(diff.Hours()/24))
 			}
 			newReviewdates, err = iu.scheduler.FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(
@@ -635,6 +636,7 @@ func (iu *ItemUsecase) UpdateReviewDates(ctx context.Context, input UpdateBackRe
 				input.BoxID,
 				input.ItemID,
 				FakeLearnedDate,
+				diff,
 			)
 			if err != nil {
 				return nil, err
