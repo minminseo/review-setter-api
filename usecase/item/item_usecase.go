@@ -613,6 +613,8 @@ func (iu *ItemUsecase) UpdateReviewDates(ctx context.Context, input UpdateBackRe
 			}
 			// isFinishedがtrueの場合、UpdateItemAsFinishedを実行
 		} else {
+			calculatedDuration := int(parsedNewScheduledDate.Sub(parsedInitialScheduledDate).Hours() / 24)
+			FakeLearnedDate := parsedLearnedDate.AddDate(0, 0, calculatedDuration)
 			var nextIntervalDays int
 			for _, step := range targetPatternSteps {
 				if step.StepNumber == input.StepNumber+1 { // isLastStep=false下での処理なので、ここではinput.StepNumber+1は必ず存在する。
@@ -620,14 +622,11 @@ func (iu *ItemUsecase) UpdateReviewDates(ctx context.Context, input UpdateBackRe
 					break
 				}
 			}
-			nextInitialScheduledDate := parsedLearnedDate.AddDate(0, 0, nextIntervalDays)
-			// リクエスト対象の復習日の変更後の日付によらず、nextInitialScheduledDateと今日との差でリクエスト対象よりあとのスケジュールは決まるので、nextInitialScheduledDateと今日の差を算出する。
-			calculatedDuration := int(parsedToday.Sub(nextInitialScheduledDate).Hours() / 24)
-			parsedLearnedDate, err := time.Parse("2006-01-02", input.LearnedDate)
-			if err != nil {
-				return nil, err
+			calculatedNextScheduledDate := FakeLearnedDate.AddDate(0, 0, nextIntervalDays)
+			if calculatedNextScheduledDate.Before(parsedToday) {
+				diff := parsedToday.Sub(calculatedNextScheduledDate)
+				FakeLearnedDate = FakeLearnedDate.AddDate(0, 0, int(diff.Hours()/24))
 			}
-			FakeLearnedDate := parsedLearnedDate.AddDate(0, 0, calculatedDuration) // これでFormat〇〇系の関数を使い回せる
 			newReviewdates, err = iu.scheduler.FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(
 				targetPatternSteps,
 				reviewDateIDs,
