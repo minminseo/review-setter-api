@@ -104,16 +104,16 @@ func (mr *MockISchedulerMockRecorder) FormatWithOverdueMarkedInCompletedWithIDs(
 }
 
 // FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates mocks base method.
-func (m *MockIScheduler) FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(targetPatternSteps []*pattern.PatternStep, reviewDateIDs []string, userID string, categoryID, boxID *string, itemID string, parsedLearnedDate time.Time) ([]*Reviewdate, error) {
+func (m *MockIScheduler) FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(targetPatternSteps []*pattern.PatternStep, reviewDateIDs []string, userID string, categoryID, boxID *string, itemID string, parsedLearnedDate time.Time, diff time.Duration) ([]*Reviewdate, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates", targetPatternSteps, reviewDateIDs, userID, categoryID, boxID, itemID, parsedLearnedDate)
+	ret := m.ctrl.Call(m, "FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates", targetPatternSteps, reviewDateIDs, userID, categoryID, boxID, itemID, parsedLearnedDate, diff)
 	ret0, _ := ret[0].([]*Reviewdate)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates indicates an expected call of FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates.
-func (mr *MockISchedulerMockRecorder) FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(targetPatternSteps, reviewDateIDs, userID, categoryID, boxID, itemID, parsedLearnedDate any) *gomock.Call {
+func (mr *MockISchedulerMockRecorder) FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(targetPatternSteps, reviewDateIDs, userID, categoryID, boxID, itemID, parsedLearnedDate, diff any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates", reflect.TypeOf((*MockIScheduler)(nil).FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates), targetPatternSteps, reviewDateIDs, userID, categoryID, boxID, itemID, parsedLearnedDate)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates", reflect.TypeOf((*MockIScheduler)(nil).FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates), targetPatternSteps, reviewDateIDs, userID, categoryID, boxID, itemID, parsedLearnedDate, diff)
 }
