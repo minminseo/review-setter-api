@@ -222,8 +222,8 @@ func (s *scheduler) FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(
 			boxID,
 			itemID,
 			step.StepNumber,
-			calculatedScheduledDate,
 			calculatedScheduledDate.Add(-diff),
+			calculatedScheduledDate,
 			false, // 全部未完了扱い
 		)
 		if err != nil {
