@@ -630,7 +630,7 @@ func TestItemRepository_UpdateReviewDatesBack(t *testing.T) {
 					BoxID:                stringPtr("950e8400-e29b-41d4-a716-446655440001"),
 					ItemID:               "a50e8400-e29b-41d4-a716-446655440001",
 					StepNumber:           2,
-					InitialScheduledDate: time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
+					InitialScheduledDate: time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
 					ScheduledDate:        time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC), // 巻き戻されたスケジュール日
 					IsCompleted:          false,
 				},
@@ -644,7 +644,7 @@ func TestItemRepository_UpdateReviewDatesBack(t *testing.T) {
 					BoxID:                stringPtr("950e8400-e29b-41d4-a716-446655440001"),
 					ItemID:               "a50e8400-e29b-41d4-a716-446655440001",
 					StepNumber:           2,
-					InitialScheduledDate: time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
+					InitialScheduledDate: time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
 					ScheduledDate:        time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
 					IsCompleted:          false,
 				},
