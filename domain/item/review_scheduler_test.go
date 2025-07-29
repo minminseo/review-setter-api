@@ -666,8 +666,8 @@ func TestFormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(t *testing.
 				}
 
 				expectedScheduledDate := tt.parsedLearnedDate.AddDate(0, 0, tt.targetPatternSteps[i].IntervalDays).Add(-tt.diff)
-				if !rd.ScheduledDate.Equal(expectedScheduledDate) {
-					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates() reviewdate[%d].ScheduledDate = %v, want %v", i, rd.ScheduledDate, expectedScheduledDate)
+				if !rd.InitialScheduledDate.Equal(expectedScheduledDate) {
+					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates() reviewdate[%d].InitialScheduledDate = %v, want %v", i, rd.InitialScheduledDate, expectedScheduledDate)
 				}
 
 				if rd.IsCompleted != false {
