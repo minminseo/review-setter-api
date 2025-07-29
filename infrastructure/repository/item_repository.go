@@ -308,7 +308,7 @@ func (r *itemRepository) UpdateReviewDatesBack(ctx context.Context, reviewdates 
 		if rd.BoxID != nil {
 			boxID = *rd.BoxID
 		}
-		inputs[i] = fmt.Sprintf("(%s,%s,%s,%s,%t)", rd.ReviewdateID, categoryID, boxID, rd.ScheduledDate.Format("2006-01-02"), rd.IsCompleted)
+		inputs[i] = fmt.Sprintf("(%s,%s,%s,%s,%s,%t)", rd.ReviewdateID, categoryID, boxID, rd.InitialScheduledDate.Format("2006-01-02"), rd.ScheduledDate.Format("2006-01-02"), rd.IsCompleted)
 	}
 
 	params := dbgen.UpdateReviewDatesBackParams{

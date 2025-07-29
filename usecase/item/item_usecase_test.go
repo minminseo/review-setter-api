@@ -2524,6 +2524,7 @@ func TestItemUsecase_UpdateReviewDates(t *testing.T) {
 						&boxID,
 						itemID,
 						gomock.Any(),
+						gomock.Any(),
 					).Return(testNewReviewdates, nil).Times(1),
 					mockItemRepo.EXPECT().GetEditedAtByItemID(ctx, itemID, userID).Return(editedAt, nil).Times(1),
 					mockItemRepo.EXPECT().UpdateReviewDatesBack(ctx, gomock.Any(), userID).Return(nil).Times(1),

@@ -552,7 +552,7 @@ func TestFormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(t *testing.
 		boxID              *string
 		itemID             string
 		parsedLearnedDate  time.Time
-		parsedToday        time.Time
+		diff               time.Duration
 		wantReviewdatesLen int
 		wantError          bool
 		wantErrorType      error
@@ -569,7 +569,23 @@ func TestFormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(t *testing.
 			boxID:              stringPtr("box123"),
 			itemID:             "item123",
 			parsedLearnedDate:  time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-			parsedToday:        time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
+			diff:               0,
+			wantReviewdatesLen: 2,
+			wantError:          false,
+		},
+		{
+			name: "diffが設定されている場合",
+			targetPatternSteps: []*PatternDomain.PatternStep{
+				{StepNumber: 1, IntervalDays: 1},
+				{StepNumber: 2, IntervalDays: 3},
+			},
+			reviewDateIDs:      []string{"rd1", "rd2"},
+			userID:             "user123",
+			categoryID:         stringPtr("cat123"),
+			boxID:              stringPtr("box123"),
+			itemID:             "item123",
+			parsedLearnedDate:  time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+			diff:               24 * time.Hour * 2,
 			wantReviewdatesLen: 2,
 			wantError:          false,
 		},
@@ -585,7 +601,7 @@ func TestFormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(t *testing.
 			boxID:              stringPtr("box123"),
 			itemID:             "item123",
 			parsedLearnedDate:  time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-			parsedToday:        time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
+			diff:               0,
 			wantReviewdatesLen: 0,
 			wantError:          true,
 			wantErrorType:      ErrNewScheduledDateBeforeInitialScheduledDate,
@@ -599,7 +615,7 @@ func TestFormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(t *testing.
 			boxID:              nil,
 			itemID:             "item123",
 			parsedLearnedDate:  time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-			parsedToday:        time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
+			diff:               0,
 			wantReviewdatesLen: 0,
 			wantError:          false,
 		},
@@ -615,6 +631,7 @@ func TestFormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(t *testing.
 				tt.boxID,
 				tt.itemID,
 				tt.parsedLearnedDate,
+				tt.diff,
 			)
 
 			if (err != nil) != tt.wantError {
@@ -648,9 +665,9 @@ func TestFormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(t *testing.
 					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates() reviewdate[%d].ItemID = %v, want %v", i, rd.ItemID, tt.itemID)
 				}
 
-				expectedScheduledDate := tt.parsedLearnedDate.AddDate(0, 0, tt.targetPatternSteps[i].IntervalDays)
-				if !rd.ScheduledDate.Equal(expectedScheduledDate) {
-					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates() reviewdate[%d].ScheduledDate = %v, want %v", i, rd.ScheduledDate, expectedScheduledDate)
+				expectedScheduledDate := tt.parsedLearnedDate.AddDate(0, 0, tt.targetPatternSteps[i].IntervalDays).Add(-tt.diff)
+				if !rd.InitialScheduledDate.Equal(expectedScheduledDate) {
+					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates() reviewdate[%d].InitialScheduledDate = %v, want %v", i, rd.InitialScheduledDate, expectedScheduledDate)
 				}
 
 				if rd.IsCompleted != false {
