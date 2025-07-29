@@ -270,5 +270,6 @@ type IScheduler interface {
 		boxID *string,
 		itemID string,
 		parsedLearnedDate time.Time,
+		diff time.Duration,
 	) ([]*Reviewdate, error)
 }
