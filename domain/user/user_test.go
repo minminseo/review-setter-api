@@ -133,8 +133,8 @@ func TestNewUser(t *testing.T) {
 			}
 
 			// フィールドのセットを確認
-			if u.ID != tc.id {
-				t.Errorf("ユーザーIDが一致しません: got %q, want %q", u.ID, tc.id)
+			if u.ID() != tc.id {
+				t.Errorf("ユーザーIDが一致しません: got %q, want %q", u.ID(), tc.id)
 			}
 
 			// メールアドレスは暗号化されているので復号化して確認
@@ -146,14 +146,14 @@ func TestNewUser(t *testing.T) {
 				t.Errorf("メールアドレスが一致しません: got %q, want %q", decryptedEmail, tc.email)
 			}
 
-			if u.Timezone != tc.timezone {
-				t.Errorf("タイムゾーンが一致しません: got %q, want %q", u.Timezone, tc.timezone)
+			if u.Timezone() != tc.timezone {
+				t.Errorf("タイムゾーンが一致しません: got %q, want %q", u.Timezone(), tc.timezone)
 			}
-			if u.ThemeColor != tc.themeColor {
-				t.Errorf("テーマカラーが一致しません: got %q, want %q", u.ThemeColor, tc.themeColor)
+			if u.ThemeColor() != tc.themeColor {
+				t.Errorf("テーマカラーが一致しません: got %q, want %q", u.ThemeColor(), tc.themeColor)
 			}
-			if u.Language != tc.language {
-				t.Errorf("言語タグが一致しません: got %q, want %q", u.Language, tc.language)
+			if u.Language() != tc.language {
+				t.Errorf("言語タグが一致しません: got %q, want %q", u.Language(), tc.language)
 			}
 
 			// 初期状態では未認証であることを確認
