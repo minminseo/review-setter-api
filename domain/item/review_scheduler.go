@@ -29,7 +29,7 @@ func (s *scheduler) FormatWithOverdueMarkedCompleted(
 
 	for i, step := range targetPatternSteps {
 		reviewDateID := uuid.NewString()
-		calculatedScheduledDate := parsedLearnedDate.AddDate(0, 0, step.IntervalDays)
+		calculatedScheduledDate := parsedLearnedDate.AddDate(0, 0, step.IntervalDays())
 
 		reviewdate, err := NewReviewdate(
 			reviewDateID,
@@ -37,7 +37,7 @@ func (s *scheduler) FormatWithOverdueMarkedCompleted(
 			categoryID,
 			boxID,
 			itemID,
-			step.StepNumber,
+			step.StepNumber(),
 			calculatedScheduledDate,
 			calculatedScheduledDate,
 			calculatedScheduledDate.Before(parsedToday), // 今日より前なら完了/逆は未完了
@@ -52,7 +52,7 @@ func (s *scheduler) FormatWithOverdueMarkedCompleted(
 	isFinished := false
 	if len(targetPatternSteps) > 0 {
 		lastScheduled := result[len(targetPatternSteps)-1].ScheduledDate
-		isFinished = lastScheduled.Before(parsedToday)
+		isFinished = lastScheduled().Before(parsedToday)
 	}
 	return result, isFinished, nil
 }
@@ -70,7 +70,7 @@ func (s *scheduler) FormatWithOverdueMarkedInCompleted(
 
 	var addDuration int
 	if len(targetPatternSteps) > 0 {
-		firstScheduled := parsedLearnedDate.AddDate(0, 0, targetPatternSteps[0].IntervalDays)
+		firstScheduled := parsedLearnedDate.AddDate(0, 0, targetPatternSteps[0].IntervalDays())
 		if firstScheduled.Before(parsedToday) {
 			addDuration = int(parsedToday.Sub(firstScheduled).Hours() / 24)
 		} else {
@@ -80,7 +80,7 @@ func (s *scheduler) FormatWithOverdueMarkedInCompleted(
 
 	for i, step := range targetPatternSteps {
 		reviewDateID := uuid.NewString()
-		calculatedScheduledDate := parsedLearnedDate.AddDate(0, 0, step.IntervalDays+addDuration)
+		calculatedScheduledDate := parsedLearnedDate.AddDate(0, 0, step.IntervalDays()+addDuration)
 
 		reviewdate, err := NewReviewdate(
 			reviewDateID,
@@ -88,7 +88,7 @@ func (s *scheduler) FormatWithOverdueMarkedInCompleted(
 			categoryID,
 			boxID,
 			itemID,
-			step.StepNumber,
+			step.StepNumber(),
 			calculatedScheduledDate,
 			calculatedScheduledDate,
 			false, //全部未完了扱い
@@ -121,7 +121,7 @@ func (s *scheduler) FormatWithOverdueMarkedCompletedWithIDs(
 	result := make([]*Reviewdate, len(targetPatternSteps))
 
 	for i, step := range targetPatternSteps {
-		calculatedScheduledDate := parsedLearnedDate.AddDate(0, 0, step.IntervalDays)
+		calculatedScheduledDate := parsedLearnedDate.AddDate(0, 0, step.IntervalDays())
 
 		reviewdate, err := NewReviewdate(
 			reviewDateIDs[i],
@@ -129,7 +129,7 @@ func (s *scheduler) FormatWithOverdueMarkedCompletedWithIDs(
 			categoryID,
 			boxID,
 			itemID,
-			step.StepNumber,
+			step.StepNumber(),
 			calculatedScheduledDate,
 			calculatedScheduledDate,
 			calculatedScheduledDate.Before(parsedToday),
@@ -143,7 +143,7 @@ func (s *scheduler) FormatWithOverdueMarkedCompletedWithIDs(
 	isFinished := false
 	if len(targetPatternSteps) > 0 {
 		lastScheduled := result[len(targetPatternSteps)-1].ScheduledDate
-		isFinished = lastScheduled.Before(parsedToday)
+		isFinished = lastScheduled().Before(parsedToday)
 	}
 	return result, isFinished, nil
 }
@@ -166,7 +166,7 @@ func (s *scheduler) FormatWithOverdueMarkedInCompletedWithIDs(
 
 	var addDuration int
 	if len(targetPatternSteps) > 0 {
-		firstScheduled := parsedLearnedDate.AddDate(0, 0, targetPatternSteps[0].IntervalDays)
+		firstScheduled := parsedLearnedDate.AddDate(0, 0, targetPatternSteps[0].IntervalDays())
 		if firstScheduled.Before(parsedToday) {
 			addDuration = int(parsedToday.Sub(firstScheduled).Hours() / 24)
 		} else {
@@ -175,14 +175,14 @@ func (s *scheduler) FormatWithOverdueMarkedInCompletedWithIDs(
 	}
 
 	for i, step := range targetPatternSteps {
-		calculatedScheduledDate := parsedLearnedDate.AddDate(0, 0, step.IntervalDays+addDuration)
+		calculatedScheduledDate := parsedLearnedDate.AddDate(0, 0, step.IntervalDays()+addDuration)
 		reviewdate, err := NewReviewdate(
 			reviewDateIDs[i],
 			userID,
 			categoryID,
 			boxID,
 			itemID,
-			step.StepNumber,
+			step.StepNumber(),
 			calculatedScheduledDate,
 			calculatedScheduledDate,
 			false,
@@ -213,7 +213,7 @@ func (s *scheduler) FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(
 	result := make([]*Reviewdate, len(targetPatternSteps))
 
 	for i, step := range targetPatternSteps {
-		calculatedScheduledDate := parsedLearnedDate.AddDate(0, 0, step.IntervalDays)
+		calculatedScheduledDate := parsedLearnedDate.AddDate(0, 0, step.IntervalDays())
 
 		reviewdate, err := NewReviewdate(
 			reviewDateIDs[i],
@@ -221,7 +221,7 @@ func (s *scheduler) FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(
 			categoryID,
 			boxID,
 			itemID,
-			step.StepNumber,
+			step.StepNumber(),
 			calculatedScheduledDate.Add(-diff),
 			calculatedScheduledDate,
 			false, // 全部未完了扱い
