@@ -39,15 +39,18 @@ func TestNewBox(t *testing.T) {
 			boxName:      "英単語",
 			registeredAt: now,
 			editedAt:     now,
-			want: &Box{
-				ID:           testBoxID,
-				UserID:       testUserID,
-				CategoryID:   testCategoryID,
-				PatternID:    testPatternID,
-				Name:         "英単語",
-				RegisteredAt: now,
-				EditedAt:     now,
-			},
+			want: func() *Box {
+				box, _ := ReconstructBox(
+					testBoxID,
+					testUserID,
+					testCategoryID,
+					testPatternID,
+					"英単語",
+					now,
+					now,
+				)
+				return box
+			}(),
 			wantErr: false,
 		},
 		{
@@ -86,14 +89,14 @@ func TestNewBox(t *testing.T) {
 				t.Fatalf("予期しないエラー: %v", err)
 			}
 
-			if diff := cmp.Diff(tc.want, box); diff != "" {
+			if diff := cmp.Diff(tc.want, box, cmp.AllowUnexported(Box{})); diff != "" {
 				t.Errorf("Box mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
 }
 
-func TestBox_Set(t *testing.T) {
+func TestBox_UpdateBox(t *testing.T) {
 	now := time.Now()
 	box, err := NewBox(testBoxID, testUserID, testCategoryID, testPatternID, "Original Box", now, now)
 	if err != nil {
@@ -117,15 +120,18 @@ func TestBox_Set(t *testing.T) {
 			newPatternID: testPatternID,
 			newName:      "Updated Box Name",
 			editedAt:     newTime,
-			wantBox: &Box{
-				ID:           testBoxID,
-				UserID:       testUserID,
-				CategoryID:   testCategoryID,
-				PatternID:    testPatternID,
-				Name:         "Updated Box Name",
-				RegisteredAt: now,
-				EditedAt:     newTime,
-			},
+			wantBox: func() *Box {
+				box, _ := ReconstructBox(
+					testBoxID,
+					testUserID,
+					testCategoryID,
+					testPatternID,
+					"Updated Box Name",
+					now,
+					newTime,
+				)
+				return box
+			}(),
 			wantSamePattern: true,
 			wantErr:         false,
 		},
@@ -134,15 +140,18 @@ func TestBox_Set(t *testing.T) {
 			newPatternID: "pattern2",
 			newName:      "Updated Box Name",
 			editedAt:     newTime,
-			wantBox: &Box{
-				ID:           testBoxID,
-				UserID:       testUserID,
-				CategoryID:   testCategoryID,
-				PatternID:    "pattern2",
-				Name:         "Updated Box Name",
-				RegisteredAt: now,
-				EditedAt:     newTime,
-			},
+			wantBox: func() *Box {
+				box, _ := ReconstructBox(
+					testBoxID,
+					testUserID,
+					testCategoryID,
+					"pattern2",
+					"Updated Box Name",
+					now,
+					newTime,
+				)
+				return box
+			}(),
 			wantSamePattern: false,
 			wantErr:         false,
 		},
@@ -151,15 +160,18 @@ func TestBox_Set(t *testing.T) {
 			newPatternID: testPatternID,
 			newName:      "",
 			editedAt:     newTime,
-			wantBox: &Box{
-				ID:           testBoxID,
-				UserID:       testUserID,
-				CategoryID:   testCategoryID,
-				PatternID:    testPatternID,
-				Name:         "Original Box",
-				RegisteredAt: now,
-				EditedAt:     now,
-			},
+			wantBox: func() *Box {
+				box, _ := ReconstructBox(
+					testBoxID,
+					testUserID,
+					testCategoryID,
+					testPatternID,
+					"Original Box",
+					now,
+					now,
+				)
+				return box
+			}(),
 			wantSamePattern: true,
 			wantErr:         true,
 			errMsg:          "カテゴリー名は必須です",
@@ -172,7 +184,7 @@ func TestBox_Set(t *testing.T) {
 			// ボックスをコピー
 			testBox := *box
 
-			isSamePattern, err := testBox.Set(tc.newPatternID, tc.newName, tc.editedAt)
+			isSamePattern, err := testBox.UpdateBox(tc.newPatternID, tc.newName, tc.editedAt)
 
 			if tc.wantErr {
 				if err == nil {
@@ -184,7 +196,7 @@ func TestBox_Set(t *testing.T) {
 				if isSamePattern != tc.wantSamePattern {
 					t.Errorf("isSamePattern: got %v, want %v", isSamePattern, tc.wantSamePattern)
 				}
-				if diff := cmp.Diff(tc.wantBox, &testBox); diff != "" {
+				if diff := cmp.Diff(tc.wantBox, &testBox, cmp.AllowUnexported(Box{})); diff != "" {
 					t.Errorf("Box mismatch (-want +got):\n%s", diff)
 				}
 				return
@@ -198,7 +210,7 @@ func TestBox_Set(t *testing.T) {
 				t.Errorf("isSamePattern: got %v, want %v", isSamePattern, tc.wantSamePattern)
 			}
 
-			if diff := cmp.Diff(tc.wantBox, &testBox); diff != "" {
+			if diff := cmp.Diff(tc.wantBox, &testBox, cmp.AllowUnexported(Box{})); diff != "" {
 				t.Errorf("Box mismatch (-want +got):\n%s", diff)
 			}
 		})
