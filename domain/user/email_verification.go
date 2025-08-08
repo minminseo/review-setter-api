@@ -14,10 +14,10 @@ const (
 )
 
 type EmailVerification struct {
-	ID        string
-	UserID    string
-	CodeHash  string
-	ExpiresAt time.Time
+	id        string
+	userID    string
+	codeHash  string
+	expiresAt time.Time
 }
 
 // 認証情報の生成
@@ -39,21 +39,58 @@ func NewEmailVerification(verificationID string, userID string) (*EmailVerificat
 	expiresAt := time.Now().Add(VerificationExpiry)
 
 	return &EmailVerification{
-		ID:        verificationID,
-		UserID:    userID,
-		CodeHash:  codeHash,
-		ExpiresAt: expiresAt,
+		id:        verificationID,
+		userID:    userID,
+		codeHash:  codeHash,
+		expiresAt: expiresAt,
 	}, code, nil
 }
 
-// 有効期限が切れているか確認
+// リポジトリからの復元用
+func ReconstructEmailVerification(
+	id string,
+	userID string,
+	codeHash string,
+	expiresAt time.Time,
+) (*EmailVerification, error) {
+	if id == "" {
+		return nil, fmt.Errorf("認証IDが空です")
+	}
+	if userID == "" {
+		return nil, fmt.Errorf("ユーザーIDが空です")
+	}
+
+	return &EmailVerification{
+		id:        id,
+		userID:    userID,
+		codeHash:  codeHash,
+		expiresAt: expiresAt,
+	}, nil
+}
+
+func (ev *EmailVerification) ID() string {
+	return ev.id
+}
+
+func (ev *EmailVerification) UserID() string {
+	return ev.userID
+}
+
+func (ev *EmailVerification) CodeHash() string {
+	return ev.codeHash
+}
+
+func (ev *EmailVerification) ExpiresAt() time.Time {
+	return ev.expiresAt
+}
+
 func (ev *EmailVerification) IsExpired() bool {
-	return time.Now().After(ev.ExpiresAt)
+	return time.Now().After(ev.expiresAt)
 }
 
 // 認証コード検証
 func (ev *EmailVerification) ValidateCode(code string) bool {
-	return ev.CodeHash == hashVerificationCode(code)
+	return ev.codeHash == hashVerificationCode(code)
 }
 
 // 認証コード生成
