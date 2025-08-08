@@ -8,17 +8,17 @@ import (
 )
 
 type Item struct {
-	ItemID       string
-	UserID       string
-	CategoryID   *string
-	BoxID        *string
-	PatternID    *string
-	Name         string
-	Detail       string
-	LearnedDate  time.Time
-	IsFinished   bool
-	RegisteredAt time.Time
-	EditedAt     time.Time
+	itemID       string
+	userID       string
+	categoryID   *string
+	boxID        *string
+	patternID    *string
+	name         string
+	detail       string
+	learnedDate  time.Time
+	isFinished   bool
+	registeredAt time.Time
+	editedAt     time.Time
 }
 
 func NewItem(
@@ -42,17 +42,17 @@ func NewItem(
 	}
 
 	i := &Item{
-		ItemID:       itemID,
-		UserID:       userID,
-		CategoryID:   categoryID,
-		BoxID:        boxID,
-		PatternID:    patternID,
-		Name:         name,
-		Detail:       detail,
-		LearnedDate:  learnedDate,
-		IsFinished:   isFinished,
-		RegisteredAt: registeredAt,
-		EditedAt:     editedAt,
+		itemID:       itemID,
+		userID:       userID,
+		categoryID:   categoryID,
+		boxID:        boxID,
+		patternID:    patternID,
+		name:         name,
+		detail:       detail,
+		learnedDate:  learnedDate,
+		isFinished:   isFinished,
+		registeredAt: registeredAt,
+		editedAt:     editedAt,
 	}
 	return i, nil
 }
@@ -71,17 +71,17 @@ func ReconstructItem(
 	editedAt time.Time,
 ) (*Item, error) {
 	i := &Item{
-		ItemID:       itemID,
-		UserID:       userID,
-		CategoryID:   categoryID,
-		BoxID:        boxID,
-		PatternID:    patternID,
-		Name:         name,
-		Detail:       detail,
-		LearnedDate:  learnedDate,
-		IsFinished:   isFinished,
-		RegisteredAt: registeredAt,
-		EditedAt:     editedAt,
+		itemID:       itemID,
+		userID:       userID,
+		categoryID:   categoryID,
+		boxID:        boxID,
+		patternID:    patternID,
+		name:         name,
+		detail:       detail,
+		learnedDate:  learnedDate,
+		isFinished:   isFinished,
+		registeredAt: registeredAt,
+		editedAt:     editedAt,
 	}
 	return i, nil
 }
@@ -102,7 +102,51 @@ func validateLearnedDate(learnedDate time.Time) error {
 
 // TODO: bool値用のバリデーション
 
-func (i *Item) Set(
+func (i *Item) ItemID() string {
+	return i.itemID
+}
+
+func (i *Item) UserID() string {
+	return i.userID
+}
+
+func (i *Item) CategoryID() *string {
+	return i.categoryID
+}
+
+func (i *Item) BoxID() *string {
+	return i.boxID
+}
+
+func (i *Item) PatternID() *string {
+	return i.patternID
+}
+
+func (i *Item) Name() string {
+	return i.name
+}
+
+func (i *Item) Detail() string {
+	return i.detail
+}
+
+func (i *Item) LearnedDate() time.Time {
+	return i.learnedDate
+}
+
+func (i *Item) IsFinished() bool {
+	return i.isFinished
+}
+
+func (i *Item) RegisteredAt() time.Time {
+	return i.registeredAt
+}
+
+func (i *Item) EditedAt() time.Time {
+	return i.editedAt
+}
+
+func (i *Item) UpdateItem(
 	categoryID *string,
 	boxID *string,
 	patternID *string,
@@ -118,27 +162,27 @@ func (i *Item) Set(
 		return err
 	}
 
-	i.CategoryID = categoryID
-	i.BoxID = boxID
-	i.PatternID = patternID
-	i.Name = name
-	i.Detail = detail
-	i.LearnedDate = learnedDate
-	i.EditedAt = editedAt
+	i.categoryID = categoryID
+	i.boxID = boxID
+	i.patternID = patternID
+	i.name = name
+	i.detail = detail
+	i.learnedDate = learnedDate
+	i.editedAt = editedAt
 
 	return nil
 }
 
 type Reviewdate struct {
-	ReviewdateID         string
-	UserID               string
-	CategoryID           *string
-	BoxID                *string
-	ItemID               string
-	StepNumber           int
-	InitialScheduledDate time.Time
-	ScheduledDate        time.Time
-	IsCompleted          bool
+	reviewdateID         string
+	userID               string
+	categoryID           *string
+	boxID                *string
+	itemID               string
+	stepNumber           int
+	initialScheduledDate time.Time
+	scheduledDate        time.Time
+	isCompleted          bool
 }
 
 func NewReviewdate(
@@ -153,15 +197,15 @@ func NewReviewdate(
 	isCompleted bool,
 ) (*Reviewdate, error) {
 	s := &Reviewdate{
-		ReviewdateID:         reviewdateID,
-		UserID:               userID,
-		CategoryID:           categoryID,
-		BoxID:                boxID,
-		ItemID:               itemID,
-		StepNumber:           stepNumber,
-		InitialScheduledDate: initialScheduledDate,
-		ScheduledDate:        scheduledDate,
-		IsCompleted:          isCompleted,
+		reviewdateID:         reviewdateID,
+		userID:               userID,
+		categoryID:           categoryID,
+		boxID:                boxID,
+		itemID:               itemID,
+		stepNumber:           stepNumber,
+		initialScheduledDate: initialScheduledDate,
+		scheduledDate:        scheduledDate,
+		isCompleted:          isCompleted,
 	}
 	if err := s.Validate(); err != nil {
 		return nil, err
@@ -181,41 +225,77 @@ func ReconstructReviewdate(
 	isCompleted bool,
 ) (*Reviewdate, error) {
 	rd := &Reviewdate{
-		ReviewdateID:         reviewdateID,
-		UserID:               userID,
-		CategoryID:           categoryID,
-		BoxID:                boxID,
-		ItemID:               itemID,
-		StepNumber:           stepNumber,
-		InitialScheduledDate: initialScheduledDate,
-		ScheduledDate:        scheduledDate,
-		IsCompleted:          isCompleted,
+		reviewdateID:         reviewdateID,
+		userID:               userID,
+		categoryID:           categoryID,
+		boxID:                boxID,
+		itemID:               itemID,
+		stepNumber:           stepNumber,
+		initialScheduledDate: initialScheduledDate,
+		scheduledDate:        scheduledDate,
+		isCompleted:          isCompleted,
 	}
 	return rd, nil
 }
 
-func (s *Reviewdate) Validate() error {
-	return validation.ValidateStruct(s,
+func (r *Reviewdate) ReviewdateID() string {
+	return r.reviewdateID
+}
+
+func (r *Reviewdate) UserID() string {
+	return r.userID
+}
+
+func (r *Reviewdate) CategoryID() *string {
+	return r.categoryID
+}
+
+func (r *Reviewdate) BoxID() *string {
+	return r.boxID
+}
+
+func (r *Reviewdate) ItemID() string {
+	return r.itemID
+}
+
+func (r *Reviewdate) StepNumber() int {
+	return r.stepNumber
+}
+
+func (r *Reviewdate) InitialScheduledDate() time.Time {
+	return r.initialScheduledDate
+}
+
+func (r *Reviewdate) ScheduledDate() time.Time {
+	return r.scheduledDate
+}
+
+func (r *Reviewdate) IsCompleted() bool {
+	return r.isCompleted
+}
+
+func (r *Reviewdate) Validate() error {
+	return validation.ValidateStruct(r,
 		validation.Field(
-			&s.StepNumber,
+			&r.stepNumber,
 			validation.Required.Error("ステップ番号は必須です"),
 			validation.Min(1).Error("ステップ番号の値が不正です"),
 			validation.Max(32767).Error("ステップは32768回以上は指定できません"),
 		),
 		validation.Field(
-			&s.ScheduledDate,
+			&r.scheduledDate,
 			validation.Required.Error("スケジュール日は必須です"),
 			// スケジュール日フォーマットのバリデーションも書く
 		),
 	)
 }
 
-func (s *Reviewdate) SetOnlyIDs(
+func (r *Reviewdate) UpdateReviewdateIDs(
 	categoryID *string,
 	boxID *string,
 ) error {
-	s.CategoryID = categoryID
-	s.BoxID = boxID
+	r.categoryID = categoryID
+	r.boxID = boxID
 	return nil
 }
 
