@@ -8,12 +8,12 @@ import (
 )
 
 type Pattern struct {
-	PatternID    string
-	UserID       string
-	Name         string
-	TargetWeight string
-	RegisteredAt time.Time
-	EditedAt     time.Time
+	patternID    string
+	userID       string
+	name         string
+	targetWeight string
+	registeredAt time.Time
+	editedAt     time.Time
 }
 
 func NewPattern(
@@ -32,12 +32,12 @@ func NewPattern(
 		return nil, err
 	}
 	p := &Pattern{
-		PatternID:    patternID,
-		UserID:       userID,
-		Name:         name,
-		TargetWeight: targetWeight,
-		RegisteredAt: registeredAt,
-		EditedAt:     editedAt,
+		patternID:    patternID,
+		userID:       userID,
+		name:         name,
+		targetWeight: targetWeight,
+		registeredAt: registeredAt,
+		editedAt:     editedAt,
 	}
 	return p, nil
 }
@@ -51,12 +51,12 @@ func ReconstructPattern(
 	editedAt time.Time,
 ) (*Pattern, error) {
 	p := &Pattern{
-		PatternID:    patternID,
-		UserID:       userID,
-		Name:         name,
-		TargetWeight: targetWeight,
-		RegisteredAt: registeredAt,
-		EditedAt:     editedAt,
+		patternID:    patternID,
+		userID:       userID,
+		name:         name,
+		targetWeight: targetWeight,
+		registeredAt: registeredAt,
+		editedAt:     editedAt,
 	}
 	return p, nil
 }
@@ -95,7 +95,31 @@ func validateTargetWeight(targetWeight string) error {
 	)
 }
 
-func (p *Pattern) Set(
+func (p *Pattern) PatternID() string {
+	return p.patternID
+}
+
+func (p *Pattern) UserID() string {
+	return p.userID
+}
+
+func (p *Pattern) Name() string {
+	return p.name
+}
+
+func (p *Pattern) TargetWeight() string {
+	return p.targetWeight
+}
+
+func (p *Pattern) RegisteredAt() time.Time {
+	return p.registeredAt
+}
+
+func (p *Pattern) EditedAt() time.Time {
+	return p.editedAt
+}
+
+func (p *Pattern) UpdatePattern(
 	name string,
 	targetWeight string,
 	editedAt time.Time,
@@ -107,19 +131,19 @@ func (p *Pattern) Set(
 		return err
 	}
 
-	p.Name = name
-	p.TargetWeight = targetWeight
-	p.EditedAt = editedAt
+	p.name = name
+	p.targetWeight = targetWeight
+	p.editedAt = editedAt
 
 	return nil
 }
 
 type PatternStep struct {
-	PatternStepID string
-	UserID        string
-	PatternID     string
-	StepNumber    int
-	IntervalDays  int
+	patternStepID string
+	userID        string
+	patternID     string
+	stepNumber    int
+	intervalDays  int
 }
 
 func NewPatternStep(
@@ -136,14 +160,34 @@ func NewPatternStep(
 		return nil, err
 	}
 	ps := &PatternStep{
-		PatternStepID: patternStepID,
-		UserID:        userID,
-		PatternID:     patternID,
-		StepNumber:    stepNumber,
-		IntervalDays:  intervalDays,
+		patternStepID: patternStepID,
+		userID:        userID,
+		patternID:     patternID,
+		stepNumber:    stepNumber,
+		intervalDays:  intervalDays,
 	}
 
 	return ps, nil
+}
+
+func (ps *PatternStep) PatternStepID() string {
+	return ps.patternStepID
+}
+
+func (ps *PatternStep) UserID() string {
+	return ps.userID
+}
+
+func (ps *PatternStep) PatternID() string {
+	return ps.patternID
+}
+
+func (ps *PatternStep) StepNumber() int {
+	return ps.stepNumber
+}
+
+func (ps *PatternStep) IntervalDays() int {
+	return ps.intervalDays
 }
 
 func ReconstructPatternStep(
@@ -154,11 +198,11 @@ func ReconstructPatternStep(
 	intervalDays int,
 ) (*PatternStep, error) {
 	ps := &PatternStep{
-		PatternStepID: patternStepID,
-		UserID:        userID,
-		PatternID:     patternID,
-		StepNumber:    stepNumber,
-		IntervalDays:  intervalDays,
+		patternStepID: patternStepID,
+		userID:        userID,
+		patternID:     patternID,
+		stepNumber:    stepNumber,
+		intervalDays:  intervalDays,
 	}
 	return ps, nil
 }
@@ -195,21 +239,21 @@ func ValidateSteps(steps []*PatternStep) error {
 	// ステップ数が2つ以上の場合は昇順チェック
 	prev := steps[0]
 	for _, curr := range steps[1:] {
-		if curr.StepNumber == prev.StepNumber {
+		if curr.StepNumber() == prev.StepNumber() {
 			return errors.New("順序番号は重複してはいけません")
 		}
-		if curr.IntervalDays == prev.IntervalDays {
+		if curr.IntervalDays() == prev.IntervalDays() {
 			return errors.New("復習日間隔数は重複してはいけません")
 		}
-		if curr.StepNumber < prev.StepNumber {
+		if curr.StepNumber() < prev.StepNumber() {
 			return errors.New("順序番号は昇順で指定してください")
 		}
-		if curr.IntervalDays < prev.IntervalDays {
+		if curr.IntervalDays() < prev.IntervalDays() {
 			return errors.New("復習日間隔数は昇順で指定してください")
 		}
 
 		// StepNumberが必ず前の値から+1（公差1の等差数列）になっているかチェック
-		if curr.StepNumber != prev.StepNumber+1 {
+		if curr.StepNumber() != prev.StepNumber()+1 {
 			return errors.New("順序番号は1ずつ増加して指定してください")
 		}
 
