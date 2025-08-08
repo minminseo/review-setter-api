@@ -275,18 +275,18 @@ func TestPatternUsecase_GetPatternsByUserID(t *testing.T) {
 			name:   "正常系_パターンとステップが存在する場合",
 			userID: "user-123",
 			setup: func(patternRepo *patternDomain.MockIPatternRepository, itemRepo *itemDomain.MockIItemRepository, txManager *transaction.MockITransactionManager) {
-				patterns := []*patternDomain.Pattern{{
-					PatternID:    "pattern-1",
-					UserID:       "user-123",
-					Name:         "パターン1",
-					TargetWeight: "light",
-					RegisteredAt: fixedTime,
-					EditedAt:     fixedTime,
-				}}
-				steps := []*patternDomain.PatternStep{
-					{PatternStepID: "step-1", PatternID: "pattern-1", StepNumber: 1, IntervalDays: 1},
-					{PatternStepID: "step-2", PatternID: "pattern-1", StepNumber: 2, IntervalDays: 3},
-				}
+				pattern1, _ := patternDomain.ReconstructPattern(
+					"pattern-1",
+					"user-123",
+					"パターン1",
+					"light",
+					fixedTime,
+					fixedTime,
+				)
+				patterns := []*patternDomain.Pattern{pattern1}
+				step1, _ := patternDomain.ReconstructPatternStep("step-1", "user-123", "pattern-1", 1, 1)
+				step2, _ := patternDomain.ReconstructPatternStep("step-2", "user-123", "pattern-1", 2, 3)
+				steps := []*patternDomain.PatternStep{step1, step2}
 				gomock.InOrder(
 					patternRepo.EXPECT().
 						GetAllPatternsByUserID(ctx, "user-123").
@@ -315,14 +315,15 @@ func TestPatternUsecase_GetPatternsByUserID(t *testing.T) {
 			name:   "正常系_パターンは存在するがステップが存在しない",
 			userID: "user-123",
 			setup: func(patternRepo *patternDomain.MockIPatternRepository, itemRepo *itemDomain.MockIItemRepository, txManager *transaction.MockITransactionManager) {
-				patterns := []*patternDomain.Pattern{{
-					PatternID:    "pattern-1",
-					UserID:       "user-123",
-					Name:         "パターン1",
-					TargetWeight: "light",
-					RegisteredAt: fixedTime,
-					EditedAt:     fixedTime,
-				}}
+				pattern1, _ := patternDomain.ReconstructPattern(
+					"pattern-1",
+					"user-123",
+					"パターン1",
+					"light",
+					fixedTime,
+					fixedTime,
+				)
+				patterns := []*patternDomain.Pattern{pattern1}
 				steps := []*patternDomain.PatternStep{}
 				gomock.InOrder(
 					patternRepo.EXPECT().
@@ -377,14 +378,15 @@ func TestPatternUsecase_GetPatternsByUserID(t *testing.T) {
 			name:   "異常系_GetAllPatternStepsByUserIDでエラー",
 			userID: "user-123",
 			setup: func(patternRepo *patternDomain.MockIPatternRepository, itemRepo *itemDomain.MockIItemRepository, txManager *transaction.MockITransactionManager) {
-				patterns := []*patternDomain.Pattern{{
-					PatternID:    "pattern-1",
-					UserID:       "user-123",
-					Name:         "パターン1",
-					TargetWeight: "light",
-					RegisteredAt: fixedTime,
-					EditedAt:     fixedTime,
-				}}
+				pattern1, _ := patternDomain.ReconstructPattern(
+					"pattern-1",
+					"user-123",
+					"パターン1",
+					"light",
+					fixedTime,
+					fixedTime,
+				)
+				patterns := []*patternDomain.Pattern{pattern1}
 				gomock.InOrder(
 					patternRepo.EXPECT().
 						GetAllPatternsByUserID(ctx, "user-123").
@@ -455,15 +457,16 @@ func TestPatternUsecase_UpdatePattern(t *testing.T) {
 				Steps:        []UpdatePatternStepInput{{StepID: "step-1", PatternID: "pattern-1", StepNumber: 1, IntervalDays: 1}},
 			},
 			setup: func(patternRepo *patternDomain.MockIPatternRepository, itemRepo *itemDomain.MockIItemRepository, txManager *transaction.MockITransactionManager) {
-				pattern := &patternDomain.Pattern{
-					PatternID:    "pattern-1",
-					UserID:       "user-123",
-					Name:         "元のパターン",
-					TargetWeight: "light",
-					RegisteredAt: fixedTime,
-					EditedAt:     fixedTime,
-				}
-				steps := []*patternDomain.PatternStep{{PatternStepID: "step-1", PatternID: "pattern-1", StepNumber: 1, IntervalDays: 1}}
+				pattern, _ := patternDomain.ReconstructPattern(
+					"pattern-1",
+					"user-123",
+					"元のパターン",
+					"light",
+					fixedTime,
+					fixedTime,
+				)
+				step1, _ := patternDomain.ReconstructPatternStep("step-1", "user-123", "pattern-1", 1, 1)
+				steps := []*patternDomain.PatternStep{step1}
 				gomock.InOrder(
 					patternRepo.EXPECT().
 						FindPatternByPatternID(ctx, "pattern-1", "user-123").
@@ -505,15 +508,16 @@ func TestPatternUsecase_UpdatePattern(t *testing.T) {
 				Steps:        []UpdatePatternStepInput{{StepID: "step-1", PatternID: "pattern-1", StepNumber: 1, IntervalDays: 2}},
 			},
 			setup: func(patternRepo *patternDomain.MockIPatternRepository, itemRepo *itemDomain.MockIItemRepository, txManager *transaction.MockITransactionManager) {
-				pattern := &patternDomain.Pattern{
-					PatternID:    "pattern-1",
-					UserID:       "user-123",
-					Name:         "元のパターン",
-					TargetWeight: "light",
-					RegisteredAt: fixedTime,
-					EditedAt:     fixedTime,
-				}
-				steps := []*patternDomain.PatternStep{{PatternStepID: "step-1", PatternID: "pattern-1", StepNumber: 1, IntervalDays: 1}}
+				pattern, _ := patternDomain.ReconstructPattern(
+					"pattern-1",
+					"user-123",
+					"元のパターン",
+					"light",
+					fixedTime,
+					fixedTime,
+				)
+				step1, _ := patternDomain.ReconstructPatternStep("step-1", "user-123", "pattern-1", 1, 1)
+				steps := []*patternDomain.PatternStep{step1}
 				gomock.InOrder(
 					patternRepo.EXPECT().
 						FindPatternByPatternID(ctx, "pattern-1", "user-123").
@@ -577,15 +581,16 @@ func TestPatternUsecase_UpdatePattern(t *testing.T) {
 				Steps:        []UpdatePatternStepInput{{StepID: "step-1", PatternID: "pattern-1", StepNumber: 1, IntervalDays: 1}},
 			},
 			setup: func(patternRepo *patternDomain.MockIPatternRepository, itemRepo *itemDomain.MockIItemRepository, txManager *transaction.MockITransactionManager) {
-				pattern := &patternDomain.Pattern{
-					PatternID:    "pattern-1",
-					UserID:       "user-123",
-					Name:         "元のパターン",
-					TargetWeight: "light",
-					RegisteredAt: fixedTime,
-					EditedAt:     fixedTime,
-				}
-				steps := []*patternDomain.PatternStep{{PatternStepID: "step-1", PatternID: "pattern-1", StepNumber: 1, IntervalDays: 1}}
+				pattern, _ := patternDomain.ReconstructPattern(
+					"pattern-1",
+					"user-123",
+					"元のパターン",
+					"light",
+					fixedTime,
+					fixedTime,
+				)
+				step1, _ := patternDomain.ReconstructPatternStep("step-1", "user-123", "pattern-1", 1, 1)
+				steps := []*patternDomain.PatternStep{step1}
 				gomock.InOrder(
 					patternRepo.EXPECT().
 						FindPatternByPatternID(ctx, "pattern-1", "user-123").
@@ -609,15 +614,16 @@ func TestPatternUsecase_UpdatePattern(t *testing.T) {
 				Steps:        []UpdatePatternStepInput{{StepID: "step-1", PatternID: "pattern-1", StepNumber: 1, IntervalDays: 2}},
 			},
 			setup: func(patternRepo *patternDomain.MockIPatternRepository, itemRepo *itemDomain.MockIItemRepository, txManager *transaction.MockITransactionManager) {
-				pattern := &patternDomain.Pattern{
-					PatternID:    "pattern-1",
-					UserID:       "user-123",
-					Name:         "元のパターン",
-					TargetWeight: "light",
-					RegisteredAt: fixedTime,
-					EditedAt:     fixedTime,
-				}
-				steps := []*patternDomain.PatternStep{{PatternStepID: "step-1", PatternID: "pattern-1", StepNumber: 1, IntervalDays: 1}}
+				pattern, _ := patternDomain.ReconstructPattern(
+					"pattern-1",
+					"user-123",
+					"元のパターン",
+					"light",
+					fixedTime,
+					fixedTime,
+				)
+				step1, _ := patternDomain.ReconstructPatternStep("step-1", "user-123", "pattern-1", 1, 1)
+				steps := []*patternDomain.PatternStep{step1}
 				gomock.InOrder(
 					patternRepo.EXPECT().
 						FindPatternByPatternID(ctx, "pattern-1", "user-123").

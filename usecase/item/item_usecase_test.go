@@ -31,50 +31,54 @@ func TestItemUsecase_CreateItem(t *testing.T) {
 	registeredAt := time.Date(2024, 1, 10, 9, 0, 0, 0, time.UTC)
 
 	// PatternStepのテストデータ
+	testPatternStep1, _ := PatternDomain.NewPatternStep(
+		uuid.NewString(),
+		userID,
+		patternID,
+		1,
+		1,
+	)
+	testPatternStep2, _ := PatternDomain.NewPatternStep(
+		uuid.NewString(),
+		userID,
+		patternID,
+		2,
+		3,
+	)
 	testPatternSteps := []*PatternDomain.PatternStep{
-		{
-			PatternStepID: uuid.NewString(),
-			UserID:        userID,
-			PatternID:     patternID,
-			StepNumber:    1,
-			IntervalDays:  1,
-		},
-		{
-			PatternStepID: uuid.NewString(),
-			UserID:        userID,
-			PatternID:     patternID,
-			StepNumber:    2,
-			IntervalDays:  3,
-		},
+		testPatternStep1,
+		testPatternStep2,
 	}
 
 	// Reviewdateのテストデータ
+	testReviewdate1, _ := ItemDomain.NewReviewdate(
+		uuid.NewString(),
+		userID,
+		&categoryID,
+		&boxID,
+		itemID,
+		1,
+		parsedToday,
+		parsedToday,
+		false,
+	)
 	testReviewdates1 := []*ItemDomain.Reviewdate{
-		{
-			ReviewdateID:         uuid.NewString(),
-			UserID:               userID,
-			CategoryID:           &categoryID,
-			BoxID:                &boxID,
-			ItemID:               itemID,
-			StepNumber:           1,
-			InitialScheduledDate: parsedToday,
-			ScheduledDate:        parsedToday,
-			IsCompleted:          false,
-		},
+		testReviewdate1,
 	}
 
+	testReviewdate2, _ := ItemDomain.NewReviewdate(
+		uuid.NewString(),
+		userID,
+		&categoryID,
+		&boxID,
+		itemID,
+		1,
+		parsedLearnedDate.AddDate(0, 0, 1),
+		parsedLearnedDate.AddDate(0, 0, 1),
+		true,
+	)
 	testReviewdates2 := []*ItemDomain.Reviewdate{
-		{
-			ReviewdateID:         uuid.NewString(),
-			UserID:               userID,
-			CategoryID:           &categoryID,
-			BoxID:                &boxID,
-			ItemID:               itemID,
-			StepNumber:           1,
-			InitialScheduledDate: parsedLearnedDate.AddDate(0, 0, 1),
-			ScheduledDate:        parsedLearnedDate.AddDate(0, 0, 1),
-			IsCompleted:          true,
-		},
+		testReviewdate2,
 	}
 
 	tests := []struct {
@@ -182,7 +186,7 @@ func TestItemUsecase_CreateItem(t *testing.T) {
 				EditedAt:     registeredAt,
 				Reviewdates: []CreateReviewdateOutput{
 					{
-						DateID:               testReviewdates2[0].ReviewdateID,
+						DateID:               testReviewdates2[0].ReviewdateID(),
 						UserID:               userID,
 						ItemID:               itemID,
 						StepNumber:           1,
@@ -255,7 +259,7 @@ func TestItemUsecase_CreateItem(t *testing.T) {
 				EditedAt:     registeredAt,
 				Reviewdates: []CreateReviewdateOutput{
 					{
-						DateID:               testReviewdates1[0].ReviewdateID,
+						DateID:               testReviewdates1[0].ReviewdateID(),
 						UserID:               userID,
 						ItemID:               itemID,
 						StepNumber:           1,
@@ -387,19 +391,19 @@ func TestItemUsecase_UpdateItemAsFinishedForce(t *testing.T) {
 	userID := uuid.NewString()
 	editedAt := time.Date(2024, 1, 10, 9, 0, 0, 0, time.UTC)
 
-	testItem := &ItemDomain.Item{
-		ItemID:       itemID,
-		UserID:       userID,
-		CategoryID:   nil,
-		BoxID:        nil,
-		PatternID:    nil,
-		Name:         "Test Item",
-		Detail:       "Test Detail",
-		LearnedDate:  time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-		IsFinished:   false,
-		RegisteredAt: time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
-		EditedAt:     editedAt,
-	}
+	testItem, _ := ItemDomain.NewItem(
+		itemID,
+		userID,
+		nil,
+		nil,
+		nil,
+		"Test Item",
+		"Test Detail",
+		time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+		false,
+		time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
+		editedAt,
+	)
 
 	tests := []struct {
 		name      string
@@ -427,8 +431,8 @@ func TestItemUsecase_UpdateItemAsFinishedForce(t *testing.T) {
 				)
 			},
 			want: &UpdateItemAsFinishedForceOutput{
-				ItemID:     testItem.ItemID,
-				UserID:     testItem.UserID,
+				ItemID:     testItem.ItemID(),
+				UserID:     testItem.UserID(),
 				IsFinished: true,
 				EditedAt:   editedAt,
 			},
@@ -487,29 +491,31 @@ func TestItemUsecase_UpdateReviewDateAsCompleted(t *testing.T) {
 	itemID := uuid.NewString()
 	editedAt := time.Date(2024, 1, 10, 9, 0, 0, 0, time.UTC)
 
+	testReviewdate1, _ := ItemDomain.NewReviewdate(
+		uuid.NewString(),
+		userID,
+		nil,
+		nil,
+		itemID,
+		1,
+		time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+		false,
+	)
+	testReviewdate2, _ := ItemDomain.NewReviewdate(
+		uuid.NewString(),
+		userID,
+		nil,
+		nil,
+		itemID,
+		2,
+		time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
+		false,
+	)
 	testReviewdates := []*ItemDomain.Reviewdate{
-		{
-			ReviewdateID:         uuid.NewString(),
-			UserID:               userID,
-			CategoryID:           nil,
-			BoxID:                nil,
-			ItemID:               itemID,
-			StepNumber:           1,
-			InitialScheduledDate: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-			ScheduledDate:        time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-			IsCompleted:          false,
-		},
-		{
-			ReviewdateID:         uuid.NewString(),
-			UserID:               userID,
-			CategoryID:           nil,
-			BoxID:                nil,
-			ItemID:               itemID,
-			StepNumber:           2,
-			InitialScheduledDate: time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
-			ScheduledDate:        time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
-			IsCompleted:          false,
-		},
+		testReviewdate1,
+		testReviewdate2,
 	}
 
 	tests := []struct {
@@ -655,33 +661,33 @@ func TestItemUsecase_UpdateReviewDateAsInCompleted(t *testing.T) {
 	itemID := uuid.NewString()
 	editedAt := time.Date(2024, 1, 10, 9, 0, 0, 0, time.UTC)
 
-	testFinishedItem := &ItemDomain.Item{
-		ItemID:       itemID,
-		UserID:       userID,
-		CategoryID:   nil,
-		BoxID:        nil,
-		PatternID:    nil,
-		Name:         "Test Item",
-		Detail:       "Test Detail",
-		LearnedDate:  time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-		IsFinished:   true,
-		RegisteredAt: time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
-		EditedAt:     editedAt,
-	}
+	testFinishedItem, _ := ItemDomain.NewItem(
+		itemID,
+		userID,
+		nil,
+		nil,
+		nil,
+		"Test Item",
+		"Test Detail",
+		time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+		true,
+		time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
+		editedAt,
+	)
 
-	testUnFinishedItem := &ItemDomain.Item{
-		ItemID:       itemID,
-		UserID:       userID,
-		CategoryID:   nil,
-		BoxID:        nil,
-		PatternID:    nil,
-		Name:         "Test Item",
-		Detail:       "Test Detail",
-		LearnedDate:  time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-		IsFinished:   false,
-		RegisteredAt: time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
-		EditedAt:     editedAt,
-	}
+	testUnFinishedItem, _ := ItemDomain.NewItem(
+		itemID,
+		userID,
+		nil,
+		nil,
+		nil,
+		"Test Item",
+		"Test Detail",
+		time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+		false,
+		time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
+		editedAt,
+	)
 
 	tests := []struct {
 		name      string
@@ -825,71 +831,77 @@ func TestItemUsecase_UpdateItemAsUnFinishedForce(t *testing.T) {
 	today := "2024-01-10"
 	learnedDate := "2024-01-01"
 
+	testReviewDate1, _ := ItemDomain.NewReviewdate(
+		uuid.NewString(),
+		userID,
+		&categoryID,
+		&boxID,
+		itemID,
+		1,
+		time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+		true,
+	)
+	testReviewDate2, _ := ItemDomain.NewReviewdate(
+		uuid.NewString(),
+		userID,
+		&categoryID,
+		&boxID,
+		itemID,
+		2,
+		time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
+		false,
+	)
 	testReviewDates := []*ItemDomain.Reviewdate{
-		{
-			ReviewdateID:         uuid.NewString(),
-			UserID:               userID,
-			CategoryID:           &categoryID,
-			BoxID:                &boxID,
-			ItemID:               itemID,
-			StepNumber:           1,
-			InitialScheduledDate: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-			ScheduledDate:        time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-			IsCompleted:          true,
-		},
-		{
-			ReviewdateID:         uuid.NewString(),
-			UserID:               userID,
-			CategoryID:           &categoryID,
-			BoxID:                &boxID,
-			ItemID:               itemID,
-			StepNumber:           2,
-			InitialScheduledDate: time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
-			ScheduledDate:        time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
-			IsCompleted:          false,
-		},
+		testReviewDate1,
+		testReviewDate2,
 	}
 
+	testPatternStep1, _ := PatternDomain.NewPatternStep(
+		uuid.NewString(),
+		userID,
+		patternID,
+		1,
+		1,
+	)
+	testPatternStep2, _ := PatternDomain.NewPatternStep(
+		uuid.NewString(),
+		userID,
+		patternID,
+		2,
+		3,
+	)
 	testPatternSteps := []*PatternDomain.PatternStep{
-		{
-			PatternStepID: uuid.NewString(),
-			UserID:        userID,
-			PatternID:     patternID,
-			StepNumber:    1,
-			IntervalDays:  1,
-		},
-		{
-			PatternStepID: uuid.NewString(),
-			UserID:        userID,
-			PatternID:     patternID,
-			StepNumber:    2,
-			IntervalDays:  3,
-		},
+		testPatternStep1,
+		testPatternStep2,
 	}
 
+	testNewReviewdate1, _ := ItemDomain.NewReviewdate(
+		testReviewDates[0].ReviewdateID(),
+		userID,
+		&categoryID,
+		&boxID,
+		itemID,
+		1,
+		time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+		true,
+	)
+	testNewReviewdate2, _ := ItemDomain.NewReviewdate(
+		testReviewDates[1].ReviewdateID(),
+		userID,
+		&categoryID,
+		&boxID,
+		itemID,
+		2,
+		time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+		false,
+	)
 	testNewReviewdates := []*ItemDomain.Reviewdate{
-		{
-			ReviewdateID:         testReviewDates[0].ReviewdateID,
-			UserID:               userID,
-			CategoryID:           &categoryID,
-			BoxID:                &boxID,
-			ItemID:               itemID,
-			StepNumber:           1,
-			InitialScheduledDate: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-			ScheduledDate:        time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-			IsCompleted:          true,
-		},
-		{
-			ReviewdateID:         testReviewDates[1].ReviewdateID,
-			UserID:               userID,
-			CategoryID:           &categoryID,
-			BoxID:                &boxID,
-			ItemID:               itemID,
-			StepNumber:           2,
-			InitialScheduledDate: time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
-			ScheduledDate:        time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
-			IsCompleted:          false,
-		},
+		testNewReviewdate1,
+		testNewReviewdate2,
 	}
 
 	tests := []struct {
@@ -915,7 +927,7 @@ func TestItemUsecase_UpdateItemAsUnFinishedForce(t *testing.T) {
 					mockPatternRepo.EXPECT().GetAllPatternStepsByPatternID(ctx, patternID, userID).Return(testPatternSteps, nil).Times(1),
 					mockScheduler.EXPECT().FormatWithOverdueMarkedInCompletedWithIDs(
 						testPatternSteps,
-						[]string{testReviewDates[0].ReviewdateID, testReviewDates[1].ReviewdateID},
+						[]string{testReviewDates[0].ReviewdateID(), testReviewDates[1].ReviewdateID()},
 						userID,
 						&categoryID,
 						&boxID,
@@ -1003,17 +1015,19 @@ func TestItemUsecase_UpdateItem_PatternNotNilToNil(t *testing.T) {
 
 	learnedDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	currentItem := &ItemDomain.Item{
-		ItemID:      itemID,
-		UserID:      userID,
-		CategoryID:  &categoryID,
-		BoxID:       &boxID,
-		PatternID:   &patternID,
-		Name:        "Original Item",
-		Detail:      "Original Detail",
-		LearnedDate: learnedDate,
-		IsFinished:  false,
-	}
+	currentItem, _ := ItemDomain.NewItem(
+		itemID,
+		userID,
+		&categoryID,
+		&boxID,
+		&patternID,
+		"Original Item",
+		"Original Detail",
+		learnedDate,
+		false,
+		time.Now(),
+		time.Now(),
+	)
 
 	// モック設定
 	gomock.InOrder(
@@ -1069,46 +1083,64 @@ func TestItemUsecase_UpdateItem_PatternNilToNotNil(t *testing.T) {
 				patternID := uuid.NewString()
 				learnedDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 
-				currentItem := &ItemDomain.Item{
-					ItemID:      itemID,
-					UserID:      userID,
-					CategoryID:  &categoryID,
-					BoxID:       &boxID,
-					PatternID:   nil,
-					Name:        "Original Item",
-					Detail:      "Original Detail",
-					LearnedDate: learnedDate,
-					IsFinished:  false,
-				}
+				currentItem, _ := ItemDomain.NewItem(
+					itemID,
+					userID,
+					&categoryID,
+					&boxID,
+					nil,
+					"Original Item",
+					"Original Detail",
+					learnedDate,
+					false,
+					time.Now(),
+					time.Now(),
+				)
 
+				testPatternStep1, _ := PatternDomain.NewPatternStep(
+					uuid.NewString(),
+					userID,
+					patternID,
+					1,
+					1,
+				)
+				testPatternStep2, _ := PatternDomain.NewPatternStep(
+					uuid.NewString(),
+					userID,
+					patternID,
+					2,
+					3,
+				)
 				testPatternSteps := []*PatternDomain.PatternStep{
-					{StepNumber: 1, IntervalDays: 1},
-					{StepNumber: 2, IntervalDays: 3},
+					testPatternStep1,
+					testPatternStep2,
 				}
 
+				testNewReviewdate1, _ := ItemDomain.NewReviewdate(
+					uuid.NewString(),
+					userID,
+					&categoryID,
+					&boxID,
+					itemID,
+					1,
+					time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+					false,
+				)
+				testNewReviewdate2, _ := ItemDomain.NewReviewdate(
+					uuid.NewString(),
+					userID,
+					&categoryID,
+					&boxID,
+					itemID,
+					2,
+					time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC),
+					false,
+				)
 				testNewReviewdates1 := []*ItemDomain.Reviewdate{
-					{
-						ReviewdateID:         uuid.NewString(),
-						UserID:               userID,
-						CategoryID:           &categoryID,
-						BoxID:                &boxID,
-						ItemID:               itemID,
-						StepNumber:           1,
-						InitialScheduledDate: time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
-						ScheduledDate:        time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
-						IsCompleted:          false,
-					},
-					{
-						ReviewdateID:         uuid.NewString(),
-						UserID:               userID,
-						CategoryID:           &categoryID,
-						BoxID:                &boxID,
-						ItemID:               itemID,
-						StepNumber:           2,
-						InitialScheduledDate: time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC),
-						ScheduledDate:        time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC),
-						IsCompleted:          false,
-					},
+					testNewReviewdate1,
+					testNewReviewdate2,
 				}
 
 				input := UpdateItemInput{
@@ -1155,46 +1187,64 @@ func TestItemUsecase_UpdateItem_PatternNilToNotNil(t *testing.T) {
 				patternID := uuid.NewString()
 				learnedDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 
-				currentItem := &ItemDomain.Item{
-					ItemID:      itemID,
-					UserID:      userID,
-					CategoryID:  &categoryID,
-					BoxID:       &boxID,
-					PatternID:   nil,
-					Name:        "Original Item",
-					Detail:      "Original Detail",
-					LearnedDate: learnedDate,
-					IsFinished:  false,
-				}
+				currentItem, _ := ItemDomain.NewItem(
+					itemID,
+					userID,
+					&categoryID,
+					&boxID,
+					nil,
+					"Original Item",
+					"Original Detail",
+					learnedDate,
+					false,
+					time.Now(),
+					time.Now(),
+				)
 
+				testPatternStep1, _ := PatternDomain.NewPatternStep(
+					uuid.NewString(),
+					userID,
+					patternID,
+					1,
+					1,
+				)
+				testPatternStep2, _ := PatternDomain.NewPatternStep(
+					uuid.NewString(),
+					userID,
+					patternID,
+					2,
+					3,
+				)
 				testPatternSteps := []*PatternDomain.PatternStep{
-					{StepNumber: 1, IntervalDays: 1},
-					{StepNumber: 2, IntervalDays: 3},
+					testPatternStep1,
+					testPatternStep2,
 				}
 
+				testNewReviewdate3, _ := ItemDomain.NewReviewdate(
+					uuid.NewString(),
+					userID,
+					&categoryID,
+					&boxID,
+					itemID,
+					1,
+					time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+					true,
+				)
+				testNewReviewdate4, _ := ItemDomain.NewReviewdate(
+					uuid.NewString(),
+					userID,
+					&categoryID,
+					&boxID,
+					itemID,
+					2,
+					time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
+					true,
+				)
 				testNewReviewdates2 := []*ItemDomain.Reviewdate{
-					{
-						ReviewdateID:         uuid.NewString(),
-						UserID:               userID,
-						CategoryID:           &categoryID,
-						BoxID:                &boxID,
-						ItemID:               itemID,
-						StepNumber:           1,
-						InitialScheduledDate: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-						ScheduledDate:        time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-						IsCompleted:          true,
-					},
-					{
-						ReviewdateID:         uuid.NewString(),
-						UserID:               userID,
-						CategoryID:           &categoryID,
-						BoxID:                &boxID,
-						ItemID:               itemID,
-						StepNumber:           2,
-						InitialScheduledDate: time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
-						ScheduledDate:        time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
-						IsCompleted:          true,
-					},
+					testNewReviewdate3,
+					testNewReviewdate4,
 				}
 
 				input := UpdateItemInput{
@@ -1284,64 +1334,100 @@ func TestItemUsecase_UpdateItem_PatternNotNilToNotNil_LengthDiff(t *testing.T) {
 				currentPatternID := uuid.NewString()
 				newPatternID := uuid.NewString()
 
-				currentItem := &ItemDomain.Item{
-					ItemID:      itemID,
-					UserID:      userID,
-					CategoryID:  &categoryID,
-					BoxID:       &boxID,
-					PatternID:   &currentPatternID,
-					Name:        "Original Item",
-					Detail:      "Original Detail",
-					LearnedDate: learnedDate,
-					IsFinished:  false,
-				}
+				currentItem, _ := ItemDomain.NewItem(
+					itemID,
+					userID,
+					&categoryID,
+					&boxID,
+					&currentPatternID,
+					"Original Item",
+					"Original Detail",
+					learnedDate,
+					false,
+					time.Now(),
+					time.Now(),
+				)
 
+				currentPatternStep1, _ := PatternDomain.NewPatternStep(
+					uuid.NewString(),
+					userID,
+					currentPatternID,
+					1,
+					1,
+				)
+				currentPatternStep2, _ := PatternDomain.NewPatternStep(
+					uuid.NewString(),
+					userID,
+					currentPatternID,
+					2,
+					3,
+				)
 				currentPatternSteps := []*PatternDomain.PatternStep{
-					{StepNumber: 1, IntervalDays: 1},
-					{StepNumber: 2, IntervalDays: 3},
+					currentPatternStep1,
+					currentPatternStep2,
 				}
 
+				newPatternStep1, _ := PatternDomain.NewPatternStep(
+					uuid.NewString(),
+					userID,
+					newPatternID,
+					1,
+					1,
+				)
+				newPatternStep2, _ := PatternDomain.NewPatternStep(
+					uuid.NewString(),
+					userID,
+					newPatternID,
+					2,
+					3,
+				)
+				newPatternStep3, _ := PatternDomain.NewPatternStep(
+					uuid.NewString(),
+					userID,
+					newPatternID,
+					3,
+					7,
+				)
 				newPatternSteps := []*PatternDomain.PatternStep{
-					{StepNumber: 1, IntervalDays: 1},
-					{StepNumber: 2, IntervalDays: 3},
-					{StepNumber: 3, IntervalDays: 7},
+					newPatternStep1,
+					newPatternStep2,
+					newPatternStep3,
 				}
 
-				testNewReviewdates := []*ItemDomain.Reviewdate{
-					{
-						ReviewdateID:         uuid.NewString(),
-						UserID:               userID,
-						CategoryID:           &categoryID,
-						BoxID:                &boxID,
-						ItemID:               itemID,
-						StepNumber:           1,
-						InitialScheduledDate: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-						ScheduledDate:        time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-						IsCompleted:          false,
-					},
-					{
-						ReviewdateID:         uuid.NewString(),
-						UserID:               userID,
-						CategoryID:           &categoryID,
-						BoxID:                &boxID,
-						ItemID:               itemID,
-						StepNumber:           2,
-						InitialScheduledDate: time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
-						ScheduledDate:        time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
-						IsCompleted:          false,
-					},
-					{
-						ReviewdateID:         uuid.NewString(),
-						UserID:               userID,
-						CategoryID:           &categoryID,
-						BoxID:                &boxID,
-						ItemID:               itemID,
-						StepNumber:           3,
-						InitialScheduledDate: time.Date(2024, 1, 8, 0, 0, 0, 0, time.UTC),
-						ScheduledDate:        time.Date(2024, 1, 8, 0, 0, 0, 0, time.UTC),
-						IsCompleted:          false,
-					},
-				}
+				testNewReviewdate1, _ := ItemDomain.NewReviewdate(
+					uuid.NewString(),
+					userID,
+					&categoryID,
+					&boxID,
+					itemID,
+					1,
+					time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+					false,
+				)
+				testNewReviewdate2, _ := ItemDomain.NewReviewdate(
+					uuid.NewString(),
+					userID,
+					&categoryID,
+					&boxID,
+					itemID,
+					2,
+					time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
+					false,
+				)
+				testNewReviewdate3, _ := ItemDomain.NewReviewdate(
+					uuid.NewString(),
+					userID,
+					&categoryID,
+					&boxID,
+					itemID,
+					3,
+					time.Date(2024, 1, 8, 0, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 8, 0, 0, 0, 0, time.UTC),
+					false,
+				)
+				testNewReviewdates := []*ItemDomain.Reviewdate{testNewReviewdate1, testNewReviewdate2, testNewReviewdate3}
 
 				gomock.InOrder(
 					mockItemRepo.EXPECT().GetItemByID(ctx, itemID, userID).Return(currentItem, nil).Times(1),
@@ -1386,64 +1472,63 @@ func TestItemUsecase_UpdateItem_PatternNotNilToNotNil_LengthDiff(t *testing.T) {
 				currentPatternID := uuid.NewString()
 				newPatternID := uuid.NewString()
 
-				currentItem := &ItemDomain.Item{
-					ItemID:      itemID,
-					UserID:      userID,
-					CategoryID:  &categoryID,
-					BoxID:       &boxID,
-					PatternID:   &currentPatternID,
-					Name:        "Original Item",
-					Detail:      "Original Detail",
-					LearnedDate: learnedDate,
-					IsFinished:  false,
-				}
+				currentItem, _ := ItemDomain.NewItem(
+					itemID,
+					userID,
+					&categoryID,
+					&boxID,
+					&currentPatternID,
+					"Original Item",
+					"Original Detail",
+					learnedDate,
+					false,
+					time.Now(),
+					time.Now(),
+				)
 
-				currentPatternSteps := []*PatternDomain.PatternStep{
-					{StepNumber: 1, IntervalDays: 1},
-					{StepNumber: 2, IntervalDays: 3},
-				}
+				currentPatternStep1, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, currentPatternID, 1, 1)
+				currentPatternStep2, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, currentPatternID, 2, 3)
+				currentPatternSteps := []*PatternDomain.PatternStep{currentPatternStep1, currentPatternStep2}
 
-				newPatternSteps := []*PatternDomain.PatternStep{
-					{StepNumber: 1, IntervalDays: 1},
-					{StepNumber: 2, IntervalDays: 3},
-					{StepNumber: 3, IntervalDays: 7},
-				}
+				newPatternStep1, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, newPatternID, 1, 1)
+				newPatternStep2, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, newPatternID, 2, 3)
+				newPatternStep3, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, newPatternID, 3, 7)
+				newPatternSteps := []*PatternDomain.PatternStep{newPatternStep1, newPatternStep2, newPatternStep3}
 
-				testNewReviewdates := []*ItemDomain.Reviewdate{
-					{
-						ReviewdateID:         uuid.NewString(),
-						UserID:               userID,
-						CategoryID:           &categoryID,
-						BoxID:                &boxID,
-						ItemID:               itemID,
-						StepNumber:           1,
-						InitialScheduledDate: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-						ScheduledDate:        time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-						IsCompleted:          false,
-					},
-					{
-						ReviewdateID:         uuid.NewString(),
-						UserID:               userID,
-						CategoryID:           &categoryID,
-						BoxID:                &boxID,
-						ItemID:               itemID,
-						StepNumber:           2,
-						InitialScheduledDate: time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
-						ScheduledDate:        time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
-						IsCompleted:          false,
-					},
-					{
-						ReviewdateID:         uuid.NewString(),
-						UserID:               userID,
-						CategoryID:           &categoryID,
-						BoxID:                &boxID,
-						ItemID:               itemID,
-						StepNumber:           3,
-						InitialScheduledDate: time.Date(2024, 1, 8, 0, 0, 0, 0, time.UTC),
-						ScheduledDate:        time.Date(2024, 1, 8, 0, 0, 0, 0, time.UTC),
-						IsCompleted:          false,
-					},
-				}
+				testNewReviewdate1, _ := ItemDomain.NewReviewdate(
+					uuid.NewString(),
+					userID,
+					&categoryID,
+					&boxID,
+					itemID,
+					1,
+					time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+					false,
+				)
+				testNewReviewdate2, _ := ItemDomain.NewReviewdate(
+					uuid.NewString(),
+					userID,
+					&categoryID,
+					&boxID,
+					itemID,
+					2,
+					time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
+					false,
+				)
+				testNewReviewdate3, _ := ItemDomain.NewReviewdate(
+					uuid.NewString(),
+					userID,
+					&categoryID,
+					&boxID,
+					itemID,
+					3,
+					time.Date(2024, 1, 8, 0, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 8, 0, 0, 0, 0, time.UTC),
+					false,
+				)
+				testNewReviewdates := []*ItemDomain.Reviewdate{testNewReviewdate1, testNewReviewdate2, testNewReviewdate3}
 
 				gomock.InOrder(
 					mockItemRepo.EXPECT().GetItemByID(ctx, itemID, userID).Return(currentItem, nil).Times(1),
@@ -1488,28 +1573,28 @@ func TestItemUsecase_UpdateItem_PatternNotNilToNotNil_LengthDiff(t *testing.T) {
 				currentPatternID := uuid.NewString()
 				newPatternID := uuid.NewString()
 
-				currentItem := &ItemDomain.Item{
-					ItemID:      itemID,
-					UserID:      userID,
-					CategoryID:  &categoryID,
-					BoxID:       &boxID,
-					PatternID:   &currentPatternID,
-					Name:        "Original Item",
-					Detail:      "Original Detail",
-					LearnedDate: learnedDate,
-					IsFinished:  false,
-				}
+				currentItem, _ := ItemDomain.NewItem(
+					itemID,
+					userID,
+					&categoryID,
+					&boxID,
+					&currentPatternID,
+					"Original Item",
+					"Original Detail",
+					learnedDate,
+					false,
+					time.Now(),
+					time.Now(),
+				)
 
-				currentPatternSteps := []*PatternDomain.PatternStep{
-					{StepNumber: 1, IntervalDays: 1},
-					{StepNumber: 2, IntervalDays: 3},
-				}
+				currentPatternStep1, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, currentPatternID, 1, 1)
+				currentPatternStep2, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, currentPatternID, 2, 3)
+				currentPatternSteps := []*PatternDomain.PatternStep{currentPatternStep1, currentPatternStep2}
 
-				newPatternSteps := []*PatternDomain.PatternStep{
-					{StepNumber: 1, IntervalDays: 1},
-					{StepNumber: 2, IntervalDays: 3},
-					{StepNumber: 3, IntervalDays: 7},
-				}
+				newPatternStep1, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, newPatternID, 1, 1)
+				newPatternStep2, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, newPatternID, 2, 3)
+				newPatternStep3, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, newPatternID, 3, 7)
+				newPatternSteps := []*PatternDomain.PatternStep{newPatternStep1, newPatternStep2, newPatternStep3}
 
 				gomock.InOrder(
 					mockItemRepo.EXPECT().GetItemByID(ctx, itemID, userID).Return(currentItem, nil).Times(1),
@@ -1587,54 +1672,53 @@ func TestItemUsecase_UpdateItem_PatternNotNilToNotNil_IntervalDaysDiff(t *testin
 				currentPatternID := uuid.NewString()
 				newPatternID := uuid.NewString()
 
-				currentItem := &ItemDomain.Item{
-					ItemID:      itemID,
-					UserID:      userID,
-					CategoryID:  &categoryID,
-					BoxID:       &boxID,
-					PatternID:   &currentPatternID,
-					Name:        "Original Item",
-					Detail:      "Original Detail",
-					LearnedDate: learnedDate,
-					IsFinished:  false,
-				}
+				currentItem, _ := ItemDomain.NewItem(
+					itemID,
+					userID,
+					&categoryID,
+					&boxID,
+					&currentPatternID,
+					"Original Item",
+					"Original Detail",
+					learnedDate,
+					false,
+					time.Now(),
+					time.Now(),
+				)
 
-				currentPatternSteps := []*PatternDomain.PatternStep{
-					{StepNumber: 1, IntervalDays: 1},
-					{StepNumber: 2, IntervalDays: 3},
-				}
+				currentPatternStep1, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, currentPatternID, 1, 1)
+				currentPatternStep2, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, currentPatternID, 2, 3)
+				currentPatternSteps := []*PatternDomain.PatternStep{currentPatternStep1, currentPatternStep2}
 
-				newPatternSteps := []*PatternDomain.PatternStep{
-					{StepNumber: 1, IntervalDays: 2},
-					{StepNumber: 2, IntervalDays: 5},
-				}
+				newPatternStep1, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, newPatternID, 1, 2)
+				newPatternStep2, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, newPatternID, 2, 5)
+				newPatternSteps := []*PatternDomain.PatternStep{newPatternStep1, newPatternStep2}
 
 				reviewDateIDs := []string{uuid.NewString(), uuid.NewString()}
 
-				testNewReviewdates := []*ItemDomain.Reviewdate{
-					{
-						ReviewdateID:         reviewDateIDs[0],
-						UserID:               userID,
-						CategoryID:           &categoryID,
-						BoxID:                &boxID,
-						ItemID:               itemID,
-						StepNumber:           1,
-						InitialScheduledDate: time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
-						ScheduledDate:        time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
-						IsCompleted:          false,
-					},
-					{
-						ReviewdateID:         reviewDateIDs[1],
-						UserID:               userID,
-						CategoryID:           &categoryID,
-						BoxID:                &boxID,
-						ItemID:               itemID,
-						StepNumber:           2,
-						InitialScheduledDate: time.Date(2024, 1, 6, 0, 0, 0, 0, time.UTC),
-						ScheduledDate:        time.Date(2024, 1, 6, 0, 0, 0, 0, time.UTC),
-						IsCompleted:          false,
-					},
-				}
+				testNewReviewdate1, _ := ItemDomain.NewReviewdate(
+					reviewDateIDs[0],
+					userID,
+					&categoryID,
+					&boxID,
+					itemID,
+					1,
+					time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
+					false,
+				)
+				testNewReviewdate2, _ := ItemDomain.NewReviewdate(
+					reviewDateIDs[1],
+					userID,
+					&categoryID,
+					&boxID,
+					itemID,
+					2,
+					time.Date(2024, 1, 6, 0, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 6, 0, 0, 0, 0, time.UTC),
+					false,
+				)
+				testNewReviewdates := []*ItemDomain.Reviewdate{testNewReviewdate1, testNewReviewdate2}
 
 				gomock.InOrder(
 					mockItemRepo.EXPECT().GetItemByID(ctx, itemID, userID).Return(currentItem, nil).Times(1),
@@ -1679,54 +1763,53 @@ func TestItemUsecase_UpdateItem_PatternNotNilToNotNil_IntervalDaysDiff(t *testin
 				currentPatternID := uuid.NewString()
 				newPatternID := uuid.NewString()
 
-				currentItem := &ItemDomain.Item{
-					ItemID:      itemID,
-					UserID:      userID,
-					CategoryID:  &categoryID,
-					BoxID:       &boxID,
-					PatternID:   &currentPatternID,
-					Name:        "Original Item",
-					Detail:      "Original Detail",
-					LearnedDate: learnedDate,
-					IsFinished:  false,
-				}
+				currentItem, _ := ItemDomain.NewItem(
+					itemID,
+					userID,
+					&categoryID,
+					&boxID,
+					&currentPatternID,
+					"Original Item",
+					"Original Detail",
+					learnedDate,
+					false,
+					time.Now(),
+					time.Now(),
+				)
 
-				currentPatternSteps := []*PatternDomain.PatternStep{
-					{StepNumber: 1, IntervalDays: 1},
-					{StepNumber: 2, IntervalDays: 3},
-				}
+				currentPatternStep1, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, currentPatternID, 1, 1)
+				currentPatternStep2, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, currentPatternID, 2, 3)
+				currentPatternSteps := []*PatternDomain.PatternStep{currentPatternStep1, currentPatternStep2}
 
-				newPatternSteps := []*PatternDomain.PatternStep{
-					{StepNumber: 1, IntervalDays: 2},
-					{StepNumber: 2, IntervalDays: 5},
-				}
+				newPatternStep1, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, newPatternID, 1, 2)
+				newPatternStep2, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, newPatternID, 2, 5)
+				newPatternSteps := []*PatternDomain.PatternStep{newPatternStep1, newPatternStep2}
 
 				reviewDateIDs := []string{uuid.NewString(), uuid.NewString()}
 
-				testNewReviewdates := []*ItemDomain.Reviewdate{
-					{
-						ReviewdateID:         reviewDateIDs[0],
-						UserID:               userID,
-						CategoryID:           &categoryID,
-						BoxID:                &boxID,
-						ItemID:               itemID,
-						StepNumber:           1,
-						InitialScheduledDate: time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
-						ScheduledDate:        time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
-						IsCompleted:          false,
-					},
-					{
-						ReviewdateID:         reviewDateIDs[1],
-						UserID:               userID,
-						CategoryID:           &categoryID,
-						BoxID:                &boxID,
-						ItemID:               itemID,
-						StepNumber:           2,
-						InitialScheduledDate: time.Date(2024, 1, 6, 0, 0, 0, 0, time.UTC),
-						ScheduledDate:        time.Date(2024, 1, 6, 0, 0, 0, 0, time.UTC),
-						IsCompleted:          false,
-					},
-				}
+				testNewReviewdate1, _ := ItemDomain.NewReviewdate(
+					reviewDateIDs[0],
+					userID,
+					&categoryID,
+					&boxID,
+					itemID,
+					1,
+					time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
+					false,
+				)
+				testNewReviewdate2, _ := ItemDomain.NewReviewdate(
+					reviewDateIDs[1],
+					userID,
+					&categoryID,
+					&boxID,
+					itemID,
+					2,
+					time.Date(2024, 1, 6, 0, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 6, 0, 0, 0, 0, time.UTC),
+					false,
+				)
+				testNewReviewdates := []*ItemDomain.Reviewdate{testNewReviewdate1, testNewReviewdate2}
 
 				gomock.InOrder(
 					mockItemRepo.EXPECT().GetItemByID(ctx, itemID, userID).Return(currentItem, nil).Times(1),
@@ -1815,49 +1898,49 @@ func TestItemUsecase_UpdateItem_LearnedDateChanged(t *testing.T) {
 				patternID := uuid.NewString()
 				learnedDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 
-				currentItem := &ItemDomain.Item{
-					ItemID:      itemID,
-					UserID:      userID,
-					CategoryID:  &categoryID,
-					BoxID:       &boxID,
-					PatternID:   &patternID,
-					Name:        "Original Item",
-					Detail:      "Original Detail",
-					LearnedDate: learnedDate,
-					IsFinished:  false,
-				}
+				currentItem, _ := ItemDomain.NewItem(
+					itemID,
+					userID,
+					&categoryID,
+					&boxID,
+					&patternID,
+					"Original Item",
+					"Original Detail",
+					learnedDate,
+					false,
+					time.Now(),
+					time.Now(),
+				)
 
-				patternSteps := []*PatternDomain.PatternStep{
-					{StepNumber: 1, IntervalDays: 1},
-					{StepNumber: 2, IntervalDays: 3},
-				}
+				patternStep1, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, patternID, 1, 1)
+				patternStep2, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, patternID, 2, 3)
+				patternSteps := []*PatternDomain.PatternStep{patternStep1, patternStep2}
 
 				reviewDateIDs := []string{uuid.NewString(), uuid.NewString()}
 
-				testNewReviewdates := []*ItemDomain.Reviewdate{
-					{
-						ReviewdateID:         reviewDateIDs[0],
-						UserID:               userID,
-						CategoryID:           &categoryID,
-						BoxID:                &boxID,
-						ItemID:               itemID,
-						StepNumber:           1,
-						InitialScheduledDate: time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
-						ScheduledDate:        time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
-						IsCompleted:          false,
-					},
-					{
-						ReviewdateID:         reviewDateIDs[1],
-						UserID:               userID,
-						CategoryID:           &categoryID,
-						BoxID:                &boxID,
-						ItemID:               itemID,
-						StepNumber:           2,
-						InitialScheduledDate: time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
-						ScheduledDate:        time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
-						IsCompleted:          false,
-					},
-				}
+				testNewReviewdate1, _ := ItemDomain.NewReviewdate(
+					reviewDateIDs[0],
+					userID,
+					&categoryID,
+					&boxID,
+					itemID,
+					1,
+					time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
+					false,
+				)
+				testNewReviewdate2, _ := ItemDomain.NewReviewdate(
+					reviewDateIDs[1],
+					userID,
+					&categoryID,
+					&boxID,
+					itemID,
+					2,
+					time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
+					false,
+				)
+				testNewReviewdates := []*ItemDomain.Reviewdate{testNewReviewdate1, testNewReviewdate2}
 
 				input := UpdateItemInput{
 					ItemID:                   itemID,
@@ -1904,22 +1987,23 @@ func TestItemUsecase_UpdateItem_LearnedDateChanged(t *testing.T) {
 				patternID := uuid.NewString()
 				learnedDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 
-				currentItem := &ItemDomain.Item{
-					ItemID:      itemID,
-					UserID:      userID,
-					CategoryID:  &categoryID,
-					BoxID:       &boxID,
-					PatternID:   &patternID,
-					Name:        "Original Item",
-					Detail:      "Original Detail",
-					LearnedDate: learnedDate,
-					IsFinished:  false,
-				}
+				currentItem, _ := ItemDomain.NewItem(
+					itemID,
+					userID,
+					&categoryID,
+					&boxID,
+					&patternID,
+					"Original Item",
+					"Original Detail",
+					learnedDate,
+					false,
+					time.Now(),
+					time.Now(),
+				)
 
-				patternSteps := []*PatternDomain.PatternStep{
-					{StepNumber: 1, IntervalDays: 1},
-					{StepNumber: 2, IntervalDays: 3},
-				}
+				patternStep1, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, patternID, 1, 1)
+				patternStep2, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, patternID, 2, 3)
+				patternSteps := []*PatternDomain.PatternStep{patternStep1, patternStep2}
 
 				input := UpdateItemInput{
 					ItemID:                   itemID,
@@ -1998,55 +2082,54 @@ func TestItemUsecase_UpdateItem_SamePatternStepsStructure_LearnedDateChanged(t *
 				currentPatternID := uuid.NewString()
 				newPatternID := uuid.NewString()
 
-				currentItem := &ItemDomain.Item{
-					ItemID:      itemID,
-					UserID:      userID,
-					CategoryID:  &categoryID,
-					BoxID:       &boxID,
-					PatternID:   &currentPatternID,
-					Name:        "Original Item",
-					Detail:      "Original Detail",
-					LearnedDate: learnedDate,
-					IsFinished:  false,
-				}
+				currentItem, _ := ItemDomain.NewItem(
+					itemID,
+					userID,
+					&categoryID,
+					&boxID,
+					&currentPatternID,
+					"Original Item",
+					"Original Detail",
+					learnedDate,
+					false,
+					time.Now(),
+					time.Now(),
+				)
 
 				// 同じpatternStepsStructure（stepNumberとintervalDaysが同じ）
-				currentPatternSteps := []*PatternDomain.PatternStep{
-					{StepNumber: 1, IntervalDays: 1},
-					{StepNumber: 2, IntervalDays: 3},
-				}
+				currentPatternStep1, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, currentPatternID, 1, 1)
+				currentPatternStep2, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, currentPatternID, 2, 3)
+				currentPatternSteps := []*PatternDomain.PatternStep{currentPatternStep1, currentPatternStep2}
 
-				newPatternSteps := []*PatternDomain.PatternStep{
-					{StepNumber: 1, IntervalDays: 1},
-					{StepNumber: 2, IntervalDays: 3},
-				}
+				newPatternStep1, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, newPatternID, 1, 1)
+				newPatternStep2, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, newPatternID, 2, 3)
+				newPatternSteps := []*PatternDomain.PatternStep{newPatternStep1, newPatternStep2}
 
 				reviewDateIDs := []string{uuid.NewString(), uuid.NewString()}
 
-				testNewReviewdates := []*ItemDomain.Reviewdate{
-					{
-						ReviewdateID:         reviewDateIDs[0],
-						UserID:               userID,
-						CategoryID:           &categoryID,
-						BoxID:                &boxID,
-						ItemID:               itemID,
-						StepNumber:           1,
-						InitialScheduledDate: time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
-						ScheduledDate:        time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
-						IsCompleted:          false,
-					},
-					{
-						ReviewdateID:         reviewDateIDs[1],
-						UserID:               userID,
-						CategoryID:           &categoryID,
-						BoxID:                &boxID,
-						ItemID:               itemID,
-						StepNumber:           2,
-						InitialScheduledDate: time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
-						ScheduledDate:        time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
-						IsCompleted:          false,
-					},
-				}
+				testNewReviewdate1, _ := ItemDomain.NewReviewdate(
+					reviewDateIDs[0],
+					userID,
+					&categoryID,
+					&boxID,
+					itemID,
+					1,
+					time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
+					false,
+				)
+				testNewReviewdate2, _ := ItemDomain.NewReviewdate(
+					reviewDateIDs[1],
+					userID,
+					&categoryID,
+					&boxID,
+					itemID,
+					2,
+					time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
+					false,
+				)
+				testNewReviewdates := []*ItemDomain.Reviewdate{testNewReviewdate1, testNewReviewdate2}
 
 				gomock.InOrder(
 					mockItemRepo.EXPECT().GetItemByID(ctx, itemID, userID).Return(currentItem, nil).Times(1),
@@ -2091,55 +2174,54 @@ func TestItemUsecase_UpdateItem_SamePatternStepsStructure_LearnedDateChanged(t *
 				currentPatternID := uuid.NewString()
 				newPatternID := uuid.NewString()
 
-				currentItem := &ItemDomain.Item{
-					ItemID:      itemID,
-					UserID:      userID,
-					CategoryID:  &categoryID,
-					BoxID:       &boxID,
-					PatternID:   &currentPatternID,
-					Name:        "Original Item",
-					Detail:      "Original Detail",
-					LearnedDate: learnedDate,
-					IsFinished:  false,
-				}
+				currentItem, _ := ItemDomain.NewItem(
+					itemID,
+					userID,
+					&categoryID,
+					&boxID,
+					&currentPatternID,
+					"Original Item",
+					"Original Detail",
+					learnedDate,
+					false,
+					time.Now(),
+					time.Now(),
+				)
 
 				// 同じpatternStepsStructure（stepNumberとintervalDaysが同じ）
-				currentPatternSteps := []*PatternDomain.PatternStep{
-					{StepNumber: 1, IntervalDays: 1},
-					{StepNumber: 2, IntervalDays: 3},
-				}
+				currentPatternStep1, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, currentPatternID, 1, 1)
+				currentPatternStep2, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, currentPatternID, 2, 3)
+				currentPatternSteps := []*PatternDomain.PatternStep{currentPatternStep1, currentPatternStep2}
 
-				newPatternSteps := []*PatternDomain.PatternStep{
-					{StepNumber: 1, IntervalDays: 1},
-					{StepNumber: 2, IntervalDays: 3},
-				}
+				newPatternStep1, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, newPatternID, 1, 1)
+				newPatternStep2, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, newPatternID, 2, 3)
+				newPatternSteps := []*PatternDomain.PatternStep{newPatternStep1, newPatternStep2}
 
 				reviewDateIDs := []string{uuid.NewString(), uuid.NewString()}
 
-				testNewReviewdates := []*ItemDomain.Reviewdate{
-					{
-						ReviewdateID:         reviewDateIDs[0],
-						UserID:               userID,
-						CategoryID:           &categoryID,
-						BoxID:                &boxID,
-						ItemID:               itemID,
-						StepNumber:           1,
-						InitialScheduledDate: time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
-						ScheduledDate:        time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
-						IsCompleted:          false,
-					},
-					{
-						ReviewdateID:         reviewDateIDs[1],
-						UserID:               userID,
-						CategoryID:           &categoryID,
-						BoxID:                &boxID,
-						ItemID:               itemID,
-						StepNumber:           2,
-						InitialScheduledDate: time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
-						ScheduledDate:        time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
-						IsCompleted:          false,
-					},
-				}
+				testNewReviewdate1, _ := ItemDomain.NewReviewdate(
+					reviewDateIDs[0],
+					userID,
+					&categoryID,
+					&boxID,
+					itemID,
+					1,
+					time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
+					false,
+				)
+				testNewReviewdate2, _ := ItemDomain.NewReviewdate(
+					reviewDateIDs[1],
+					userID,
+					&categoryID,
+					&boxID,
+					itemID,
+					2,
+					time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
+					false,
+				)
+				testNewReviewdates := []*ItemDomain.Reviewdate{testNewReviewdate1, testNewReviewdate2}
 
 				gomock.InOrder(
 					mockItemRepo.EXPECT().GetItemByID(ctx, itemID, userID).Return(currentItem, nil).Times(1),
@@ -2184,28 +2266,28 @@ func TestItemUsecase_UpdateItem_SamePatternStepsStructure_LearnedDateChanged(t *
 				currentPatternID := uuid.NewString()
 				newPatternID := uuid.NewString()
 
-				currentItem := &ItemDomain.Item{
-					ItemID:      itemID,
-					UserID:      userID,
-					CategoryID:  &categoryID,
-					BoxID:       &boxID,
-					PatternID:   &currentPatternID,
-					Name:        "Original Item",
-					Detail:      "Original Detail",
-					LearnedDate: learnedDate,
-					IsFinished:  false,
-				}
+				currentItem, _ := ItemDomain.NewItem(
+					itemID,
+					userID,
+					&categoryID,
+					&boxID,
+					&currentPatternID,
+					"Original Item",
+					"Original Detail",
+					learnedDate,
+					false,
+					time.Now(),
+					time.Now(),
+				)
 
 				// 同じpatternStepsStructure（stepNumberとintervalDaysが同じ）
-				currentPatternSteps := []*PatternDomain.PatternStep{
-					{StepNumber: 1, IntervalDays: 1},
-					{StepNumber: 2, IntervalDays: 3},
-				}
+				currentPatternStep1, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, currentPatternID, 1, 1)
+				currentPatternStep2, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, currentPatternID, 2, 3)
+				currentPatternSteps := []*PatternDomain.PatternStep{currentPatternStep1, currentPatternStep2}
 
-				newPatternSteps := []*PatternDomain.PatternStep{
-					{StepNumber: 1, IntervalDays: 1},
-					{StepNumber: 2, IntervalDays: 3},
-				}
+				newPatternStep1, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, newPatternID, 1, 1)
+				newPatternStep2, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, newPatternID, 2, 3)
+				newPatternSteps := []*PatternDomain.PatternStep{newPatternStep1, newPatternStep2}
 
 				gomock.InOrder(
 					mockItemRepo.EXPECT().GetItemByID(ctx, itemID, userID).Return(currentItem, nil).Times(1),
@@ -2276,47 +2358,47 @@ func TestItemUsecase_UpdateItem_CategoryIDBoxIDUpdate(t *testing.T) {
 	patternID := uuid.NewString()
 	learnedDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	currentItem := &ItemDomain.Item{
-		ItemID:      itemID,
-		UserID:      userID,
-		CategoryID:  &categoryID,
-		BoxID:       &boxID,
-		PatternID:   &patternID,
-		Name:        "Original Item",
-		Detail:      "Original Detail",
-		LearnedDate: learnedDate,
-		IsFinished:  false,
-	}
+	currentItem, _ := ItemDomain.NewItem(
+		itemID,
+		userID,
+		&categoryID,
+		&boxID,
+		&patternID,
+		"Original Item",
+		"Original Detail",
+		learnedDate,
+		false,
+		time.Now(),
+		time.Now(),
+	)
 
-	patternSteps := []*PatternDomain.PatternStep{
-		{StepNumber: 1, IntervalDays: 1},
-		{StepNumber: 2, IntervalDays: 3},
-	}
+	patternStep1, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, patternID, 1, 1)
+	patternStep2, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, patternID, 2, 3)
+	patternSteps := []*PatternDomain.PatternStep{patternStep1, patternStep2}
 
-	currentReviewdates := []*ItemDomain.Reviewdate{
-		{
-			ReviewdateID:         uuid.NewString(),
-			UserID:               userID,
-			CategoryID:           &categoryID,
-			BoxID:                &boxID,
-			ItemID:               itemID,
-			StepNumber:           1,
-			InitialScheduledDate: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-			ScheduledDate:        time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-			IsCompleted:          false,
-		},
-		{
-			ReviewdateID:         uuid.NewString(),
-			UserID:               userID,
-			CategoryID:           &categoryID,
-			BoxID:                &boxID,
-			ItemID:               itemID,
-			StepNumber:           2,
-			InitialScheduledDate: time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
-			ScheduledDate:        time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
-			IsCompleted:          false,
-		},
-	}
+	currentReviewdate1, _ := ItemDomain.NewReviewdate(
+		uuid.NewString(),
+		userID,
+		&categoryID,
+		&boxID,
+		itemID,
+		1,
+		time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+		false,
+	)
+	currentReviewdate2, _ := ItemDomain.NewReviewdate(
+		uuid.NewString(),
+		userID,
+		&categoryID,
+		&boxID,
+		itemID,
+		2,
+		time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
+		false,
+	)
+	currentReviewdates := []*ItemDomain.Reviewdate{currentReviewdate1, currentReviewdate2}
 
 	tests := []struct {
 		name      string
@@ -2405,90 +2487,75 @@ func TestItemUsecase_UpdateReviewDates(t *testing.T) {
 	initialScheduledDate := "2024-01-02"
 	requestScheduledDate := "2024-01-05"
 
-	testPatternSteps := []*PatternDomain.PatternStep{
-		{
-			PatternStepID: uuid.NewString(),
-			UserID:        userID,
-			PatternID:     patternID,
-			StepNumber:    1,
-			IntervalDays:  1,
-		},
-		{
-			PatternStepID: uuid.NewString(),
-			UserID:        userID,
-			PatternID:     patternID,
-			StepNumber:    2,
-			IntervalDays:  3,
-		},
-	}
+	testPatternStep1, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, patternID, 1, 1)
+	testPatternStep2, _ := PatternDomain.NewPatternStep(uuid.NewString(), userID, patternID, 2, 3)
+	testPatternSteps := []*PatternDomain.PatternStep{testPatternStep1, testPatternStep2}
 
 	testReviewDateIDs := []string{reviewDateID, uuid.NewString()}
 
-	testNewReviewdates := []*ItemDomain.Reviewdate{
-		{
-			ReviewdateID:         reviewDateID,
-			UserID:               userID,
-			CategoryID:           &categoryID,
-			BoxID:                &boxID,
-			ItemID:               itemID,
-			StepNumber:           1,
-			InitialScheduledDate: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-			ScheduledDate:        time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
-			IsCompleted:          true,
-		},
-		{
-			ReviewdateID:         testReviewDateIDs[1],
-			UserID:               userID,
-			CategoryID:           &categoryID,
-			BoxID:                &boxID,
-			ItemID:               itemID,
-			StepNumber:           2,
-			InitialScheduledDate: time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
-			ScheduledDate:        time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
-			IsCompleted:          false,
-		},
-	}
+	testNewReviewdate1, _ := ItemDomain.NewReviewdate(
+		reviewDateID,
+		userID,
+		&categoryID,
+		&boxID,
+		itemID,
+		1,
+		time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
+		true,
+	)
+	testNewReviewdate2, _ := ItemDomain.NewReviewdate(
+		testReviewDateIDs[1],
+		userID,
+		&categoryID,
+		&boxID,
+		itemID,
+		2,
+		time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+		false,
+	)
+	testNewReviewdates := []*ItemDomain.Reviewdate{testNewReviewdate1, testNewReviewdate2}
 
 	editedAt := time.Date(2024, 1, 10, 9, 0, 0, 0, time.UTC)
 
 	// 最終ステップ用のテストデータ
-	testFinalReviewdate := &ItemDomain.Reviewdate{
-		ReviewdateID:         reviewDateID,
-		UserID:               userID,
-		CategoryID:           &categoryID,
-		BoxID:                &boxID,
-		ItemID:               itemID,
-		StepNumber:           2,
-		InitialScheduledDate: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-		ScheduledDate:        time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
-		IsCompleted:          true,
-	}
+	testFinalReviewdate, _ := ItemDomain.NewReviewdate(
+		reviewDateID,
+		userID,
+		&categoryID,
+		&boxID,
+		itemID,
+		2,
+		time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
+		true,
+	)
 
 	// Overdue完了マーク用のテストデータ
-	testOverdueCompletedReviewdates := []*ItemDomain.Reviewdate{
-		{
-			ReviewdateID:         reviewDateID,
-			UserID:               userID,
-			CategoryID:           &categoryID,
-			BoxID:                &boxID,
-			ItemID:               itemID,
-			StepNumber:           1,
-			InitialScheduledDate: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-			ScheduledDate:        time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
-			IsCompleted:          true,
-		},
-		{
-			ReviewdateID:         testReviewDateIDs[1],
-			UserID:               userID,
-			CategoryID:           &categoryID,
-			BoxID:                &boxID,
-			ItemID:               itemID,
-			StepNumber:           2,
-			InitialScheduledDate: time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
-			ScheduledDate:        time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
-			IsCompleted:          true,
-		},
-	}
+	testOverdueCompletedReviewdate1, _ := ItemDomain.NewReviewdate(
+		reviewDateID,
+		userID,
+		&categoryID,
+		&boxID,
+		itemID,
+		1,
+		time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
+		true,
+	)
+	testOverdueCompletedReviewdate2, _ := ItemDomain.NewReviewdate(
+		testReviewDateIDs[1],
+		userID,
+		&categoryID,
+		&boxID,
+		itemID,
+		2,
+		time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+		true,
+	)
+	testOverdueCompletedReviewdates := []*ItemDomain.Reviewdate{testOverdueCompletedReviewdate1, testOverdueCompletedReviewdate2}
 
 	tests := []struct {
 		name      string
@@ -2688,35 +2755,33 @@ func TestItemUsecase_GetAllUnFinishedItemsByBoxID(t *testing.T) {
 	userID := uuid.NewString()
 	boxID := uuid.NewString()
 
-	testItems := []*ItemDomain.Item{
-		{
-			ItemID:       uuid.NewString(),
-			UserID:       userID,
-			CategoryID:   nil,
-			BoxID:        &boxID,
-			PatternID:    nil,
-			Name:         "Test Item",
-			Detail:       "Test Detail",
-			LearnedDate:  time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-			IsFinished:   false,
-			RegisteredAt: time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
-			EditedAt:     time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
-		},
-	}
+	testItem1, _ := ItemDomain.NewItem(
+		uuid.NewString(),
+		userID,
+		nil,
+		&boxID,
+		nil,
+		"Test Item",
+		"Test Detail",
+		time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+		false,
+		time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
+		time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
+	)
+	testItems := []*ItemDomain.Item{testItem1}
 
-	testReviewdates := []*ItemDomain.Reviewdate{
-		{
-			ReviewdateID:         uuid.NewString(),
-			UserID:               userID,
-			CategoryID:           nil,
-			BoxID:                &boxID,
-			ItemID:               testItems[0].ItemID,
-			StepNumber:           1,
-			InitialScheduledDate: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-			ScheduledDate:        time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-			IsCompleted:          false,
-		},
-	}
+	testReviewdate1, _ := ItemDomain.NewReviewdate(
+		uuid.NewString(),
+		userID,
+		nil,
+		&boxID,
+		testItems[0].ItemID(),
+		1,
+		time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+		false,
+	)
+	testReviewdates := []*ItemDomain.Reviewdate{testReviewdate1}
 
 	tests := []struct {
 		name      string
@@ -2744,7 +2809,7 @@ func TestItemUsecase_GetAllUnFinishedItemsByBoxID(t *testing.T) {
 			},
 			want: []*GetItemOutput{
 				{
-					ItemID:       testItems[0].ItemID,
+					ItemID:       testItems[0].ItemID(),
 					UserID:       userID,
 					CategoryID:   nil,
 					BoxID:        &boxID,
@@ -2757,11 +2822,11 @@ func TestItemUsecase_GetAllUnFinishedItemsByBoxID(t *testing.T) {
 					EditedAt:     time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
 					ReviewDates: []GetReviewDateOutput{
 						{
-							ReviewDateID:         testReviewdates[0].ReviewdateID,
+							ReviewDateID:         testReviewdates[0].ReviewdateID(),
 							UserID:               userID,
 							CategoryID:           nil,
 							BoxID:                &boxID,
-							ItemID:               testItems[0].ItemID,
+							ItemID:               testItems[0].ItemID(),
 							StepNumber:           1,
 							InitialScheduledDate: "2024-01-02",
 							ScheduledDate:        "2024-01-02",
@@ -2889,35 +2954,33 @@ func TestItemUsecase_GetAllUnFinishedUnclassifiedItemsByUserID(t *testing.T) {
 	parsedLearnedDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 	registeredAt := time.Date(2024, 1, 10, 9, 0, 0, 0, time.UTC)
 
-	testItems := []*ItemDomain.Item{
-		{
-			ItemID:       itemID,
-			UserID:       userID,
-			CategoryID:   nil,
-			BoxID:        nil,
-			PatternID:    nil,
-			Name:         "Test Item",
-			Detail:       "Test Detail",
-			LearnedDate:  parsedLearnedDate,
-			IsFinished:   false,
-			RegisteredAt: registeredAt,
-			EditedAt:     registeredAt,
-		},
-	}
+	testItem1, _ := ItemDomain.NewItem(
+		itemID,
+		userID,
+		nil,
+		nil,
+		nil,
+		"Test Item",
+		"Test Detail",
+		parsedLearnedDate,
+		false,
+		registeredAt,
+		registeredAt,
+	)
+	testItems := []*ItemDomain.Item{testItem1}
 
-	testReviewdates := []*ItemDomain.Reviewdate{
-		{
-			ReviewdateID:         uuid.NewString(),
-			UserID:               userID,
-			CategoryID:           nil,
-			BoxID:                nil,
-			ItemID:               itemID,
-			StepNumber:           1,
-			InitialScheduledDate: time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC),
-			ScheduledDate:        time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC),
-			IsCompleted:          false,
-		},
-	}
+	testReviewdate2, _ := ItemDomain.NewReviewdate(
+		uuid.NewString(),
+		userID,
+		nil,
+		nil,
+		itemID,
+		1,
+		time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC),
+		false,
+	)
+	testReviewdates := []*ItemDomain.Reviewdate{testReviewdate2}
 
 	tests := []struct {
 		name      string
@@ -2984,35 +3047,33 @@ func TestItemUsecase_GetAllUnFinishedUnclassifiedItemsByCategoryID(t *testing.T)
 	parsedLearnedDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 	registeredAt := time.Date(2024, 1, 10, 9, 0, 0, 0, time.UTC)
 
-	testItems := []*ItemDomain.Item{
-		{
-			ItemID:       itemID,
-			UserID:       userID,
-			CategoryID:   &categoryID,
-			BoxID:        nil,
-			PatternID:    nil,
-			Name:         "Test Item",
-			Detail:       "Test Detail",
-			LearnedDate:  parsedLearnedDate,
-			IsFinished:   false,
-			RegisteredAt: registeredAt,
-			EditedAt:     registeredAt,
-		},
-	}
+	testItem1, _ := ItemDomain.NewItem(
+		itemID,
+		userID,
+		&categoryID,
+		nil,
+		nil,
+		"Test Item",
+		"Test Detail",
+		parsedLearnedDate,
+		false,
+		registeredAt,
+		registeredAt,
+	)
+	testItems := []*ItemDomain.Item{testItem1}
 
-	testReviewdates := []*ItemDomain.Reviewdate{
-		{
-			ReviewdateID:         uuid.NewString(),
-			UserID:               userID,
-			CategoryID:           &categoryID,
-			BoxID:                nil,
-			ItemID:               itemID,
-			StepNumber:           1,
-			InitialScheduledDate: time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC),
-			ScheduledDate:        time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC),
-			IsCompleted:          false,
-		},
-	}
+	testReviewdate3, _ := ItemDomain.NewReviewdate(
+		uuid.NewString(),
+		userID,
+		&categoryID,
+		nil,
+		itemID,
+		1,
+		time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC),
+		false,
+	)
+	testReviewdates := []*ItemDomain.Reviewdate{testReviewdate3}
 
 	tests := []struct {
 		name       string
@@ -3590,35 +3651,33 @@ func TestItemUsecase_GetFinishedItemsByBoxID(t *testing.T) {
 	parsedLearnedDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 	registeredAt := time.Date(2024, 1, 10, 9, 0, 0, 0, time.UTC)
 
-	testItems := []*ItemDomain.Item{
-		{
-			ItemID:       itemID,
-			UserID:       userID,
-			CategoryID:   &categoryID,
-			BoxID:        &boxID,
-			PatternID:    &patternID,
-			Name:         "Finished Item",
-			Detail:       "Finished Detail",
-			LearnedDate:  parsedLearnedDate,
-			IsFinished:   true,
-			RegisteredAt: registeredAt,
-			EditedAt:     registeredAt,
-		},
-	}
+	testItem1, _ := ItemDomain.NewItem(
+		itemID,
+		userID,
+		&categoryID,
+		&boxID,
+		&patternID,
+		"Finished Item",
+		"Finished Detail",
+		parsedLearnedDate,
+		true,
+		registeredAt,
+		registeredAt,
+	)
+	testItems := []*ItemDomain.Item{testItem1}
 
-	testReviewdates := []*ItemDomain.Reviewdate{
-		{
-			ReviewdateID:         uuid.NewString(),
-			UserID:               userID,
-			CategoryID:           &categoryID,
-			BoxID:                &boxID,
-			ItemID:               itemID,
-			StepNumber:           1,
-			InitialScheduledDate: time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC),
-			ScheduledDate:        time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC),
-			IsCompleted:          true,
-		},
-	}
+	testReviewdate4, _ := ItemDomain.NewReviewdate(
+		uuid.NewString(),
+		userID,
+		&categoryID,
+		&boxID,
+		itemID,
+		1,
+		time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC),
+		true,
+	)
+	testReviewdates := []*ItemDomain.Reviewdate{testReviewdate4}
 
 	tests := []struct {
 		name      string
@@ -3685,21 +3744,20 @@ func TestItemUsecase_GetUnclassfiedFinishedItemsByCategoryID(t *testing.T) {
 	userID := uuid.NewString()
 	categoryID := uuid.NewString()
 
-	testItems := []*ItemDomain.Item{
-		{
-			ItemID:       uuid.NewString(),
-			UserID:       userID,
-			CategoryID:   &categoryID,
-			BoxID:        nil,
-			PatternID:    nil,
-			Name:         "Test Item 1",
-			Detail:       "Test Detail 1",
-			LearnedDate:  time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-			IsFinished:   true,
-			RegisteredAt: time.Date(2024, 1, 10, 9, 0, 0, 0, time.UTC),
-			EditedAt:     time.Date(2024, 1, 10, 9, 0, 0, 0, time.UTC),
-		},
-	}
+	testItem1, _ := ItemDomain.NewItem(
+		uuid.NewString(),
+		userID,
+		&categoryID,
+		nil,
+		nil,
+		"Test Item 1",
+		"Test Detail 1",
+		time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+		true,
+		time.Date(2024, 1, 10, 9, 0, 0, 0, time.UTC),
+		time.Date(2024, 1, 10, 9, 0, 0, 0, time.UTC),
+	)
+	testItems := []*ItemDomain.Item{testItem1}
 
 	tests := []struct {
 		name       string
@@ -3766,21 +3824,20 @@ func TestItemUsecase_GetUnclassfiedFinishedItemsByUserID(t *testing.T) {
 	userID := uuid.NewString()
 	categoryID := uuid.NewString()
 
-	testItems := []*ItemDomain.Item{
-		{
-			ItemID:       uuid.NewString(),
-			UserID:       userID,
-			CategoryID:   &categoryID,
-			BoxID:        nil,
-			PatternID:    nil,
-			Name:         "Test Item 1",
-			Detail:       "Test Detail 1",
-			LearnedDate:  time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-			IsFinished:   true,
-			RegisteredAt: time.Date(2024, 1, 10, 9, 0, 0, 0, time.UTC),
-			EditedAt:     time.Date(2024, 1, 10, 9, 0, 0, 0, time.UTC),
-		},
-	}
+	testItem1, _ := ItemDomain.NewItem(
+		uuid.NewString(),
+		userID,
+		&categoryID,
+		nil,
+		nil,
+		"Test Item 1",
+		"Test Detail 1",
+		time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+		true,
+		time.Date(2024, 1, 10, 9, 0, 0, 0, time.UTC),
+		time.Date(2024, 1, 10, 9, 0, 0, 0, time.UTC),
+	)
+	testItems := []*ItemDomain.Item{testItem1}
 
 	tests := []struct {
 		name      string

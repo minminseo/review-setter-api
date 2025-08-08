@@ -115,10 +115,9 @@ func TestCreateCategory(t *testing.T) {
 func TestGetCategoriesByUserID(t *testing.T) {
 	ctx := context.Background()
 	now := time.Now().UTC()
-	testCategories := []*categoryDomain.Category{
-		{ID: "category-1", UserID: "user-1", Name: "カテゴリ1", RegisteredAt: now, EditedAt: now},
-		{ID: "category-2", UserID: "user-1", Name: "カテゴリ2", RegisteredAt: now, EditedAt: now},
-	}
+	category1, _ := categoryDomain.ReconstructCategory("category-1", "user-1", "カテゴリ1", now, now)
+	category2, _ := categoryDomain.ReconstructCategory("category-2", "user-1", "カテゴリ2", now, now)
+	testCategories := []*categoryDomain.Category{category1, category2}
 
 	tests := []struct {
 		name      string
@@ -219,13 +218,13 @@ func TestUpdateCategory(t *testing.T) {
 	ctx := context.Background()
 	now := time.Now().UTC()
 
-	existing := &categoryDomain.Category{
-		ID:           "category-1",
-		UserID:       "user-1",
-		Name:         "古いカテゴリ名",
-		RegisteredAt: now,
-		EditedAt:     now,
-	}
+	existing, _ := categoryDomain.ReconstructCategory(
+		"category-1",
+		"user-1",
+		"古いカテゴリ名",
+		now,
+		now,
+	)
 
 	tests := []struct {
 		name      string
@@ -437,13 +436,13 @@ func TestCategoryUsecase_DTOMapping(t *testing.T) {
 	ctx := context.Background()
 	now := time.Now().UTC()
 
-	category := &categoryDomain.Category{
-		ID:           "test-id",
-		UserID:       "test-user",
-		Name:         "テストカテゴリ",
-		RegisteredAt: now,
-		EditedAt:     now,
-	}
+	category, _ := categoryDomain.ReconstructCategory(
+		"test-id",
+		"test-user",
+		"テストカテゴリ",
+		now,
+		now,
+	)
 
 	mockRepo.EXPECT().
 		GetAllByUserID(ctx, "test-user").
