@@ -88,21 +88,21 @@ func (pu *patternUsecase) CreatePattern(ctx context.Context, in CreatePatternInp
 	}
 
 	out := &CreatePatternOutput{
-		ID:           newPattern.PatternID,
-		UserID:       newPattern.UserID,
-		Name:         newPattern.Name,
-		TargetWeight: string(newPattern.TargetWeight),
-		RegisteredAt: newPattern.RegisteredAt,
-		EditedAt:     newPattern.EditedAt,
+		ID:           newPattern.PatternID(),
+		UserID:       newPattern.UserID(),
+		Name:         newPattern.Name(),
+		TargetWeight: newPattern.TargetWeight(),
+		RegisteredAt: newPattern.RegisteredAt(),
+		EditedAt:     newPattern.EditedAt(),
 	}
 	out.Steps = make([]CreatePatternStepOutput, len(newSteps))
 	for i, ps := range newSteps {
 		out.Steps[i] = CreatePatternStepOutput{
-			PatternStepID: ps.PatternStepID,
-			UserID:        ps.UserID,
-			PatternID:     ps.PatternID,
-			StepNumber:    ps.StepNumber,
-			IntervalDays:  ps.IntervalDays,
+			PatternStepID: ps.PatternStepID(),
+			UserID:        ps.UserID(),
+			PatternID:     ps.PatternID(),
+			StepNumber:    ps.StepNumber(),
+			IntervalDays:  ps.IntervalDays(),
 		}
 	}
 	return out, nil
@@ -123,12 +123,12 @@ func (pu *patternUsecase) GetPatternsByUserID(ctx context.Context, userID string
 	for _, domainStep := range allPatternSteps {
 
 		stepOutput := GetPatternStepOutput{
-			PatternStepID: domainStep.PatternStepID,
-			PatternID:     domainStep.PatternID,
-			StepNumber:    domainStep.StepNumber,
-			IntervalDays:  domainStep.IntervalDays,
+			PatternStepID: domainStep.PatternStepID(),
+			PatternID:     domainStep.PatternID(),
+			StepNumber:    domainStep.StepNumber(),
+			IntervalDays:  domainStep.IntervalDays(),
 		}
-		stepsByPattern[domainStep.PatternID] = append(stepsByPattern[domainStep.PatternID], stepOutput)
+		stepsByPattern[domainStep.PatternID()] = append(stepsByPattern[domainStep.PatternID()], stepOutput)
 	}
 
 	// 4) stepsByPatternを使ってGetPatternOutputのスライスを生成
@@ -136,13 +136,13 @@ func (pu *patternUsecase) GetPatternsByUserID(ctx context.Context, userID string
 	result = make([]*GetPatternOutput, 0, len(allPatterns))
 	for _, domainPattern := range allPatterns {
 		patternOutput := &GetPatternOutput{
-			PatternID:    domainPattern.PatternID,
-			UserID:       domainPattern.UserID,
-			Name:         domainPattern.Name,
-			TargetWeight: domainPattern.TargetWeight,
-			RegisteredAt: domainPattern.RegisteredAt,
-			EditedAt:     domainPattern.EditedAt,
-			Steps:        stepsByPattern[domainPattern.PatternID],
+			PatternID:    domainPattern.PatternID(),
+			UserID:       domainPattern.UserID(),
+			Name:         domainPattern.Name(),
+			TargetWeight: domainPattern.TargetWeight(),
+			RegisteredAt: domainPattern.RegisteredAt(),
+			EditedAt:     domainPattern.EditedAt(),
+			Steps:        stepsByPattern[domainPattern.PatternID()],
 		}
 		result = append(result, patternOutput)
 	}
@@ -162,12 +162,12 @@ func (pu *patternUsecase) UpdatePattern(ctx context.Context, input UpdatePattern
 
 	// 変更部分の判定
 	// pattern
-	isPatternChanged := targetPattern.Name != input.Name || targetPattern.TargetWeight != input.TargetWeight
+	isPatternChanged := targetPattern.Name() != input.Name || targetPattern.TargetWeight() != input.TargetWeight
 
 	// steps
 	isStepsChanged := len(targetPatternSteps) != len(input.Steps)
 	for i := range targetPatternSteps {
-		if targetPatternSteps[i].IntervalDays != input.Steps[i].IntervalDays {
+		if targetPatternSteps[i].IntervalDays() != input.Steps[i].IntervalDays {
 			isStepsChanged = true
 			break
 		}
@@ -190,7 +190,7 @@ func (pu *patternUsecase) UpdatePattern(ctx context.Context, input UpdatePattern
 
 	if isPatternChanged {
 		editedAt := time.Now().UTC()
-		err = targetPattern.Set(input.Name, input.TargetWeight, editedAt)
+		err = targetPattern.UpdatePattern(input.Name, input.TargetWeight, editedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -248,21 +248,21 @@ func (pu *patternUsecase) UpdatePattern(ctx context.Context, input UpdatePattern
 	}
 
 	resPattern := &UpdatePatternOutput{
-		PatternID:    targetPattern.PatternID,
-		UserID:       targetPattern.UserID,
-		Name:         targetPattern.Name,
-		TargetWeight: targetPattern.TargetWeight,
-		RegisteredAt: targetPattern.RegisteredAt,
-		EditedAt:     targetPattern.EditedAt,
+		PatternID:    targetPattern.PatternID(),
+		UserID:       targetPattern.UserID(),
+		Name:         targetPattern.Name(),
+		TargetWeight: targetPattern.TargetWeight(),
+		RegisteredAt: targetPattern.RegisteredAt(),
+		EditedAt:     targetPattern.EditedAt(),
 	}
 	resPattern.Steps = make([]UpdatePatternStepOutput, len(newSteps))
 	for i, s := range newSteps {
 		resPattern.Steps[i] = UpdatePatternStepOutput{
-			PatternStepID: s.PatternStepID,
-			UserID:        s.UserID,
-			PatternID:     s.PatternID,
-			StepNumber:    s.StepNumber,
-			IntervalDays:  s.IntervalDays,
+			PatternStepID: s.PatternStepID(),
+			UserID:        s.UserID(),
+			PatternID:     s.PatternID(),
+			StepNumber:    s.StepNumber(),
+			IntervalDays:  s.IntervalDays(),
 		}
 	}
 
