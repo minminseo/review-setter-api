@@ -25,38 +25,46 @@ func TestUserRepository_Create(t *testing.T) {
 	}{
 		{
 			name: "ユーザー作成に成功する場合",
-			user: &userDomain.User{
-				ID:                uuid.New().String(),
-				EmailSearchKey:    "newuser@example.com",
-				EncryptedEmail:    "encrypted_email_data",
-				EncryptedPassword: "encrypted_password_data",
-				Timezone:          "Asia/Tokyo",
-				ThemeColor:        "light",
-				Language:          "ja",
-				VerifiedAt:        nil,
-			},
-			want: &userDomain.User{
-				EmailSearchKey:    "", // FindByEmailSearchKeyクエリでは取得されない
-				EncryptedEmail:    "encrypted_email_data",
-				EncryptedPassword: "encrypted_password_data",
-				ThemeColor:        "light",
-				Language:          "ja",
-				VerifiedAt:        nil,
-			},
+			user: func() *userDomain.User {
+				u, _ := userDomain.ReconstructUserForAuth(
+					uuid.New().String(),
+					"newuser@example.com",
+					"encrypted_email_data",
+					"encrypted_password_data",
+					"light",
+					"ja",
+					nil,
+				)
+				return u
+			}(),
+			want: func() *userDomain.User {
+				u, _ := userDomain.ReconstructUserForAuth(
+					"", // IDは動的に設定
+					"newuser@example.com", // FindByEmailSearchKeyでsearchKeyが設定される
+					"encrypted_email_data",
+					"encrypted_password_data",
+					"light",
+					"ja",
+					nil,
+				)
+				return u
+			}(),
 			wantErr: false,
 		},
 		{
 			name: "メール検索キー重複で作成失敗する場合",
-			user: &userDomain.User{
-				ID:                uuid.New().String(),
-				EmailSearchKey:    "test1@example.com",
-				EncryptedEmail:    "encrypted_email_data2",
-				EncryptedPassword: "encrypted_password_data2",
-				Timezone:          "Asia/Tokyo",
-				ThemeColor:        "light",
-				Language:          "ja",
-				VerifiedAt:        nil,
-			},
+			user: func() *userDomain.User {
+				u, _ := userDomain.ReconstructUserForAuth(
+					uuid.New().String(),
+					"test1@example.com",
+					"encrypted_email_data2",
+					"encrypted_password_data2",
+					"light",
+					"ja",
+					nil,
+				)
+				return u
+			}(),
 			want:    nil,
 			wantErr: true,
 		},
@@ -83,15 +91,24 @@ func TestUserRepository_Create(t *testing.T) {
 			}
 
 			// 作成されたユーザーを取得して検証
-			createdUser, err := repo.FindByEmailSearchKey(ctx, tc.user.EmailSearchKey)
+			createdUser, err := repo.FindByEmailSearchKey(ctx, tc.user.EmailSearchKey())
 			if err != nil {
 				t.Errorf("failed to find created user: %v", err)
 				return
 			}
 
-			// IDは動的に生成されるので除外して比較
-			tc.want.ID = createdUser.ID
-			if diff := cmp.Diff(tc.want, createdUser); diff != "" {
+			// 動的に生成されるフィールドを設定して新しい期待値を作成
+			want, _ := userDomain.ReconstructUserForAuth(
+				createdUser.ID(),
+				tc.want.EmailSearchKey(),
+				tc.want.EncryptedEmail(),
+				tc.want.EncryptedPassword(),
+				tc.want.ThemeColor(),
+				tc.want.Language(),
+				tc.want.VerifiedAt(),
+			)
+			
+			if diff := cmp.Diff(want, createdUser, cmp.AllowUnexported(userDomain.User{})); diff != "" {
 				t.Errorf("Create() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -115,14 +132,18 @@ func TestUserRepository_FindByEmailSearchKey(t *testing.T) {
 		{
 			name:      "既存ユーザーを検索する場合",
 			searchKey: "test1@example.com",
-			want: &userDomain.User{
-				ID:                "550e8400-e29b-41d4-a716-446655440001",
-				EncryptedEmail:    "encrypted_email_data_1",
-				EncryptedPassword: "encrypted_password_1",
-				ThemeColor:        "light",
-				Language:          "ja",
-				VerifiedAt:        nil,
-			},
+			want: func() *userDomain.User {
+				u, _ := userDomain.ReconstructUserForAuth(
+					"550e8400-e29b-41d4-a716-446655440001",
+					"test1@example.com", // FindByEmailSearchKeyでsearchKeyが設定される
+					"encrypted_email_data_1",
+					"encrypted_password_1",
+					"light",
+					"ja",
+					nil,
+				)
+				return u
+			}(),
 			wantErr: false,
 		},
 	}
@@ -154,7 +175,7 @@ func TestUserRepository_FindByEmailSearchKey(t *testing.T) {
 				return
 			}
 
-			if diff := cmp.Diff(tc.want, user); diff != "" {
+			if diff := cmp.Diff(tc.want, user, cmp.AllowUnexported(userDomain.User{})); diff != "" {
 				t.Errorf("FindByEmailSearchKey() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -177,26 +198,31 @@ func TestUserRepository_Update(t *testing.T) {
 	}{
 		{
 			name: "ユーザー更新に成功する場合",
-			user: &userDomain.User{
-				ID:                "550e8400-e29b-41d4-a716-446655440001",
-				EmailSearchKey:    "updated@example.com",
-				EncryptedEmail:    "updated_encrypted_email",
-				EncryptedPassword: "updated_encrypted_password",
-				Timezone:          "America/New_York",
-				ThemeColor:        "dark",
-				Language:          "en",
-				VerifiedAt:        &[]time.Time{time.Now()}[0],
-			},
-			want: &userDomain.User{
-				ID:                "550e8400-e29b-41d4-a716-446655440001",
-				EmailSearchKey:    "", // FindByEmailSearchKeyクエリでは取得されない
-				EncryptedEmail:    "updated_encrypted_email",
-				EncryptedPassword: "encrypted_password_1", // Updateではパスワードは更新されない
-				Timezone:          "",                     // FindByEmailSearchKeyクエリでは取得されない
-				ThemeColor:        "dark",
-				Language:          "en",
-				VerifiedAt:        nil,
-			},
+			user: func() *userDomain.User {
+				verifiedTime := time.Now()
+				u, _ := userDomain.ReconstructUserForAuth(
+					"550e8400-e29b-41d4-a716-446655440001",
+					"updated@example.com",
+					"updated_encrypted_email",
+					"updated_encrypted_password",
+					"dark",
+					"en",
+					&verifiedTime,
+				)
+				return u
+			}(),
+			want: func() *userDomain.User {
+				u, _ := userDomain.ReconstructUserForAuth(
+					"550e8400-e29b-41d4-a716-446655440001",
+					"updated@example.com", // FindByEmailSearchKeyで更新後のsearchKeyが設定される
+					"updated_encrypted_email",
+					"encrypted_password_1", // Updateではパスワードは更新されない
+					"dark",
+					"en",
+					nil,
+				)
+				return u
+			}(),
 			wantErr: false,
 		},
 	}
@@ -222,14 +248,14 @@ func TestUserRepository_Update(t *testing.T) {
 			}
 
 			// 更新されたユーザーを取得して検証
-			updatedUser, err := repo.FindByEmailSearchKey(ctx, tc.user.EmailSearchKey)
+			updatedUser, err := repo.FindByEmailSearchKey(ctx, tc.user.EmailSearchKey())
 			if err != nil {
 				t.Errorf("failed to find updated user: %v", err)
 				return
 			}
 
 			// 期待値との比較
-			if diff := cmp.Diff(tc.want, updatedUser); diff != "" {
+			if diff := cmp.Diff(tc.want, updatedUser, cmp.AllowUnexported(userDomain.User{})); diff != "" {
 				t.Errorf("Update() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -255,14 +281,18 @@ func TestUserRepository_UpdatePassword(t *testing.T) {
 			name:     "パスワード更新に成功する場合",
 			userID:   "550e8400-e29b-41d4-a716-446655440001",
 			password: "new_encrypted_password",
-			want: &userDomain.User{
-				ID:                "550e8400-e29b-41d4-a716-446655440001",
-				EncryptedEmail:    "encrypted_email_data_1",
-				EncryptedPassword: "new_encrypted_password",
-				ThemeColor:        "light",
-				Language:          "ja",
-				VerifiedAt:        nil,
-			},
+			want: func() *userDomain.User {
+				u, _ := userDomain.ReconstructUserForAuth(
+					"550e8400-e29b-41d4-a716-446655440001",
+					"test1@example.com", // FindByEmailSearchKeyでsearchKeyが設定される
+					"encrypted_email_data_1",
+					"new_encrypted_password",
+					"light",
+					"ja",
+					nil,
+				)
+				return u
+			}(),
 			wantErr: false,
 		},
 	}
@@ -296,7 +326,7 @@ func TestUserRepository_UpdatePassword(t *testing.T) {
 			}
 
 			// 期待値との比較
-			if diff := cmp.Diff(tc.want, updatedUser); diff != "" {
+			if diff := cmp.Diff(tc.want, updatedUser, cmp.AllowUnexported(userDomain.User{})); diff != "" {
 				t.Errorf("UpdatePassword() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -322,14 +352,19 @@ func TestUserRepository_UpdateVerifiedAt(t *testing.T) {
 			name:       "認証日時の更新に成功する場合",
 			userID:     "550e8400-e29b-41d4-a716-446655440003",
 			verifiedAt: &[]time.Time{time.Now()}[0],
-			want: &userDomain.User{
-				ID:                "550e8400-e29b-41d4-a716-446655440003",
-				EncryptedEmail:    "encrypted_email_data_3",
-				EncryptedPassword: "encrypted_password_3",
-				ThemeColor:        "light",
-				Language:          "en",
-				VerifiedAt:        &[]time.Time{time.Now()}[0],
-			},
+			want: func() *userDomain.User {
+				verifiedTime := time.Now()
+				u, _ := userDomain.ReconstructUserForAuth(
+					"550e8400-e29b-41d4-a716-446655440003",
+					"test3@example.com", // FindByEmailSearchKeyでsearchKeyが設定される
+					"encrypted_email_data_3",
+					"encrypted_password_3",
+					"light",
+					"en",
+					&verifiedTime,
+				)
+				return u
+			}(),
 			wantErr: false,
 		},
 	}
@@ -364,13 +399,22 @@ func TestUserRepository_UpdateVerifiedAt(t *testing.T) {
 				return
 			}
 
-			// 時間の比較で差を許容するために、期待値のVerifiedAtを実際の値に設定
+			// 時間の比較で差を許容するために、期待値を新しく作成
+			want := tc.want
 			if tc.verifiedAt != nil {
-				tc.want.VerifiedAt = updatedUser.VerifiedAt
+				want, _ = userDomain.ReconstructUserForAuth(
+					tc.want.ID(),
+					tc.want.EmailSearchKey(),
+					tc.want.EncryptedEmail(),
+					tc.want.EncryptedPassword(),
+					tc.want.ThemeColor(),
+					tc.want.Language(),
+					updatedUser.VerifiedAt(),
+				)
 			}
 
 			// 期待値との比較
-			if diff := cmp.Diff(tc.want, updatedUser); diff != "" {
+			if diff := cmp.Diff(want, updatedUser, cmp.AllowUnexported(userDomain.User{})); diff != "" {
 				t.Errorf("UpdateVerifiedAt() mismatch (-want +got):\n%s", diff)
 			}
 		})

@@ -25,44 +25,59 @@ func TestPatternRepository_CreatePattern(t *testing.T) {
 	}{
 		{
 			name: "パターン作成に成功する場合",
-			pattern: &patternDomain.Pattern{
-				PatternID:    uuid.New().String(),
-				UserID:       "550e8400-e29b-41d4-a716-446655440001", // Exists in fixture
-				Name:         "新しいパターン",
-				TargetWeight: "normal",
-				RegisteredAt: time.Now(),
-				EditedAt:     time.Now(),
-			},
-			want: &patternDomain.Pattern{
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				Name:         "新しいパターン",
-				TargetWeight: "normal",
-			},
+			pattern: func() *patternDomain.Pattern {
+				p, _ := patternDomain.ReconstructPattern(
+					uuid.New().String(),
+					"550e8400-e29b-41d4-a716-446655440001", // Exists in fixture
+					"新しいパターン",
+					"normal",
+					time.Now(),
+					time.Now(),
+				)
+				return p
+			}(),
+			want: func() *patternDomain.Pattern {
+				p, _ := patternDomain.ReconstructPattern(
+					"", // PatternIDは動的に設定
+					"550e8400-e29b-41d4-a716-446655440001",
+					"新しいパターン",
+					"normal",
+					time.Time{}, // RegisteredAtは動的に設定
+					time.Time{}, // EditedAtは動的に設定
+				)
+				return p
+			}(),
 			wantErr: false,
 		},
 		{
 			name: "存在しないユーザーによる外部キー制約違反",
-			pattern: &patternDomain.Pattern{
-				PatternID:    uuid.New().String(),
-				UserID:       uuid.New().String(), // Does not exist in fixture
-				Name:         "存在しないユーザーパターン",
-				TargetWeight: "normal",
-				RegisteredAt: time.Now(),
-				EditedAt:     time.Now(),
-			},
+			pattern: func() *patternDomain.Pattern {
+				p, _ := patternDomain.ReconstructPattern(
+					uuid.New().String(),
+					uuid.New().String(), // Does not exist in fixture
+					"存在しないユーザーパターン",
+					"normal",
+					time.Now(),
+					time.Now(),
+				)
+				return p
+			}(),
 			want:    nil,
 			wantErr: true,
 		},
 		{
 			name: "無効な重みで作成する場合",
-			pattern: &patternDomain.Pattern{
-				PatternID:    uuid.New().String(),
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				Name:         "無効な重みパターン",
-				TargetWeight: "invalid_weight", // Invalid enum value
-				RegisteredAt: time.Now(),
-				EditedAt:     time.Now(),
-			},
+			pattern: func() *patternDomain.Pattern {
+				p, _ := patternDomain.ReconstructPattern(
+					uuid.New().String(),
+					"550e8400-e29b-41d4-a716-446655440001",
+					"無効な重みパターン",
+					"invalid_weight", // Invalid enum value
+					time.Now(),
+					time.Now(),
+				)
+				return p
+			}(),
 			want:    nil,
 			wantErr: true,
 		},
@@ -89,7 +104,7 @@ func TestPatternRepository_CreatePattern(t *testing.T) {
 			}
 
 			// 作成されたパターンを取得して検証
-			createdPattern, err := repo.FindPatternByPatternID(ctx, tc.pattern.PatternID, tc.pattern.UserID)
+			createdPattern, err := repo.FindPatternByPatternID(ctx, tc.pattern.PatternID(), tc.pattern.UserID())
 			if err != nil {
 				t.Errorf("created pattern retrieval failed: %v", err)
 				return
@@ -100,13 +115,18 @@ func TestPatternRepository_CreatePattern(t *testing.T) {
 				return
 			}
 
-			// 動的に生成されるフィールドを期待値に設定
-			tc.want.PatternID = createdPattern.PatternID
-			tc.want.RegisteredAt = createdPattern.RegisteredAt
-			tc.want.EditedAt = createdPattern.EditedAt
+			// 動的に生成されるフィールドを設定して新しい期待値を作成
+			want, _ := patternDomain.ReconstructPattern(
+				createdPattern.PatternID(),
+				tc.want.UserID(),
+				tc.want.Name(),
+				tc.want.TargetWeight(),
+				createdPattern.RegisteredAt(),
+				createdPattern.EditedAt(),
+			)
 
 			// 期待値との比較
-			if diff := cmp.Diff(tc.want, createdPattern); diff != "" {
+			if diff := cmp.Diff(want, createdPattern, cmp.AllowUnexported(patternDomain.Pattern{})); diff != "" {
 				t.Errorf("CreatePattern() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -132,30 +152,39 @@ func TestPatternRepository_GetAllPatternsByUserID(t *testing.T) {
 			name:   "ユーザー1のパターンを取得（3件）",
 			userID: "550e8400-e29b-41d4-a716-446655440001",
 			want: []patternDomain.Pattern{
-				{
-					PatternID:    "750e8400-e29b-41d4-a716-446655440001",
-					UserID:       "550e8400-e29b-41d4-a716-446655440001",
-					Name:         "フィボナッチパターン",
-					TargetWeight: "normal",
-					RegisteredAt: time.Date(2024, 1, 1, 8, 0, 0, 0, time.UTC),
-					EditedAt:     time.Date(2024, 1, 1, 8, 0, 0, 0, time.UTC),
-				},
-				{
-					PatternID:    "750e8400-e29b-41d4-a716-446655440002",
-					UserID:       "550e8400-e29b-41d4-a716-446655440001",
-					Name:         "エビングハウスパターン",
-					TargetWeight: "heavy",
-					RegisteredAt: time.Date(2024, 1, 1, 8, 30, 0, 0, time.UTC),
-					EditedAt:     time.Date(2024, 1, 1, 8, 30, 0, 0, time.UTC),
-				},
-				{
-					PatternID:    "750e8400-e29b-41d4-a716-446655440005",
-					UserID:       "550e8400-e29b-41d4-a716-446655440001",
-					Name:         "ステップ未作成のパターン",
-					TargetWeight: "light",
-					RegisteredAt: time.Date(2024, 1, 1, 9, 00, 0, 0, time.UTC),
-					EditedAt:     time.Date(2024, 1, 1, 9, 00, 0, 0, time.UTC),
-				},
+				func() patternDomain.Pattern {
+					p, _ := patternDomain.ReconstructPattern(
+						"750e8400-e29b-41d4-a716-446655440001",
+						"550e8400-e29b-41d4-a716-446655440001",
+						"フィボナッチパターン",
+						"normal",
+						time.Date(2024, 1, 1, 8, 0, 0, 0, time.UTC),
+						time.Date(2024, 1, 1, 8, 0, 0, 0, time.UTC),
+					)
+					return *p
+				}(),
+				func() patternDomain.Pattern {
+					p, _ := patternDomain.ReconstructPattern(
+						"750e8400-e29b-41d4-a716-446655440002",
+						"550e8400-e29b-41d4-a716-446655440001",
+						"エビングハウスパターン",
+						"heavy",
+						time.Date(2024, 1, 1, 8, 30, 0, 0, time.UTC),
+						time.Date(2024, 1, 1, 8, 30, 0, 0, time.UTC),
+					)
+					return *p
+				}(),
+				func() patternDomain.Pattern {
+					p, _ := patternDomain.ReconstructPattern(
+						"750e8400-e29b-41d4-a716-446655440005",
+						"550e8400-e29b-41d4-a716-446655440001",
+						"ステップ未作成のパターン",
+						"light",
+						time.Date(2024, 1, 1, 9, 00, 0, 0, time.UTC),
+						time.Date(2024, 1, 1, 9, 00, 0, 0, time.UTC),
+					)
+					return *p
+				}(),
 			},
 			wantErr:       false,
 			expectedCount: 3,
@@ -200,7 +229,7 @@ func TestPatternRepository_GetAllPatternsByUserID(t *testing.T) {
 			}
 
 			// 期待値との比較
-			if diff := cmp.Diff(tc.want, patternsSlice); diff != "" {
+			if diff := cmp.Diff(tc.want, patternsSlice, cmp.AllowUnexported(patternDomain.Pattern{})); diff != "" {
 				t.Errorf("GetAllPatternsByUserID() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -223,33 +252,43 @@ func TestPatternRepository_UpdatePattern(t *testing.T) {
 	}{
 		{
 			name: "パターン更新に成功する場合",
-			pattern: &patternDomain.Pattern{
-				PatternID:    "750e8400-e29b-41d4-a716-446655440001",
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				Name:         "更新されたフィボナッチパターン",
-				TargetWeight: "heavy",
-				RegisteredAt: time.Now().Add(-24 * time.Hour),
-				EditedAt:     time.Now(),
-			},
-			want: &patternDomain.Pattern{
-				PatternID:    "750e8400-e29b-41d4-a716-446655440001",
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				Name:         "更新されたフィボナッチパターン",
-				TargetWeight: "heavy",
-				RegisteredAt: time.Date(2024, 1, 1, 8, 0, 0, 0, time.UTC),
-			},
+			pattern: func() *patternDomain.Pattern {
+				p, _ := patternDomain.ReconstructPattern(
+					"750e8400-e29b-41d4-a716-446655440001",
+					"550e8400-e29b-41d4-a716-446655440001",
+					"更新されたフィボナッチパターン",
+					"heavy",
+					time.Now().Add(-24 * time.Hour),
+					time.Now(),
+				)
+				return p
+			}(),
+			want: func() *patternDomain.Pattern {
+				p, _ := patternDomain.ReconstructPattern(
+					"750e8400-e29b-41d4-a716-446655440001",
+					"550e8400-e29b-41d4-a716-446655440001",
+					"更新されたフィボナッチパターン",
+					"heavy",
+					time.Date(2024, 1, 1, 8, 0, 0, 0, time.UTC),
+					time.Time{}, // EditedAtは動的に設定
+				)
+				return p
+			}(),
 			wantErr: false,
 		},
 		{
 			name: "無効な重みで更新する場合",
-			pattern: &patternDomain.Pattern{
-				PatternID:    "750e8400-e29b-41d4-a716-446655440001",
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				Name:         "パターン",
-				TargetWeight: "invalid_weight",
-				RegisteredAt: time.Now().Add(-24 * time.Hour),
-				EditedAt:     time.Now(),
-			},
+			pattern: func() *patternDomain.Pattern {
+				p, _ := patternDomain.ReconstructPattern(
+					"750e8400-e29b-41d4-a716-446655440001",
+					"550e8400-e29b-41d4-a716-446655440001",
+					"パターン",
+					"invalid_weight",
+					time.Now().Add(-24 * time.Hour),
+					time.Now(),
+				)
+				return p
+			}(),
 			want:    nil,
 			wantErr: true,
 		},
@@ -277,7 +316,7 @@ func TestPatternRepository_UpdatePattern(t *testing.T) {
 
 			if tc.want != nil {
 				// 更新されたパターンを取得して検証
-				updatedPattern, err := repo.FindPatternByPatternID(ctx, tc.pattern.PatternID, tc.pattern.UserID)
+				updatedPattern, err := repo.FindPatternByPatternID(ctx, tc.pattern.PatternID(), tc.pattern.UserID())
 				if err != nil {
 					t.Errorf("更新されたパターンの取得に失敗: %v", err)
 					return
@@ -289,10 +328,19 @@ func TestPatternRepository_UpdatePattern(t *testing.T) {
 				}
 
 				// 動的に変更されるフィールドを期待値に設定
-				tc.want.EditedAt = updatedPattern.EditedAt
+				// 動的に変更されるフィールドを期待値に設定して新しい期待値を作成
+				want, _ := patternDomain.ReconstructPattern(
+					tc.want.PatternID(),
+					tc.want.UserID(),
+					tc.want.Name(),
+					tc.want.TargetWeight(),
+					tc.want.RegisteredAt(),
+					updatedPattern.EditedAt(),
+				)
+				tc.want = want
 
 				// 期待値との比較
-				if diff := cmp.Diff(tc.want, updatedPattern); diff != "" {
+				if diff := cmp.Diff(tc.want, updatedPattern, cmp.AllowUnexported(patternDomain.Pattern{})); diff != "" {
 					t.Errorf("UpdatePattern() mismatch (-want +got):\n%s", diff)
 				}
 			}
@@ -384,14 +432,17 @@ func TestPatternRepository_FindPatternByPatternID(t *testing.T) {
 			name:      "有効なIDでパターンを取得する場合",
 			patternID: "750e8400-e29b-41d4-a716-446655440001",
 			userID:    "550e8400-e29b-41d4-a716-446655440001",
-			want: &patternDomain.Pattern{
-				PatternID:    "750e8400-e29b-41d4-a716-446655440001",
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				Name:         "フィボナッチパターン",
-				TargetWeight: "normal",
-				RegisteredAt: time.Date(2024, 1, 1, 8, 0, 0, 0, time.UTC),
-				EditedAt:     time.Date(2024, 1, 1, 8, 0, 0, 0, time.UTC),
-			},
+			want: func() *patternDomain.Pattern {
+				p, _ := patternDomain.ReconstructPattern(
+					"750e8400-e29b-41d4-a716-446655440001",
+					"550e8400-e29b-41d4-a716-446655440001",
+					"フィボナッチパターン",
+					"normal",
+					time.Date(2024, 1, 1, 8, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 1, 8, 0, 0, 0, time.UTC),
+				)
+				return p
+			}(),
 			wantErr:      false,
 			expectName:   "フィボナッチパターン",
 			expectWeight: "normal",
@@ -426,7 +477,7 @@ func TestPatternRepository_FindPatternByPatternID(t *testing.T) {
 			}
 
 			// 期待値との比較
-			if diff := cmp.Diff(tc.want, pattern); diff != "" {
+			if diff := cmp.Diff(tc.want, pattern, cmp.AllowUnexported(patternDomain.Pattern{})); diff != "" {
 				t.Errorf("FindPatternByPatternID() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -450,49 +501,64 @@ func TestPatternRepository_CreatePatternSteps(t *testing.T) {
 		{
 			name: "パターンステップ作成に成功する場合",
 			steps: []*patternDomain.PatternStep{
-				{
-					PatternStepID: "850e8400-e29b-41d4-a716-446655440100",
-					UserID:        "550e8400-e29b-41d4-a716-446655440001",
-					PatternID:     "750e8400-e29b-41d4-a716-446655440005",
-					StepNumber:    1,
-					IntervalDays:  1,
-				},
-				{
-					PatternStepID: "850e8400-e29b-41d4-a716-446655440101",
-					UserID:        "550e8400-e29b-41d4-a716-446655440001",
-					PatternID:     "750e8400-e29b-41d4-a716-446655440005",
-					StepNumber:    2,
-					IntervalDays:  3,
-				},
+				func() *patternDomain.PatternStep {
+					ps, _ := patternDomain.ReconstructPatternStep(
+						"850e8400-e29b-41d4-a716-446655440100",
+						"550e8400-e29b-41d4-a716-446655440001",
+						"750e8400-e29b-41d4-a716-446655440005",
+						1,
+						1,
+					)
+					return ps
+				}(),
+				func() *patternDomain.PatternStep {
+					ps, _ := patternDomain.ReconstructPatternStep(
+						"850e8400-e29b-41d4-a716-446655440101",
+						"550e8400-e29b-41d4-a716-446655440001",
+						"750e8400-e29b-41d4-a716-446655440005",
+						2,
+						3,
+					)
+					return ps
+				}(),
 			},
 			want: []*patternDomain.PatternStep{
-				{
-					PatternStepID: "850e8400-e29b-41d4-a716-446655440100",
-					UserID:        "550e8400-e29b-41d4-a716-446655440001",
-					PatternID:     "750e8400-e29b-41d4-a716-446655440005",
-					StepNumber:    1,
-					IntervalDays:  1,
-				},
-				{
-					PatternStepID: "850e8400-e29b-41d4-a716-446655440101",
-					UserID:        "550e8400-e29b-41d4-a716-446655440001",
-					PatternID:     "750e8400-e29b-41d4-a716-446655440005",
-					StepNumber:    2,
-					IntervalDays:  3,
-				},
+				func() *patternDomain.PatternStep {
+					ps, _ := patternDomain.ReconstructPatternStep(
+						"850e8400-e29b-41d4-a716-446655440100",
+						"550e8400-e29b-41d4-a716-446655440001",
+						"750e8400-e29b-41d4-a716-446655440005",
+						1,
+						1,
+					)
+					return ps
+				}(),
+				func() *patternDomain.PatternStep {
+					ps, _ := patternDomain.ReconstructPatternStep(
+						"850e8400-e29b-41d4-a716-446655440101",
+						"550e8400-e29b-41d4-a716-446655440001",
+						"750e8400-e29b-41d4-a716-446655440005",
+						2,
+						3,
+					)
+					return ps
+				}(),
 			},
 			wantErr: false,
 		},
 		{
 			name: "存在しないパターンIDで作成失敗する場合",
 			steps: []*patternDomain.PatternStep{
-				{
-					PatternStepID: "850e8400-e29b-41d4-a716-446655440102",
-					UserID:        "550e8400-e29b-41d4-a716-446655440001",
-					PatternID:     "750e8400-e29b-41d4-a716-446655440999", // 存在しないパターンID
-					StepNumber:    1,
-					IntervalDays:  1,
-				},
+				func() *patternDomain.PatternStep {
+					ps, _ := patternDomain.ReconstructPatternStep(
+						"850e8400-e29b-41d4-a716-446655440102",
+						"550e8400-e29b-41d4-a716-446655440001",
+						"750e8400-e29b-41d4-a716-446655440999", // 存在しないパターンID
+						1,
+						1,
+					)
+					return ps
+				}(),
 			},
 			want:    nil,
 			wantErr: true,
@@ -521,7 +587,7 @@ func TestPatternRepository_CreatePatternSteps(t *testing.T) {
 
 			if tc.want != nil {
 				// 作成されたパターンステップを取得して検証
-				createdSteps, err := repo.GetAllPatternStepsByPatternID(ctx, tc.steps[0].PatternID, tc.steps[0].UserID)
+				createdSteps, err := repo.GetAllPatternStepsByPatternID(ctx, tc.steps[0].PatternID(), tc.steps[0].UserID())
 				if err != nil {
 					t.Errorf("作成されたパターンステップの取得に失敗: %v", err)
 					return
@@ -540,7 +606,7 @@ func TestPatternRepository_CreatePatternSteps(t *testing.T) {
 				}
 
 				// 期待値との比較
-				if diff := cmp.Diff(wantSlice, stepsSlice); diff != "" {
+				if diff := cmp.Diff(wantSlice, stepsSlice, cmp.AllowUnexported(patternDomain.PatternStep{})); diff != "" {
 					t.Errorf("CreatePatternSteps() mismatch (-want +got):\n%s", diff)
 				}
 			}
@@ -566,65 +632,25 @@ func TestPatternRepository_GetAllPatternStepsByUserID(t *testing.T) {
 		{
 			name:   "ユーザー1のパターンステップを取得（5件）",
 			userID: "550e8400-e29b-41d4-a716-446655440001",
-			want: []patternDomain.PatternStep{
-				{
-					PatternStepID: "850e8400-e29b-41d4-a716-446655440001",
-					UserID:        "550e8400-e29b-41d4-a716-446655440001",
-					PatternID:     "750e8400-e29b-41d4-a716-446655440001",
-					StepNumber:    1,
-					IntervalDays:  1,
-				},
-				{
-					PatternStepID: "850e8400-e29b-41d4-a716-446655440002",
-					UserID:        "550e8400-e29b-41d4-a716-446655440001",
-					PatternID:     "750e8400-e29b-41d4-a716-446655440001",
-					StepNumber:    2,
-					IntervalDays:  2,
-				},
-				{
-					PatternStepID: "850e8400-e29b-41d4-a716-446655440003",
-					UserID:        "550e8400-e29b-41d4-a716-446655440001",
-					PatternID:     "750e8400-e29b-41d4-a716-446655440001",
-					StepNumber:    3,
-					IntervalDays:  3,
-				},
-				{
-					PatternStepID: "850e8400-e29b-41d4-a716-446655440004",
-					UserID:        "550e8400-e29b-41d4-a716-446655440001",
-					PatternID:     "750e8400-e29b-41d4-a716-446655440002",
-					StepNumber:    1,
-					IntervalDays:  1,
-				},
-				{
-					PatternStepID: "850e8400-e29b-41d4-a716-446655440005",
-					UserID:        "550e8400-e29b-41d4-a716-446655440001",
-					PatternID:     "750e8400-e29b-41d4-a716-446655440002",
-					StepNumber:    2,
-					IntervalDays:  5,
-				},
-			},
+			want: func() []patternDomain.PatternStep {
+				ps1, _ := patternDomain.ReconstructPatternStep("850e8400-e29b-41d4-a716-446655440001", "550e8400-e29b-41d4-a716-446655440001", "750e8400-e29b-41d4-a716-446655440001", 1, 1)
+				ps2, _ := patternDomain.ReconstructPatternStep("850e8400-e29b-41d4-a716-446655440002", "550e8400-e29b-41d4-a716-446655440001", "750e8400-e29b-41d4-a716-446655440001", 2, 2)
+				ps3, _ := patternDomain.ReconstructPatternStep("850e8400-e29b-41d4-a716-446655440003", "550e8400-e29b-41d4-a716-446655440001", "750e8400-e29b-41d4-a716-446655440001", 3, 3)
+				ps4, _ := patternDomain.ReconstructPatternStep("850e8400-e29b-41d4-a716-446655440004", "550e8400-e29b-41d4-a716-446655440001", "750e8400-e29b-41d4-a716-446655440002", 1, 1)
+				ps5, _ := patternDomain.ReconstructPatternStep("850e8400-e29b-41d4-a716-446655440005", "550e8400-e29b-41d4-a716-446655440001", "750e8400-e29b-41d4-a716-446655440002", 2, 5)
+				return []patternDomain.PatternStep{*ps1, *ps2, *ps3, *ps4, *ps5}
+			}(),
 			wantErr:       false,
 			expectedCount: 5,
 		},
 		{
 			name:   "ユーザー2のパターンステップを取得（2件）",
 			userID: "550e8400-e29b-41d4-a716-446655440002",
-			want: []patternDomain.PatternStep{
-				{
-					PatternStepID: "850e8400-e29b-41d4-a716-446655440006",
-					UserID:        "550e8400-e29b-41d4-a716-446655440002",
-					PatternID:     "750e8400-e29b-41d4-a716-446655440003",
-					StepNumber:    1,
-					IntervalDays:  7,
-				},
-				{
-					PatternStepID: "850e8400-e29b-41d4-a716-446655440007",
-					UserID:        "550e8400-e29b-41d4-a716-446655440002",
-					PatternID:     "750e8400-e29b-41d4-a716-446655440004",
-					StepNumber:    1,
-					IntervalDays:  3,
-				},
-			},
+			want: func() []patternDomain.PatternStep {
+				ps1, _ := patternDomain.ReconstructPatternStep("850e8400-e29b-41d4-a716-446655440006", "550e8400-e29b-41d4-a716-446655440002", "750e8400-e29b-41d4-a716-446655440003", 1, 7)
+				ps2, _ := patternDomain.ReconstructPatternStep("850e8400-e29b-41d4-a716-446655440007", "550e8400-e29b-41d4-a716-446655440002", "750e8400-e29b-41d4-a716-446655440004", 1, 3)
+				return []patternDomain.PatternStep{*ps1, *ps2}
+			}(),
 			wantErr:       false,
 			expectedCount: 2,
 		},
@@ -668,7 +694,7 @@ func TestPatternRepository_GetAllPatternStepsByUserID(t *testing.T) {
 			}
 
 			// 期待値との比較
-			if diff := cmp.Diff(tc.want, stepsSlice); diff != "" {
+			if diff := cmp.Diff(tc.want, stepsSlice, cmp.AllowUnexported(patternDomain.PatternStep{})); diff != "" {
 				t.Errorf("GetAllPatternStepsByUserID() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -740,7 +766,7 @@ func TestPatternRepository_DeletePatternSteps(t *testing.T) {
 			}
 
 			// 期待値との比較
-			if diff := cmp.Diff(tc.want, stepsSlice); diff != "" {
+			if diff := cmp.Diff(tc.want, stepsSlice, cmp.AllowUnexported(patternDomain.PatternStep{})); diff != "" {
 				t.Errorf("DeletePatternSteps() verification mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -766,29 +792,12 @@ func TestPatternRepository_GetAllPatternStepsByPatternID(t *testing.T) {
 			name:      "パターンID1のステップを取得（3件）",
 			patternID: "750e8400-e29b-41d4-a716-446655440001",
 			userID:    "550e8400-e29b-41d4-a716-446655440001",
-			want: []patternDomain.PatternStep{
-				{
-					PatternStepID: "850e8400-e29b-41d4-a716-446655440001",
-					UserID:        "550e8400-e29b-41d4-a716-446655440001",
-					PatternID:     "750e8400-e29b-41d4-a716-446655440001",
-					StepNumber:    1,
-					IntervalDays:  1,
-				},
-				{
-					PatternStepID: "850e8400-e29b-41d4-a716-446655440002",
-					UserID:        "550e8400-e29b-41d4-a716-446655440001",
-					PatternID:     "750e8400-e29b-41d4-a716-446655440001",
-					StepNumber:    2,
-					IntervalDays:  2,
-				},
-				{
-					PatternStepID: "850e8400-e29b-41d4-a716-446655440003",
-					UserID:        "550e8400-e29b-41d4-a716-446655440001",
-					PatternID:     "750e8400-e29b-41d4-a716-446655440001",
-					StepNumber:    3,
-					IntervalDays:  3,
-				},
-			},
+			want: func() []patternDomain.PatternStep {
+				ps1, _ := patternDomain.ReconstructPatternStep("850e8400-e29b-41d4-a716-446655440001", "550e8400-e29b-41d4-a716-446655440001", "750e8400-e29b-41d4-a716-446655440001", 1, 1)
+				ps2, _ := patternDomain.ReconstructPatternStep("850e8400-e29b-41d4-a716-446655440002", "550e8400-e29b-41d4-a716-446655440001", "750e8400-e29b-41d4-a716-446655440001", 2, 2)
+				ps3, _ := patternDomain.ReconstructPatternStep("850e8400-e29b-41d4-a716-446655440003", "550e8400-e29b-41d4-a716-446655440001", "750e8400-e29b-41d4-a716-446655440001", 3, 3)
+				return []patternDomain.PatternStep{*ps1, *ps2, *ps3}
+			}(),
 			wantErr: false,
 		},
 	}
@@ -820,7 +829,7 @@ func TestPatternRepository_GetAllPatternStepsByPatternID(t *testing.T) {
 			}
 
 			// 期待値との比較
-			if diff := cmp.Diff(tc.want, stepsSlice); diff != "" {
+			if diff := cmp.Diff(tc.want, stepsSlice, cmp.AllowUnexported(patternDomain.PatternStep{})); diff != "" {
 				t.Errorf("GetAllPatternStepsByPatternID() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -899,7 +908,7 @@ func TestPatternRepository_GetPatternTargetWeightsByPatternIDs(t *testing.T) {
 			}
 
 			// 期待値との比較
-			if diff := cmp.Diff(tc.want, weightsSlice); diff != "" {
+			if diff := cmp.Diff(tc.want, weightsSlice, cmp.AllowUnexported(patternDomain.TargetWeight{})); diff != "" {
 				t.Errorf("GetPatternTargetWeightsByPatternIDs() mismatch (-want +got):\n%s", diff)
 			}
 		})

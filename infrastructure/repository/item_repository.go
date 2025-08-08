@@ -31,23 +31,23 @@ func toNullableUUID(s *string) (pgtype.UUID, error) {
 func (r *itemRepository) CreateItem(ctx context.Context, item *itemDomain.Item) error {
 	q := db.GetQuery(ctx)
 
-	pgID, err := toUUID(item.ItemID)
+	pgID, err := toUUID(item.ItemID())
 	if err != nil {
 		return err
 	}
-	pgUserID, err := toUUID(item.UserID)
+	pgUserID, err := toUUID(item.UserID())
 	if err != nil {
 		return err
 	}
-	pgCategoryID, err := toNullableUUID(item.CategoryID)
+	pgCategoryID, err := toNullableUUID(item.CategoryID())
 	if err != nil {
 		return err
 	}
-	pgBoxID, err := toNullableUUID(item.BoxID)
+	pgBoxID, err := toNullableUUID(item.BoxID())
 	if err != nil {
 		return err
 	}
-	pgPatternID, err := toNullableUUID(item.PatternID)
+	pgPatternID, err := toNullableUUID(item.PatternID())
 	if err != nil {
 		return err
 	}
@@ -58,12 +58,12 @@ func (r *itemRepository) CreateItem(ctx context.Context, item *itemDomain.Item) 
 		CategoryID:   pgCategoryID,
 		BoxID:        pgBoxID,
 		PatternID:    pgPatternID,
-		Name:         item.Name,
-		Detail:       pgtype.Text{String: item.Detail, Valid: true},
-		LearnedDate:  pgtype.Date{Time: item.LearnedDate, Valid: true},
-		IsFinished:   item.IsFinished,
-		RegisteredAt: pgtype.Timestamptz{Time: item.RegisteredAt, Valid: true},
-		EditedAt:     pgtype.Timestamptz{Time: item.EditedAt, Valid: true},
+		Name:         item.Name(),
+		Detail:       pgtype.Text{String: item.Detail(), Valid: true},
+		LearnedDate:  pgtype.Date{Time: item.LearnedDate(), Valid: true},
+		IsFinished:   item.IsFinished(),
+		RegisteredAt: pgtype.Timestamptz{Time: item.RegisteredAt(), Valid: true},
+		EditedAt:     pgtype.Timestamptz{Time: item.EditedAt(), Valid: true},
 	}
 	return q.CreateItem(ctx, params)
 }
@@ -75,23 +75,23 @@ func (r *itemRepository) CreateReviewdates(ctx context.Context, reviewdates []*i
 	rows := make([][]interface{}, len(reviewdates))
 
 	for i, rd := range reviewdates {
-		pgID, err := toUUID(rd.ReviewdateID)
+		pgID, err := toUUID(rd.ReviewdateID())
 		if err != nil {
 			return 0, err
 		}
-		pgUserID, err := toUUID(rd.UserID)
+		pgUserID, err := toUUID(rd.UserID())
 		if err != nil {
 			return 0, err
 		}
-		pgCategoryID, err := toNullableUUID(rd.CategoryID)
+		pgCategoryID, err := toNullableUUID(rd.CategoryID())
 		if err != nil {
 			return 0, err
 		}
-		pgBoxID, err := toNullableUUID(rd.BoxID)
+		pgBoxID, err := toNullableUUID(rd.BoxID())
 		if err != nil {
 			return 0, err
 		}
-		pgItemID, err := toUUID(rd.ItemID)
+		pgItemID, err := toUUID(rd.ItemID())
 		if err != nil {
 			return 0, err
 		}
@@ -102,10 +102,10 @@ func (r *itemRepository) CreateReviewdates(ctx context.Context, reviewdates []*i
 			CategoryID:           pgCategoryID,
 			BoxID:                pgBoxID,
 			ItemID:               pgItemID,
-			StepNumber:           int16(rd.StepNumber), // #nosec G115
-			InitialScheduledDate: pgtype.Date{Time: rd.InitialScheduledDate, Valid: true},
-			ScheduledDate:        pgtype.Date{Time: rd.ScheduledDate, Valid: true},
-			IsCompleted:          rd.IsCompleted,
+			StepNumber:           int16(rd.StepNumber()), // #nosec G115
+			InitialScheduledDate: pgtype.Date{Time: rd.InitialScheduledDate(), Valid: true},
+			ScheduledDate:        pgtype.Date{Time: rd.ScheduledDate(), Valid: true},
+			IsCompleted:          rd.IsCompleted(),
 		}
 
 		rows[i] = []interface{}{
@@ -225,23 +225,23 @@ func (r *itemRepository) GetReviewDateIDsByItemID(ctx context.Context, itemID st
 
 func (r *itemRepository) UpdateItem(ctx context.Context, item *itemDomain.Item) error {
 	q := db.GetQuery(ctx)
-	pgID, err := toUUID(item.ItemID)
+	pgID, err := toUUID(item.ItemID())
 	if err != nil {
 		return err
 	}
-	pgUserID, err := toUUID(item.UserID)
+	pgUserID, err := toUUID(item.UserID())
 	if err != nil {
 		return err
 	}
-	pgCategoryID, err := toNullableUUID(item.CategoryID)
+	pgCategoryID, err := toNullableUUID(item.CategoryID())
 	if err != nil {
 		return err
 	}
-	pgBoxID, err := toNullableUUID(item.BoxID)
+	pgBoxID, err := toNullableUUID(item.BoxID())
 	if err != nil {
 		return err
 	}
-	pgPatternID, err := toNullableUUID(item.PatternID)
+	pgPatternID, err := toNullableUUID(item.PatternID())
 	if err != nil {
 		return err
 	}
@@ -252,11 +252,11 @@ func (r *itemRepository) UpdateItem(ctx context.Context, item *itemDomain.Item) 
 		CategoryID:  pgCategoryID,
 		BoxID:       pgBoxID,
 		PatternID:   pgPatternID,
-		Name:        item.Name,
-		Detail:      pgtype.Text{String: item.Detail, Valid: true},
-		LearnedDate: pgtype.Date{Time: item.LearnedDate, Valid: true},
-		IsFinished:  item.IsFinished,
-		EditedAt:    pgtype.Timestamptz{Time: item.EditedAt, Valid: true},
+		Name:        item.Name(),
+		Detail:      pgtype.Text{String: item.Detail(), Valid: true},
+		LearnedDate: pgtype.Date{Time: item.LearnedDate(), Valid: true},
+		IsFinished:  item.IsFinished(),
+		EditedAt:    pgtype.Timestamptz{Time: item.EditedAt(), Valid: true},
 	}
 	return q.UpdateItem(ctx, params)
 }
@@ -272,14 +272,14 @@ func (r *itemRepository) UpdateReviewDates(ctx context.Context, reviewdates []*i
 	for i, rd := range reviewdates {
 		// UNNESTに渡すための(id,category_id,box_id,scheduled_date,is_completed)形式の文字列を生成
 		var categoryID string
-		if rd.CategoryID != nil {
-			categoryID = *rd.CategoryID
+		if rd.CategoryID() != nil {
+			categoryID = *rd.CategoryID()
 		}
 		var boxID string
-		if rd.BoxID != nil {
-			boxID = *rd.BoxID
+		if rd.BoxID() != nil {
+			boxID = *rd.BoxID()
 		}
-		inputs[i] = fmt.Sprintf("(%s,%s,%s,%s,%s,%t)", rd.ReviewdateID, categoryID, boxID, rd.InitialScheduledDate.Format("2006-01-02"), rd.ScheduledDate.Format("2006-01-02"), rd.IsCompleted)
+		inputs[i] = fmt.Sprintf("(%s,%s,%s,%s,%s,%t)", rd.ReviewdateID(), categoryID, boxID, rd.InitialScheduledDate().Format("2006-01-02"), rd.ScheduledDate().Format("2006-01-02"), rd.IsCompleted())
 	}
 
 	params := dbgen.UpdateReviewDatesParams{
@@ -301,14 +301,14 @@ func (r *itemRepository) UpdateReviewDatesBack(ctx context.Context, reviewdates 
 	for i, rd := range reviewdates {
 		// UNNESTに渡すための(id,category_id,box_id,scheduled_date,is_completed)形式の文字列を生成
 		var categoryID string
-		if rd.CategoryID != nil {
-			categoryID = *rd.CategoryID
+		if rd.CategoryID() != nil {
+			categoryID = *rd.CategoryID()
 		}
 		var boxID string
-		if rd.BoxID != nil {
-			boxID = *rd.BoxID
+		if rd.BoxID() != nil {
+			boxID = *rd.BoxID()
 		}
-		inputs[i] = fmt.Sprintf("(%s,%s,%s,%s,%s,%t)", rd.ReviewdateID, categoryID, boxID, rd.InitialScheduledDate.Format("2006-01-02"), rd.ScheduledDate.Format("2006-01-02"), rd.IsCompleted)
+		inputs[i] = fmt.Sprintf("(%s,%s,%s,%s,%s,%t)", rd.ReviewdateID(), categoryID, boxID, rd.InitialScheduledDate().Format("2006-01-02"), rd.ScheduledDate().Format("2006-01-02"), rd.IsCompleted())
 	}
 
 	params := dbgen.UpdateReviewDatesBackParams{

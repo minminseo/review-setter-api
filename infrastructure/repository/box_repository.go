@@ -20,39 +20,39 @@ func NewBoxRepository() boxDomain.IBoxRepository {
 func (r *boxRepository) Create(ctx context.Context, box *boxDomain.Box) error {
 	q := db.GetQuery(ctx)
 
-	parsedID, err := uuid.Parse(box.ID)
+	parsedID, err := uuid.Parse(box.ID())
 	if err != nil {
 		return err
 	}
 	pgID := pgtype.UUID{Bytes: parsedID, Valid: true}
 
-	parsedUserID, err := uuid.Parse(box.UserID)
+	parsedUserID, err := uuid.Parse(box.UserID())
 	if err != nil {
 		return err
 	}
 	pgUserID := pgtype.UUID{Bytes: parsedUserID, Valid: true}
 
-	parsedCategoryID, err := uuid.Parse(box.CategoryID)
+	parsedCategoryID, err := uuid.Parse(box.CategoryID())
 	if err != nil {
 		return err
 	}
 	pgCategoryID := pgtype.UUID{Bytes: parsedCategoryID, Valid: true}
 
-	parsedPatternID, err := uuid.Parse(box.PatternID)
+	parsedPatternID, err := uuid.Parse(box.PatternID())
 	if err != nil {
 		return err
 	}
 	pgPatternID := pgtype.UUID{Bytes: parsedPatternID, Valid: true}
 
-	pgRegisteredAt := pgtype.Timestamptz{Time: box.RegisteredAt, Valid: true}
-	pgEditedAt := pgtype.Timestamptz{Time: box.EditedAt, Valid: true}
+	pgRegisteredAt := pgtype.Timestamptz{Time: box.RegisteredAt(), Valid: true}
+	pgEditedAt := pgtype.Timestamptz{Time: box.EditedAt(), Valid: true}
 
 	params := dbgen.CreateBoxParams{
 		ID:           pgID,
 		UserID:       pgUserID,
 		CategoryID:   pgCategoryID,
 		PatternID:    pgPatternID,
-		Name:         box.Name,
+		Name:         box.Name(),
 		RegisteredAt: pgRegisteredAt,
 		EditedAt:     pgEditedAt,
 	}
@@ -155,22 +155,22 @@ func (r *boxRepository) GetByID(ctx context.Context, boxID string, categoryID st
 func (r *boxRepository) Update(ctx context.Context, box *boxDomain.Box) error {
 	q := db.GetQuery(ctx)
 
-	parsedID, err := uuid.Parse(box.ID)
+	parsedID, err := uuid.Parse(box.ID())
 	if err != nil {
 		return err
 	}
 	pgID := pgtype.UUID{Bytes: parsedID, Valid: true}
 
-	parsedUserID, err := uuid.Parse(box.UserID)
+	parsedUserID, err := uuid.Parse(box.UserID())
 	if err != nil {
 		return err
 	}
 	pgUserID := pgtype.UUID{Bytes: parsedUserID, Valid: true}
 
-	pgEditedAt := pgtype.Timestamptz{Time: box.EditedAt, Valid: true}
+	pgEditedAt := pgtype.Timestamptz{Time: box.EditedAt(), Valid: true}
 
 	params := dbgen.UpdateBoxParams{
-		Name:     box.Name,
+		Name:     box.Name(),
 		EditedAt: pgEditedAt,
 		ID:       pgID,
 		UserID:   pgUserID,
@@ -181,35 +181,35 @@ func (r *boxRepository) Update(ctx context.Context, box *boxDomain.Box) error {
 func (r *boxRepository) UpdateWithPatternID(ctx context.Context, box *boxDomain.Box) (int64, error) {
 	q := db.GetQuery(ctx)
 
-	parsedID, err := uuid.Parse(box.ID)
+	parsedID, err := uuid.Parse(box.ID())
 	if err != nil {
 		return 0, err
 	}
 	pgID := pgtype.UUID{Bytes: parsedID, Valid: true}
 
-	parsedCategoryID, err := uuid.Parse(box.CategoryID)
+	parsedCategoryID, err := uuid.Parse(box.CategoryID())
 	if err != nil {
 		return 0, err
 	}
 	pgCategoryID := pgtype.UUID{Bytes: parsedCategoryID, Valid: true}
 
-	parsedUserID, err := uuid.Parse(box.UserID)
+	parsedUserID, err := uuid.Parse(box.UserID())
 	if err != nil {
 		return 0, err
 	}
 	pgUserID := pgtype.UUID{Bytes: parsedUserID, Valid: true}
 
-	parsedPatternID, err := uuid.Parse(box.PatternID)
+	parsedPatternID, err := uuid.Parse(box.PatternID())
 	if err != nil {
 		return 0, err
 	}
 	pgPatternID := pgtype.UUID{Bytes: parsedPatternID, Valid: true}
 
-	pgEditedAt := pgtype.Timestamptz{Time: box.EditedAt, Valid: true}
+	pgEditedAt := pgtype.Timestamptz{Time: box.EditedAt(), Valid: true}
 
 	params := dbgen.UpdateBoxIfNoReviewItemsParams{
 		PatternID:  pgPatternID,
-		Name:       box.Name,
+		Name:       box.Name(),
 		EditedAt:   pgEditedAt,
 		ID:         pgID,
 		CategoryID: pgCategoryID,

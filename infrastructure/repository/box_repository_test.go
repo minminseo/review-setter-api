@@ -25,51 +25,63 @@ func TestBoxRepository_Create(t *testing.T) {
 	}{
 		{
 			name: "ボックス作成に成功する場合",
-			box: &boxDomain.Box{
-				ID:           uuid.New().String(),
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				CategoryID:   "650e8400-e29b-41d4-a716-446655440001",
-				PatternID:    "750e8400-e29b-41d4-a716-446655440001",
-				Name:         "新しい復習ボックス",
-				RegisteredAt: time.Now(),
-				EditedAt:     time.Now(),
-			},
-			want: &boxDomain.Box{
-				ID:           "",
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				CategoryID:   "650e8400-e29b-41d4-a716-446655440001",
-				PatternID:    "750e8400-e29b-41d4-a716-446655440001",
-				Name:         "新しい復習ボックス",
-				RegisteredAt: time.Time{},
-				EditedAt:     time.Time{},
-			},
+			box: func() *boxDomain.Box {
+				box, _ := boxDomain.ReconstructBox(
+					uuid.New().String(),
+					"550e8400-e29b-41d4-a716-446655440001",
+					"650e8400-e29b-41d4-a716-446655440001",
+					"750e8400-e29b-41d4-a716-446655440001",
+					"新しい復習ボックス",
+					time.Now(),
+					time.Now(),
+				)
+				return box
+			}(),
+			want: func() *boxDomain.Box {
+				box, _ := boxDomain.ReconstructBox(
+					"",
+					"550e8400-e29b-41d4-a716-446655440001",
+					"650e8400-e29b-41d4-a716-446655440001",
+					"750e8400-e29b-41d4-a716-446655440001",
+					"新しい復習ボックス",
+					time.Time{},
+					time.Time{},
+				)
+				return box
+			}(),
 			wantErr: false,
 		},
 		{
 			name: "存在しないカテゴリによる外部キー制約違反",
-			box: &boxDomain.Box{
-				ID:           uuid.New().String(),
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				CategoryID:   uuid.New().String(),
-				PatternID:    "750e8400-e29b-41d4-a716-446655440001",
-				Name:         "存在しないカテゴリのボックス",
-				RegisteredAt: time.Now(),
-				EditedAt:     time.Now(),
-			},
+			box: func() *boxDomain.Box {
+				box, _ := boxDomain.ReconstructBox(
+					uuid.New().String(),
+					"550e8400-e29b-41d4-a716-446655440001",
+					uuid.New().String(),
+					"750e8400-e29b-41d4-a716-446655440001",
+					"存在しないカテゴリのボックス",
+					time.Now(),
+					time.Now(),
+				)
+				return box
+			}(),
 			want:    nil,
 			wantErr: true,
 		},
 		{
 			name: "存在しないパターンによる外部キー制約違反",
-			box: &boxDomain.Box{
-				ID:           uuid.New().String(),
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				CategoryID:   "650e8400-e29b-41d4-a716-446655440001",
-				PatternID:    uuid.New().String(), // Does not exist in fixture
-				Name:         "存在しないパターンのボックス",
-				RegisteredAt: time.Now(),
-				EditedAt:     time.Now(),
-			},
+			box: func() *boxDomain.Box {
+				box, _ := boxDomain.ReconstructBox(
+					uuid.New().String(),
+					"550e8400-e29b-41d4-a716-446655440001",
+					"650e8400-e29b-41d4-a716-446655440001",
+					uuid.New().String(), // Does not exist in fixture
+					"存在しないパターンのボックス",
+					time.Now(),
+					time.Now(),
+				)
+				return box
+			}(),
 			want:    nil,
 			wantErr: true,
 		},
@@ -97,7 +109,7 @@ func TestBoxRepository_Create(t *testing.T) {
 
 			if tc.want != nil {
 				// 作成されたボックスを取得して検証
-				createdBox, err := repo.GetByID(ctx, tc.box.ID, tc.box.CategoryID, tc.box.UserID)
+				createdBox, err := repo.GetByID(ctx, tc.box.ID(), tc.box.CategoryID(), tc.box.UserID())
 				if err != nil {
 					t.Errorf("作成されたボックスの取得に失敗: %v", err)
 					return
@@ -108,13 +120,19 @@ func TestBoxRepository_Create(t *testing.T) {
 					return
 				}
 
-				// 期待値に動的な値を設定
-				tc.want.ID = createdBox.ID
-				tc.want.RegisteredAt = createdBox.RegisteredAt
-				tc.want.EditedAt = createdBox.EditedAt
+				// 期待値を生成し動的な値を設定
+				wantBox, _ := boxDomain.ReconstructBox(
+					createdBox.ID(),
+					tc.want.UserID(),
+					tc.want.CategoryID(),
+					tc.want.PatternID(),
+					tc.want.Name(),
+					createdBox.RegisteredAt(),
+					createdBox.EditedAt(),
+				)
 
 				// 期待値との比較
-				if diff := cmp.Diff(tc.want, createdBox); diff != "" {
+				if diff := cmp.Diff(wantBox, createdBox, cmp.AllowUnexported(boxDomain.Box{})); diff != "" {
 					t.Errorf("Create() mismatch (-want +got):\n%s", diff)
 				}
 			}
@@ -143,33 +161,42 @@ func TestBoxRepository_GetAllByCategoryID(t *testing.T) {
 			categoryID: "650e8400-e29b-41d4-a716-446655440001",
 			userID:     "550e8400-e29b-41d4-a716-446655440001",
 			want: []boxDomain.Box{
-				{
-					ID:           "950e8400-e29b-41d4-a716-446655440001",
-					UserID:       "550e8400-e29b-41d4-a716-446655440001",
-					CategoryID:   "650e8400-e29b-41d4-a716-446655440001",
-					PatternID:    "750e8400-e29b-41d4-a716-446655440001",
-					Name:         "代数学",
-					RegisteredAt: time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
-					EditedAt:     time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
-				},
-				{
-					ID:           "950e8400-e29b-41d4-a716-446655440002",
-					UserID:       "550e8400-e29b-41d4-a716-446655440001",
-					CategoryID:   "650e8400-e29b-41d4-a716-446655440001",
-					PatternID:    "750e8400-e29b-41d4-a716-446655440002",
-					Name:         "幾何学",
-					RegisteredAt: time.Date(2024, 1, 1, 10, 30, 0, 0, time.UTC),
-					EditedAt:     time.Date(2024, 1, 1, 10, 30, 0, 0, time.UTC),
-				},
-				{
-					ID:           "950e8400-e29b-41d4-a716-446655440005",
-					UserID:       "550e8400-e29b-41d4-a716-446655440001",
-					CategoryID:   "650e8400-e29b-41d4-a716-446655440001",
-					PatternID:    "750e8400-e29b-41d4-a716-446655440001",
-					Name:         "復習物のないボックス",
-					RegisteredAt: time.Date(2024, 1, 1, 11, 00, 0, 0, time.UTC),
-					EditedAt:     time.Date(2024, 1, 1, 11, 00, 0, 0, time.UTC),
-				},
+				func() boxDomain.Box {
+					box, _ := boxDomain.ReconstructBox(
+						"950e8400-e29b-41d4-a716-446655440001",
+						"550e8400-e29b-41d4-a716-446655440001",
+						"650e8400-e29b-41d4-a716-446655440001",
+						"750e8400-e29b-41d4-a716-446655440001",
+						"代数学",
+						time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
+						time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
+					)
+					return *box
+				}(),
+				func() boxDomain.Box {
+					box, _ := boxDomain.ReconstructBox(
+						"950e8400-e29b-41d4-a716-446655440002",
+						"550e8400-e29b-41d4-a716-446655440001",
+						"650e8400-e29b-41d4-a716-446655440001",
+						"750e8400-e29b-41d4-a716-446655440002",
+						"幾何学",
+						time.Date(2024, 1, 1, 10, 30, 0, 0, time.UTC),
+						time.Date(2024, 1, 1, 10, 30, 0, 0, time.UTC),
+					)
+					return *box
+				}(),
+				func() boxDomain.Box {
+					box, _ := boxDomain.ReconstructBox(
+						"950e8400-e29b-41d4-a716-446655440005",
+						"550e8400-e29b-41d4-a716-446655440001",
+						"650e8400-e29b-41d4-a716-446655440001",
+						"750e8400-e29b-41d4-a716-446655440001",
+						"復習物のないボックス",
+						time.Date(2024, 1, 1, 11, 00, 0, 0, time.UTC),
+						time.Date(2024, 1, 1, 11, 00, 0, 0, time.UTC),
+					)
+					return *box
+				}(),
 			},
 			wantErr:       false,
 			expectedCount: 3,
@@ -179,15 +206,18 @@ func TestBoxRepository_GetAllByCategoryID(t *testing.T) {
 			categoryID: "650e8400-e29b-41d4-a716-446655440002",
 			userID:     "550e8400-e29b-41d4-a716-446655440001",
 			want: []boxDomain.Box{
-				{
-					ID:           "950e8400-e29b-41d4-a716-446655440003",
-					UserID:       "550e8400-e29b-41d4-a716-446655440001",
-					CategoryID:   "650e8400-e29b-41d4-a716-446655440002",
-					PatternID:    "750e8400-e29b-41d4-a716-446655440001",
-					Name:         "力学",
-					RegisteredAt: time.Date(2024, 1, 1, 11, 0, 0, 0, time.UTC),
-					EditedAt:     time.Date(2024, 1, 1, 11, 0, 0, 0, time.UTC),
-				},
+				func() boxDomain.Box {
+					box, _ := boxDomain.ReconstructBox(
+						"950e8400-e29b-41d4-a716-446655440003",
+						"550e8400-e29b-41d4-a716-446655440001",
+						"650e8400-e29b-41d4-a716-446655440002",
+						"750e8400-e29b-41d4-a716-446655440001",
+						"力学",
+						time.Date(2024, 1, 1, 11, 0, 0, 0, time.UTC),
+						time.Date(2024, 1, 1, 11, 0, 0, 0, time.UTC),
+					)
+					return *box
+				}(),
 			},
 			wantErr:       false,
 			expectedCount: 1,
@@ -197,15 +227,18 @@ func TestBoxRepository_GetAllByCategoryID(t *testing.T) {
 			categoryID: "650e8400-e29b-41d4-a716-446655440003",
 			userID:     "550e8400-e29b-41d4-a716-446655440002",
 			want: []boxDomain.Box{
-				{
-					ID:           "950e8400-e29b-41d4-a716-446655440004",
-					UserID:       "550e8400-e29b-41d4-a716-446655440002",
-					CategoryID:   "650e8400-e29b-41d4-a716-446655440003",
-					PatternID:    "750e8400-e29b-41d4-a716-446655440003",
-					Name:         "リーディング",
-					RegisteredAt: time.Date(2024, 1, 1, 11, 30, 0, 0, time.UTC),
-					EditedAt:     time.Date(2024, 1, 1, 11, 30, 0, 0, time.UTC),
-				},
+				func() boxDomain.Box {
+					box, _ := boxDomain.ReconstructBox(
+						"950e8400-e29b-41d4-a716-446655440004",
+						"550e8400-e29b-41d4-a716-446655440002",
+						"650e8400-e29b-41d4-a716-446655440003",
+						"750e8400-e29b-41d4-a716-446655440003",
+						"リーディング",
+						time.Date(2024, 1, 1, 11, 30, 0, 0, time.UTC),
+						time.Date(2024, 1, 1, 11, 30, 0, 0, time.UTC),
+					)
+					return *box
+				}(),
 			},
 			wantErr:       false,
 			expectedCount: 1,
@@ -251,7 +284,7 @@ func TestBoxRepository_GetAllByCategoryID(t *testing.T) {
 				}
 
 				// 期待値との比較
-				if diff := cmp.Diff(tc.want, boxesSlice); diff != "" {
+				if diff := cmp.Diff(tc.want, boxesSlice, cmp.AllowUnexported(boxDomain.Box{})); diff != "" {
 					t.Errorf("GetAllByCategoryID() mismatch (-want +got):\n%s", diff)
 				}
 			}
@@ -275,23 +308,30 @@ func TestBoxRepository_Update(t *testing.T) {
 	}{
 		{
 			name: "ボックス更新に成功する場合",
-			box: &boxDomain.Box{
-				ID:           "950e8400-e29b-41d4-a716-446655440001", // Exists in fixture
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				CategoryID:   "650e8400-e29b-41d4-a716-446655440001",
-				PatternID:    "750e8400-e29b-41d4-a716-446655440002", // Change pattern
-				Name:         "更新された代数学ボックス",
-				RegisteredAt: time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC), // Keep original registered_at
-				EditedAt:     time.Now(),
-			},
-			want: &boxDomain.Box{
-				ID:           "950e8400-e29b-41d4-a716-446655440001",
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				CategoryID:   "650e8400-e29b-41d4-a716-446655440001",
-				PatternID:    "750e8400-e29b-41d4-a716-446655440001", // Pattern should remain unchanged in Update (not UpdateWithPatternID)
-				Name:         "更新された代数学ボックス",
-				RegisteredAt: time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
-			},
+			box: func() *boxDomain.Box {
+				box, _ := boxDomain.ReconstructBox(
+					"950e8400-e29b-41d4-a716-446655440001", // Exists in fixture
+					"550e8400-e29b-41d4-a716-446655440001",
+					"650e8400-e29b-41d4-a716-446655440001",
+					"750e8400-e29b-41d4-a716-446655440002", // Change pattern
+					"更新された代数学ボックス",
+					time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC), // Keep original registered_at
+					time.Now(),
+				)
+				return box
+			}(),
+			want: func() *boxDomain.Box {
+				box, _ := boxDomain.ReconstructBox(
+					"950e8400-e29b-41d4-a716-446655440001",
+					"550e8400-e29b-41d4-a716-446655440001",
+					"650e8400-e29b-41d4-a716-446655440001",
+					"750e8400-e29b-41d4-a716-446655440001", // Pattern should remain unchanged in Update (not UpdateWithPatternID)
+					"更新された代数学ボックス",
+					time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
+					time.Time{},
+				)
+				return box
+			}(),
 			wantErr: false,
 		},
 	}
@@ -318,7 +358,7 @@ func TestBoxRepository_Update(t *testing.T) {
 
 			if tc.want != nil {
 				// 更新されたボックスを取得して検証
-				updatedBox, err := repo.GetByID(ctx, tc.box.ID, tc.box.CategoryID, tc.box.UserID)
+				updatedBox, err := repo.GetByID(ctx, tc.box.ID(), tc.box.CategoryID(), tc.box.UserID())
 				if err != nil {
 					t.Errorf("更新されたボックスの取得に失敗: %v", err)
 					return
@@ -329,11 +369,19 @@ func TestBoxRepository_Update(t *testing.T) {
 					return
 				}
 
-				// 動的に変更されるフィールドを期待値に設定
-				tc.want.EditedAt = updatedBox.EditedAt
+				// 期待値を生成し動的な値を設定
+				wantBox, _ := boxDomain.ReconstructBox(
+					tc.want.ID(),
+					tc.want.UserID(),
+					tc.want.CategoryID(),
+					tc.want.PatternID(),
+					tc.want.Name(),
+					tc.want.RegisteredAt(),
+					updatedBox.EditedAt(),
+				)
 
 				// 期待値との比較
-				if diff := cmp.Diff(tc.want, updatedBox); diff != "" {
+				if diff := cmp.Diff(wantBox, updatedBox, cmp.AllowUnexported(boxDomain.Box{})); diff != "" {
 					t.Errorf("Update() mismatch (-want +got):\n%s", diff)
 				}
 			}
@@ -362,15 +410,18 @@ func TestBoxRepository_Delete(t *testing.T) {
 			boxID:      "950e8400-e29b-41d4-a716-446655440004",
 			categoryID: "650e8400-e29b-41d4-a716-446655440003",
 			userID:     "550e8400-e29b-41d4-a716-446655440002",
-			wantBefore: &boxDomain.Box{
-				ID:           "950e8400-e29b-41d4-a716-446655440004",
-				UserID:       "550e8400-e29b-41d4-a716-446655440002",
-				CategoryID:   "650e8400-e29b-41d4-a716-446655440003",
-				PatternID:    "750e8400-e29b-41d4-a716-446655440003",
-				Name:         "リーディング",
-				RegisteredAt: time.Date(2024, 1, 1, 11, 30, 0, 0, time.UTC),
-				EditedAt:     time.Date(2024, 1, 1, 11, 30, 0, 0, time.UTC),
-			},
+			wantBefore: func() *boxDomain.Box {
+				box, _ := boxDomain.ReconstructBox(
+					"950e8400-e29b-41d4-a716-446655440004",
+					"550e8400-e29b-41d4-a716-446655440002",
+					"650e8400-e29b-41d4-a716-446655440003",
+					"750e8400-e29b-41d4-a716-446655440003",
+					"リーディング",
+					time.Date(2024, 1, 1, 11, 30, 0, 0, time.UTC),
+					time.Date(2024, 1, 1, 11, 30, 0, 0, time.UTC),
+				)
+				return box
+			}(),
 			wantErr: false,
 		},
 	}
@@ -394,7 +445,7 @@ func TestBoxRepository_Delete(t *testing.T) {
 				}
 
 				// 削除前のボックスが期待値と一致することを確認
-				if diff := cmp.Diff(tc.wantBefore, boxBefore); diff != "" {
+				if diff := cmp.Diff(tc.wantBefore, boxBefore, cmp.AllowUnexported(boxDomain.Box{})); diff != "" {
 					t.Errorf("削除前のボックスが期待値と一致しません (-want +got):\n%s", diff)
 				}
 			}
@@ -448,15 +499,18 @@ func TestBoxRepository_GetByID(t *testing.T) {
 			boxID:      "950e8400-e29b-41d4-a716-446655440001",
 			categoryID: "650e8400-e29b-41d4-a716-446655440001",
 			userID:     "550e8400-e29b-41d4-a716-446655440001",
-			want: &boxDomain.Box{
-				ID:           "950e8400-e29b-41d4-a716-446655440001",
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				CategoryID:   "650e8400-e29b-41d4-a716-446655440001",
-				PatternID:    "750e8400-e29b-41d4-a716-446655440001",
-				Name:         "代数学",
-				RegisteredAt: time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
-				EditedAt:     time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
-			},
+			want: func() *boxDomain.Box {
+				box, _ := boxDomain.ReconstructBox(
+					"950e8400-e29b-41d4-a716-446655440001",
+					"550e8400-e29b-41d4-a716-446655440001",
+					"650e8400-e29b-41d4-a716-446655440001",
+					"750e8400-e29b-41d4-a716-446655440001",
+					"代数学",
+					time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
+				)
+				return box
+			}(),
 			wantErr: false,
 		},
 	}
@@ -489,7 +543,7 @@ func TestBoxRepository_GetByID(t *testing.T) {
 			}
 
 			if tc.want != nil {
-				if diff := cmp.Diff(tc.want, box); diff != "" {
+				if diff := cmp.Diff(tc.want, box, cmp.AllowUnexported(boxDomain.Box{})); diff != "" {
 					t.Errorf("GetByID() mismatch (-want +got):\n%s", diff)
 				}
 			}
@@ -514,23 +568,30 @@ func TestBoxRepository_UpdateWithPatternID(t *testing.T) {
 	}{
 		{
 			name: "復習物がないボックスのパターンID更新に成功する場合",
-			box: &boxDomain.Box{
-				ID:           "950e8400-e29b-41d4-a716-446655440005",
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				CategoryID:   "650e8400-e29b-41d4-a716-446655440001",
-				PatternID:    "750e8400-e29b-41d4-a716-446655440002", // 変更するパターンID
-				Name:         "代数学",
-				RegisteredAt: time.Date(2024, 1, 1, 11, 0, 0, 0, time.UTC),
-				EditedAt:     time.Now(),
-			},
-			want: &boxDomain.Box{
-				ID:           "950e8400-e29b-41d4-a716-446655440005",
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				CategoryID:   "650e8400-e29b-41d4-a716-446655440001",
-				PatternID:    "750e8400-e29b-41d4-a716-446655440002",
-				Name:         "代数学",
-				RegisteredAt: time.Date(2024, 1, 1, 11, 0, 0, 0, time.UTC),
-			},
+			box: func() *boxDomain.Box {
+				box, _ := boxDomain.ReconstructBox(
+					"950e8400-e29b-41d4-a716-446655440005",
+					"550e8400-e29b-41d4-a716-446655440001",
+					"650e8400-e29b-41d4-a716-446655440001",
+					"750e8400-e29b-41d4-a716-446655440002", // 変更するパターンID
+					"代数学",
+					time.Date(2024, 1, 1, 11, 0, 0, 0, time.UTC),
+					time.Now(),
+				)
+				return box
+			}(),
+			want: func() *boxDomain.Box {
+				box, _ := boxDomain.ReconstructBox(
+					"950e8400-e29b-41d4-a716-446655440005",
+					"550e8400-e29b-41d4-a716-446655440001",
+					"650e8400-e29b-41d4-a716-446655440001",
+					"750e8400-e29b-41d4-a716-446655440002",
+					"代数学",
+					time.Date(2024, 1, 1, 11, 0, 0, 0, time.UTC),
+					time.Time{},
+				)
+				return box
+			}(),
 			wantErr:         false,
 			expectedUpdated: 1,
 		},
@@ -562,7 +623,7 @@ func TestBoxRepository_UpdateWithPatternID(t *testing.T) {
 
 			if tc.want != nil && updatedCount > 0 {
 				// 更新されたボックスを取得して検証
-				updatedBox, err := repo.GetByID(ctx, tc.box.ID, tc.box.CategoryID, tc.box.UserID)
+				updatedBox, err := repo.GetByID(ctx, tc.box.ID(), tc.box.CategoryID(), tc.box.UserID())
 				if err != nil {
 					t.Errorf("更新されたボックスの取得に失敗: %v", err)
 					return
@@ -573,11 +634,19 @@ func TestBoxRepository_UpdateWithPatternID(t *testing.T) {
 					return
 				}
 
-				// 動的に変更されるフィールドを期待値に設定
-				tc.want.EditedAt = updatedBox.EditedAt
+				// 期待値を生成し動的な値を設定
+				wantBox, _ := boxDomain.ReconstructBox(
+					tc.want.ID(),
+					tc.want.UserID(),
+					tc.want.CategoryID(),
+					tc.want.PatternID(),
+					tc.want.Name(),
+					tc.want.RegisteredAt(),
+					updatedBox.EditedAt(),
+				)
 
 				// 期待値との比較
-				if diff := cmp.Diff(tc.want, updatedBox); diff != "" {
+				if diff := cmp.Diff(wantBox, updatedBox, cmp.AllowUnexported(boxDomain.Box{})); diff != "" {
 					t.Errorf("UpdateWithPatternID() mismatch (-want +got):\n%s", diff)
 				}
 			}
@@ -654,7 +723,7 @@ func TestBoxRepository_GetBoxNamesByBoxIDs(t *testing.T) {
 			}
 
 			// 期待値との比較
-			if diff := cmp.Diff(tc.want, boxNamesSlice); diff != "" {
+			if diff := cmp.Diff(tc.want, boxNamesSlice, cmp.AllowUnexported(boxDomain.BoxName{})); diff != "" {
 				t.Errorf("GetBoxNamesByBoxIDs() mismatch (-want +got):\n%s", diff)
 			}
 		})

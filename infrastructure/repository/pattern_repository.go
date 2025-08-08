@@ -21,16 +21,16 @@ func NewPatternRepository() patternDomain.IPatternRepository {
 
 func (r *patternRepository) CreatePattern(ctx context.Context, p *patternDomain.Pattern) error {
 	q := db.GetQuery(ctx)
-	pgID, _ := toUUID(p.PatternID)
-	pgUserID, _ := toUUID(p.UserID)
-	pgReg := pgtype.Timestamptz{Time: p.RegisteredAt, Valid: true}
-	pgEdit := pgtype.Timestamptz{Time: p.EditedAt, Valid: true}
+	pgID, _ := toUUID(p.PatternID())
+	pgUserID, _ := toUUID(p.UserID())
+	pgReg := pgtype.Timestamptz{Time: p.RegisteredAt(), Valid: true}
+	pgEdit := pgtype.Timestamptz{Time: p.EditedAt(), Valid: true}
 
 	params := dbgen.CreatePatternParams{
 		ID:           pgID,
 		UserID:       pgUserID,
-		Name:         p.Name,
-		TargetWeight: dbgen.TargetWeightEnum(p.TargetWeight),
+		Name:         p.Name(),
+		TargetWeight: dbgen.TargetWeightEnum(p.TargetWeight()),
 		RegisteredAt: pgReg,
 		EditedAt:     pgEdit,
 	}
@@ -44,15 +44,15 @@ func (r *patternRepository) CreatePatternSteps(ctx context.Context, steps []*pat
 	cps := make([]dbgen.CreatePatternStepsParams, len(steps))
 	rows := make([][]any, len(steps))
 	for i, s := range steps {
-		pgStepID, _ := toUUID(s.PatternStepID)
-		pgUserID, _ := toUUID(s.UserID)
-		pgPatternID, _ := toUUID(s.PatternID)
+		pgStepID, _ := toUUID(s.PatternStepID())
+		pgUserID, _ := toUUID(s.UserID())
+		pgPatternID, _ := toUUID(s.PatternID())
 		cps[i] = dbgen.CreatePatternStepsParams{
 			ID:           pgStepID,
 			UserID:       pgUserID,
 			PatternID:    pgPatternID,
-			StepNumber:   int16(s.StepNumber),   // #nosec G115
-			IntervalDays: int16(s.IntervalDays), // #nosec G115
+			StepNumber:   int16(s.StepNumber()),   // #nosec G115
+			IntervalDays: int16(s.IntervalDays()), // #nosec G115
 		}
 		rows[i] = []any{
 			cps[i].ID,
@@ -129,13 +129,13 @@ func (r *patternRepository) GetAllPatternStepsByUserID(ctx context.Context, user
 
 func (r *patternRepository) UpdatePattern(ctx context.Context, p *patternDomain.Pattern) error {
 	q := db.GetQuery(ctx)
-	pgID, _ := toUUID(p.PatternID)
-	pgUserID, _ := toUUID(p.UserID)
-	pgEdit := pgtype.Timestamptz{Time: p.EditedAt, Valid: true}
+	pgID, _ := toUUID(p.PatternID())
+	pgUserID, _ := toUUID(p.UserID())
+	pgEdit := pgtype.Timestamptz{Time: p.EditedAt(), Valid: true}
 
 	params := dbgen.UpdatePatternParams{
-		Name:         p.Name,
-		TargetWeight: dbgen.TargetWeightEnum(p.TargetWeight),
+		Name:         p.Name(),
+		TargetWeight: dbgen.TargetWeightEnum(p.TargetWeight()),
 		EditedAt:     pgEdit,
 		ID:           pgID,
 		UserID:       pgUserID,

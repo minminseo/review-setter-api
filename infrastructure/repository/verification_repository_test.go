@@ -25,26 +25,29 @@ func TestEmailVerificationRepository_Create(t *testing.T) {
 	}{
 		{
 			name: "既存ユーザーで認証作成（正常系）",
-			verification: &userDomain.EmailVerification{
-				ID:        uuid.New().String(),
-				UserID:    "550e8400-e29b-41d4-a716-446655440004", // 既存ユーザー
-				CodeHash:  "hashed_verification_code_success",
-				ExpiresAt: time.Now().Add(10 * time.Minute),
-			},
-			want: &userDomain.EmailVerification{
-				UserID:   "550e8400-e29b-41d4-a716-446655440004",
-				CodeHash: "hashed_verification_code_success",
-			},
+			verification: func() *userDomain.EmailVerification {
+				ev, _ := userDomain.ReconstructEmailVerification(
+					uuid.New().String(),
+					"550e8400-e29b-41d4-a716-446655440004", // 既存ユーザー
+					"hashed_verification_code_success",
+					time.Now().Add(10 * time.Minute),
+				)
+				return ev
+			}(),
+			want: nil, // 動的に期待値を設定するためnil
 			wantErr: false,
 		},
 		{
 			name: "新規ユーザーで認証作成（外部キー制約違反）",
-			verification: &userDomain.EmailVerification{
-				ID:        uuid.New().String(),
-				UserID:    uuid.New().String(),
-				CodeHash:  "hashed_verification_code_new",
-				ExpiresAt: time.Now().Add(10 * time.Minute),
-			},
+			verification: func() *userDomain.EmailVerification {
+				ev, _ := userDomain.ReconstructEmailVerification(
+					uuid.New().String(),
+					uuid.New().String(),
+					"hashed_verification_code_new",
+					time.Now().Add(10 * time.Minute),
+				)
+				return ev
+			}(),
 			want:    nil,
 			wantErr: true,
 		},
@@ -71,7 +74,7 @@ func TestEmailVerificationRepository_Create(t *testing.T) {
 			}
 
 			// 作成された認証情報を取得して検証
-			createdVerification, err := repo.FindByUserID(ctx, tc.verification.UserID)
+			createdVerification, err := repo.FindByUserID(ctx, tc.verification.UserID())
 			if err != nil {
 				t.Errorf("作成された認証情報の取得に失敗: %v", err)
 				return
@@ -82,12 +85,16 @@ func TestEmailVerificationRepository_Create(t *testing.T) {
 				return
 			}
 
-			// 動的に生成されるフィールドを期待値に設定
-			tc.want.ID = createdVerification.ID
-			tc.want.ExpiresAt = createdVerification.ExpiresAt
+			// 動的に生成されるフィールドを期待値に設定するため、新しい期待値を作成
+			want, _ := userDomain.ReconstructEmailVerification(
+				createdVerification.ID(),
+				"550e8400-e29b-41d4-a716-446655440004",
+				"hashed_verification_code_success",
+				createdVerification.ExpiresAt(),
+			)
 
 			// 期待値との比較
-			if diff := cmp.Diff(tc.want, createdVerification); diff != "" {
+			if diff := cmp.Diff(want, createdVerification, cmp.AllowUnexported(userDomain.EmailVerification{})); diff != "" {
 				t.Errorf("Create() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -112,12 +119,15 @@ func TestEmailVerificationRepository_FindByUserID(t *testing.T) {
 		{
 			name:   "ユーザー1の認証情報を取得（正常系）",
 			userID: "550e8400-e29b-41d4-a716-446655440001",
-			want: &userDomain.EmailVerification{
-				ID:        "c50e8400-e29b-41d4-a716-446655440001",
-				UserID:    "550e8400-e29b-41d4-a716-446655440001",
-				CodeHash:  "hashed_verification_code_1",
-				ExpiresAt: time.Date(2024, 1, 1, 1, 0, 0, 0, time.UTC),
-			},
+			want: func() *userDomain.EmailVerification {
+				ev, _ := userDomain.ReconstructEmailVerification(
+					"c50e8400-e29b-41d4-a716-446655440001",
+					"550e8400-e29b-41d4-a716-446655440001",
+					"hashed_verification_code_1",
+					time.Date(2024, 1, 1, 1, 0, 0, 0, time.UTC),
+				)
+				return ev
+			}(),
 			wantErr:   false,
 			hasRecord: true,
 		},
@@ -152,7 +162,7 @@ func TestEmailVerificationRepository_FindByUserID(t *testing.T) {
 				}
 
 				// 期待値との比較
-				if diff := cmp.Diff(tc.want, verification); diff != "" {
+				if diff := cmp.Diff(tc.want, verification, cmp.AllowUnexported(userDomain.EmailVerification{})); diff != "" {
 					t.Errorf("FindByUserID() mismatch (-want +got):\n%s", diff)
 				}
 			} else {
