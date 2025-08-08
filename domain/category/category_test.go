@@ -33,13 +33,16 @@ func TestNewCategory(t *testing.T) {
 			categoryName: "英語",
 			registeredAt: now,
 			editedAt:     now,
-			want: &Category{
-				ID:           testCategoryID,
-				UserID:       testUserID,
-				Name:         "英語",
-				RegisteredAt: now,
-				EditedAt:     now,
-			},
+			want: func() *Category {
+				category, _ := ReconstructCategory(
+					testCategoryID,
+					testUserID,
+					"英語",
+					now,
+					now,
+				)
+				return category
+			}(),
 			wantErr: false,
 		},
 		{
@@ -76,14 +79,14 @@ func TestNewCategory(t *testing.T) {
 				t.Fatalf("予期しないエラー: %v", err)
 			}
 
-			if diff := cmp.Diff(tc.want, category); diff != "" {
+			if diff := cmp.Diff(tc.want, category, cmp.AllowUnexported(Category{})); diff != "" {
 				t.Errorf("Category mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
 }
 
-func TestCategory_Set(t *testing.T) {
+func TestCategory_UpdateCategory(t *testing.T) {
 	now := time.Now()
 	category, err := NewCategory(testCategoryID, testUserID, "Original Name", now, now)
 	if err != nil {
@@ -104,26 +107,32 @@ func TestCategory_Set(t *testing.T) {
 			name:     "カテゴリー名を更新（正常系）",
 			newName:  "Updated Category Name",
 			editedAt: newTime,
-			wantCategory: &Category{
-				ID:           testCategoryID,
-				UserID:       testUserID,
-				Name:         "Updated Category Name",
-				RegisteredAt: now,
-				EditedAt:     newTime,
-			},
+			wantCategory: func() *Category {
+				category, _ := ReconstructCategory(
+					testCategoryID,
+					testUserID,
+					"Updated Category Name",
+					now,
+					newTime,
+				)
+				return category
+			}(),
 			wantErr: false,
 		},
 		{
 			name:     "カテゴリー名が空で更新（異常系）",
 			newName:  "",
 			editedAt: newTime,
-			wantCategory: &Category{
-				ID:           testCategoryID,
-				UserID:       testUserID,
-				Name:         "Original Name",
-				RegisteredAt: now,
-				EditedAt:     now,
-			},
+			wantCategory: func() *Category {
+				category, _ := ReconstructCategory(
+					testCategoryID,
+					testUserID,
+					"Original Name",
+					now,
+					now,
+				)
+				return category
+			}(),
 			wantErr: true,
 			errMsg:  "カテゴリー名は必須です",
 		},
@@ -135,7 +144,7 @@ func TestCategory_Set(t *testing.T) {
 			// カテゴリーをコピー
 			testCategory := *category
 
-			err := testCategory.Set(tc.newName, tc.editedAt)
+			err := testCategory.UpdateCategory(tc.newName, tc.editedAt)
 
 			if tc.wantErr {
 				if err == nil {
@@ -144,7 +153,7 @@ func TestCategory_Set(t *testing.T) {
 				if err.Error() != tc.errMsg {
 					t.Errorf("エラーメッセージが一致しません: got %q, want %q", err.Error(), tc.errMsg)
 				}
-				if diff := cmp.Diff(tc.wantCategory, &testCategory); diff != "" {
+				if diff := cmp.Diff(tc.wantCategory, &testCategory, cmp.AllowUnexported(Category{})); diff != "" {
 					t.Errorf("Category mismatch (-want +got):\n%s", diff)
 				}
 				return
@@ -154,7 +163,7 @@ func TestCategory_Set(t *testing.T) {
 				t.Fatalf("予期しないエラー: %v", err)
 			}
 
-			if diff := cmp.Diff(tc.wantCategory, &testCategory); diff != "" {
+			if diff := cmp.Diff(tc.wantCategory, &testCategory, cmp.AllowUnexported(Category{})); diff != "" {
 				t.Errorf("Category mismatch (-want +got):\n%s", diff)
 			}
 		})
