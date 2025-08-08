@@ -22,7 +22,7 @@ func NewUserRepository() userDomain.UserRepository {
 func (r *userRepository) Create(ctx context.Context, u *userDomain.User) error {
 	q := db.GetQuery(ctx)
 
-	parsed, err := uuid.Parse(u.ID)
+	parsed, err := uuid.Parse(u.ID())
 	if err != nil {
 		return err
 	}
@@ -30,12 +30,12 @@ func (r *userRepository) Create(ctx context.Context, u *userDomain.User) error {
 
 	params := dbgen.CreateUserParams{
 		ID:             pgID,
-		EmailSearchKey: u.EmailSearchKey,
-		Email:          u.EncryptedEmail,
-		Password:       u.EncryptedPassword,
-		Timezone:       u.Timezone,
-		ThemeColor:     dbgen.ThemeColorEnum(u.ThemeColor),
-		Language:       u.Language,
+		EmailSearchKey: u.EmailSearchKey(),
+		Email:          u.EncryptedEmail(),
+		Password:       u.EncryptedPassword(),
+		Timezone:       u.Timezone(),
+		ThemeColor:     dbgen.ThemeColorEnum(u.ThemeColor()),
+		Language:       u.Language(),
 	}
 
 	return q.CreateUser(ctx, params)
@@ -60,14 +60,20 @@ func (r *userRepository) FindByEmailSearchKey(ctx context.Context, searchKey str
 		verifiedAt = &row.VerifiedAt.Time
 	}
 
-	return &userDomain.User{
-		ID:                id,
-		EncryptedEmail:    row.Email,
-		EncryptedPassword: row.Password,
-		ThemeColor:        string(row.ThemeColor),
-		Language:          row.Language,
-		VerifiedAt:        verifiedAt,
-	}, nil
+	user, err := userDomain.ReconstructUserForAuth(
+		id,
+		searchKey, // FindByEmailSearchKeyの引数として渡されたsearchKey
+		row.Email,
+		row.Password,
+		string(row.ThemeColor),
+		row.Language,
+		verifiedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	
+	return user, nil
 }
 
 func (r *userRepository) GetSettingByID(ctx context.Context, userID string) (*userDomain.User, error) {
@@ -84,7 +90,7 @@ func (r *userRepository) GetSettingByID(ctx context.Context, userID string) (*us
 		return nil, err
 	}
 
-	ud, err := userDomain.ReconstructUser(
+	ud, err := userDomain.ReconstructUserForSettings(
 		userID,
 		row.Email,
 		row.Timezone,
@@ -101,18 +107,18 @@ func (r *userRepository) GetSettingByID(ctx context.Context, userID string) (*us
 func (r *userRepository) Update(ctx context.Context, u *userDomain.User) error {
 	q := db.GetQuery(ctx)
 
-	parsed, err := uuid.Parse(u.ID)
+	parsed, err := uuid.Parse(u.ID())
 	if err != nil {
 		return err
 	}
 	pgID := pgtype.UUID{Bytes: parsed, Valid: true}
 
 	params := dbgen.UpdateUserParams{
-		EmailSearchKey: u.EmailSearchKey,
-		Email:          u.EncryptedEmail,
-		Timezone:       u.Timezone,
-		ThemeColor:     dbgen.ThemeColorEnum(u.ThemeColor),
-		Language:       u.Language,
+		EmailSearchKey: u.EmailSearchKey(),
+		Email:          u.EncryptedEmail(),
+		Timezone:       u.Timezone(),
+		ThemeColor:     dbgen.ThemeColorEnum(u.ThemeColor()),
+		Language:       u.Language(),
 		ID:             pgID,
 	}
 

@@ -48,13 +48,13 @@ func (bu *boxUsecase) CreateBox(ctx context.Context, input CreateBoxInput) (*Cre
 	}
 
 	return &CreateBoxOutput{
-		ID:           newBox.ID,
-		UserID:       newBox.UserID,
-		CategoryID:   newBox.CategoryID,
-		PatternID:    newBox.PatternID,
-		Name:         newBox.Name,
-		RegisteredAt: newBox.RegisteredAt,
-		EditedAt:     newBox.EditedAt,
+		ID:           newBox.ID(),
+		UserID:       newBox.UserID(),
+		CategoryID:   newBox.CategoryID(),
+		PatternID:    newBox.PatternID(),
+		Name:         newBox.Name(),
+		RegisteredAt: newBox.RegisteredAt(),
+		EditedAt:     newBox.EditedAt(),
 	}, nil
 }
 
@@ -66,13 +66,13 @@ func (bu *boxUsecase) GetBoxesByCategoryID(ctx context.Context, categoryID, user
 	outputs := make([]*GetBoxOutput, 0, len(boxes))
 	for _, b := range boxes {
 		outputs = append(outputs, &GetBoxOutput{
-			ID:           b.ID,
-			UserID:       b.UserID,
-			CategoryID:   b.CategoryID,
-			PatternID:    b.PatternID,
-			Name:         b.Name,
-			RegisteredAt: b.RegisteredAt,
-			EditedAt:     b.EditedAt,
+			ID:           b.ID(),
+			UserID:       b.UserID(),
+			CategoryID:   b.CategoryID(),
+			PatternID:    b.PatternID(),
+			Name:         b.Name(),
+			RegisteredAt: b.RegisteredAt(),
+			EditedAt:     b.EditedAt(),
 		})
 	}
 	return outputs, nil
@@ -87,7 +87,7 @@ func (bu *boxUsecase) UpdateBox(ctx context.Context, input UpdateBoxInput) (*Upd
 	editedAt := time.Now().UTC()
 
 	var isSamePattern bool
-	isSamePattern, err = targetBox.Set(input.PatternID, input.Name, editedAt)
+	isSamePattern, err = targetBox.UpdateBox(input.PatternID, input.Name, editedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -108,12 +108,12 @@ func (bu *boxUsecase) UpdateBox(ctx context.Context, input UpdateBoxInput) (*Upd
 	}
 
 	resBox := &UpdateBoxOutput{
-		ID:         targetBox.ID,
-		UserID:     targetBox.UserID,
-		CategoryID: targetBox.CategoryID,
-		PatternID:  targetBox.PatternID,
-		Name:       targetBox.Name,
-		EditedAt:   targetBox.EditedAt,
+		ID:         targetBox.ID(),
+		UserID:     targetBox.UserID(),
+		CategoryID: targetBox.CategoryID(),
+		PatternID:  targetBox.PatternID(),
+		Name:       targetBox.Name(),
+		EditedAt:   targetBox.EditedAt(),
 	}
 	return resBox, nil
 }

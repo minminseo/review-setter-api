@@ -33,53 +33,62 @@ func TestItemRepository_CreateItem(t *testing.T) {
 	}{
 		{
 			name: "ボックス・パターンありで復習物作成に成功する場合",
-			item: &itemDomain.Item{
-				ItemID:       uuid.New().String(),
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				CategoryID:   stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-				BoxID:        stringPtr("950e8400-e29b-41d4-a716-446655440001"),
-				PatternID:    stringPtr("750e8400-e29b-41d4-a716-446655440001"),
-				Name:         "新しい数学問題",
-				Detail:       "微分積分の応用問題",
-				LearnedDate:  time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
-				IsFinished:   false,
-				RegisteredAt: now,
-				EditedAt:     now,
-			},
+			item: func() *itemDomain.Item {
+				item, _ := itemDomain.NewItem(
+					uuid.New().String(),
+					"550e8400-e29b-41d4-a716-446655440001",
+					stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+					stringPtr("950e8400-e29b-41d4-a716-446655440001"),
+					stringPtr("750e8400-e29b-41d4-a716-446655440001"),
+					"新しい数学問題",
+					"微分積分の応用問題",
+					time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+					false,
+					now,
+					now,
+				)
+				return item
+			}(),
 			wantErr: false,
 		},
 		{
 			name: "ボックスなし（未分類）で復習物作成に成功する場合",
-			item: &itemDomain.Item{
-				ItemID:       uuid.New().String(),
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				CategoryID:   stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-				BoxID:        nil,
-				PatternID:    nil,
-				Name:         "未分類の問題",
-				Detail:       "まだボックスに分類されていない問題",
-				LearnedDate:  time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
-				IsFinished:   false,
-				RegisteredAt: now,
-				EditedAt:     now,
-			},
+			item: func() *itemDomain.Item {
+				item, _ := itemDomain.NewItem(
+					uuid.New().String(),
+					"550e8400-e29b-41d4-a716-446655440001",
+					stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+					nil,
+					nil,
+					"未分類の問題",
+					"まだボックスに分類されていない問題",
+					time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+					false,
+					now,
+					now,
+				)
+				return item
+			}(),
 			wantErr: false,
 		},
 		{
 			name: "存在しないカテゴリによる外部キー制約違反",
-			item: &itemDomain.Item{
-				ItemID:       uuid.New().String(),
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				CategoryID:   stringPtr(uuid.New().String()), // Does not exist in fixture
-				BoxID:        nil,
-				PatternID:    nil,
-				Name:         "存在しないカテゴリの問題",
-				Detail:       "詳細",
-				LearnedDate:  time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-				IsFinished:   false,
-				RegisteredAt: now,
-				EditedAt:     now,
-			},
+			item: func() *itemDomain.Item {
+				item, _ := itemDomain.NewItem(
+					uuid.New().String(),
+					"550e8400-e29b-41d4-a716-446655440001",
+					stringPtr(uuid.New().String()), // Does not exist in fixture
+					nil,
+					nil,
+					"存在しないカテゴリの問題",
+					"詳細",
+					time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+					false,
+					now,
+					now,
+				)
+				return item
+			}(),
 			wantErr: true,
 		},
 	}
@@ -124,52 +133,64 @@ func TestItemRepository_CreateReviewdates(t *testing.T) {
 		{
 			name: "復習日の作成に成功する場合",
 			reviewdates: []*itemDomain.Reviewdate{
-				{
-					ReviewdateID:         "c50e8400-e29b-41d4-a716-446655440001",
-					UserID:               "550e8400-e29b-41d4-a716-446655440001",
-					CategoryID:           stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-					BoxID:                stringPtr("950e8400-e29b-41d4-a716-446655440001"),
-					ItemID:               "a50e8400-e29b-41d4-a716-446655440001",
-					StepNumber:           3,
-					InitialScheduledDate: time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
-					ScheduledDate:        time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
-					IsCompleted:          false,
-				},
-				{
-					ReviewdateID:         "c50e8400-e29b-41d4-a716-446655440002",
-					UserID:               "550e8400-e29b-41d4-a716-446655440001",
-					CategoryID:           stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-					BoxID:                stringPtr("950e8400-e29b-41d4-a716-446655440001"),
-					ItemID:               "a50e8400-e29b-41d4-a716-446655440001",
-					StepNumber:           4,
-					InitialScheduledDate: time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
-					ScheduledDate:        time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
-					IsCompleted:          false,
-				},
+				func() *itemDomain.Reviewdate {
+					reviewdate, _ := itemDomain.ReconstructReviewdate(
+						"c50e8400-e29b-41d4-a716-446655440001",
+						"550e8400-e29b-41d4-a716-446655440001",
+						stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+						stringPtr("950e8400-e29b-41d4-a716-446655440001"),
+						"a50e8400-e29b-41d4-a716-446655440001",
+						3,
+						time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+						time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+						false,
+					)
+					return reviewdate
+				}(),
+				func() *itemDomain.Reviewdate {
+					reviewdate, _ := itemDomain.ReconstructReviewdate(
+						"c50e8400-e29b-41d4-a716-446655440002",
+						"550e8400-e29b-41d4-a716-446655440001",
+						stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+						stringPtr("950e8400-e29b-41d4-a716-446655440001"),
+						"a50e8400-e29b-41d4-a716-446655440001",
+						4,
+						time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+						time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+						false,
+					)
+					return reviewdate
+				}(),
 			},
 			want: []*itemDomain.Reviewdate{
-				{
-					ReviewdateID:         "c50e8400-e29b-41d4-a716-446655440001",
-					UserID:               "550e8400-e29b-41d4-a716-446655440001",
-					CategoryID:           stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-					BoxID:                stringPtr("950e8400-e29b-41d4-a716-446655440001"),
-					ItemID:               "a50e8400-e29b-41d4-a716-446655440001",
-					StepNumber:           3,
-					InitialScheduledDate: time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
-					ScheduledDate:        time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
-					IsCompleted:          false,
-				},
-				{
-					ReviewdateID:         "c50e8400-e29b-41d4-a716-446655440002",
-					UserID:               "550e8400-e29b-41d4-a716-446655440001",
-					CategoryID:           stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-					BoxID:                stringPtr("950e8400-e29b-41d4-a716-446655440001"),
-					ItemID:               "a50e8400-e29b-41d4-a716-446655440001",
-					StepNumber:           4,
-					InitialScheduledDate: time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
-					ScheduledDate:        time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
-					IsCompleted:          false,
-				},
+				func() *itemDomain.Reviewdate {
+					reviewdate, _ := itemDomain.ReconstructReviewdate(
+						"c50e8400-e29b-41d4-a716-446655440001",
+						"550e8400-e29b-41d4-a716-446655440001",
+						stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+						stringPtr("950e8400-e29b-41d4-a716-446655440001"),
+						"a50e8400-e29b-41d4-a716-446655440001",
+						3,
+						time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+						time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+						false,
+					)
+					return reviewdate
+				}(),
+				func() *itemDomain.Reviewdate {
+					reviewdate, _ := itemDomain.ReconstructReviewdate(
+						"c50e8400-e29b-41d4-a716-446655440002",
+						"550e8400-e29b-41d4-a716-446655440001",
+						stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+						stringPtr("950e8400-e29b-41d4-a716-446655440001"),
+						"a50e8400-e29b-41d4-a716-446655440001",
+						4,
+						time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+						time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+						false,
+					)
+					return reviewdate
+				}(),
 			},
 			wantCount: 2,
 			wantErr:   false,
@@ -202,7 +223,7 @@ func TestItemRepository_CreateReviewdates(t *testing.T) {
 			}
 
 			// 作成された復習日を取得して比較
-			createdReviewdates, err := repo.GetReviewDatesByItemID(ctx, tc.reviewdates[0].ItemID, tc.reviewdates[0].UserID)
+			createdReviewdates, err := repo.GetReviewDatesByItemID(ctx, tc.reviewdates[0].ItemID(), tc.reviewdates[0].UserID())
 			if err != nil {
 				t.Errorf("作成された復習日の取得に失敗: %v", err)
 				return
@@ -212,14 +233,14 @@ func TestItemRepository_CreateReviewdates(t *testing.T) {
 			var actualReviewdates []*itemDomain.Reviewdate
 			for _, created := range createdReviewdates {
 				for _, expected := range tc.want {
-					if created.ReviewdateID == expected.ReviewdateID {
+					if created.ReviewdateID() == expected.ReviewdateID() {
 						actualReviewdates = append(actualReviewdates, created)
 						break
 					}
 				}
 			}
 
-			if diff := cmp.Diff(tc.want, actualReviewdates); diff != "" {
+			if diff := cmp.Diff(tc.want, actualReviewdates, cmp.AllowUnexported(itemDomain.Reviewdate{})); diff != "" {
 				t.Errorf("CreateReviewdates() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -245,19 +266,22 @@ func TestItemRepository_GetItemByID(t *testing.T) {
 			name:   "有効なIDで復習物を取得する場合",
 			itemID: "a50e8400-e29b-41d4-a716-446655440001",
 			userID: "550e8400-e29b-41d4-a716-446655440001",
-			want: &itemDomain.Item{
-				ItemID:       "a50e8400-e29b-41d4-a716-446655440001",
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				CategoryID:   stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-				BoxID:        stringPtr("950e8400-e29b-41d4-a716-446655440001"),
-				PatternID:    stringPtr("750e8400-e29b-41d4-a716-446655440001"),
-				Name:         "二次方程式",
-				Detail:       "ax^2 + bx + c = 0の解の公式を覚える",
-				LearnedDate:  time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-				IsFinished:   false,
-				RegisteredAt: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-				EditedAt:     time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-			},
+			want: func() *itemDomain.Item {
+				item, _ := itemDomain.ReconstructItem(
+					"a50e8400-e29b-41d4-a716-446655440001",
+					"550e8400-e29b-41d4-a716-446655440001",
+					stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+					stringPtr("950e8400-e29b-41d4-a716-446655440001"),
+					stringPtr("750e8400-e29b-41d4-a716-446655440001"),
+					"二次方程式",
+					"ax^2 + bx + c = 0の解の公式を覚える",
+					time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+					false,
+					time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+				)
+				return item
+			}(),
 			wantErr: false,
 		},
 		{
@@ -298,7 +322,7 @@ func TestItemRepository_GetItemByID(t *testing.T) {
 			}
 
 			if tc.want != nil {
-				if diff := cmp.Diff(tc.want, item); diff != "" {
+				if diff := cmp.Diff(tc.want, item, cmp.AllowUnexported(itemDomain.Item{})); diff != "" {
 					t.Errorf("GetItemByID() mismatch (-want +got):\n%s", diff)
 				}
 			}
@@ -434,31 +458,38 @@ func TestItemRepository_UpdateItem(t *testing.T) {
 	}{
 		{
 			name: "復習物の更新に成功する場合",
-			item: &itemDomain.Item{
-				ItemID:       "a50e8400-e29b-41d4-a716-446655440001",
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				CategoryID:   stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-				BoxID:        stringPtr("950e8400-e29b-41d4-a716-446655440001"),
-				PatternID:    stringPtr("750e8400-e29b-41d4-a716-446655440001"),
-				Name:         "更新された二次方程式",
-				Detail:       "更新された詳細",
-				LearnedDate:  time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-				IsFinished:   false,
-				RegisteredAt: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-				EditedAt:     time.Now(),
-			},
-			want: &itemDomain.Item{
-				ItemID:       "a50e8400-e29b-41d4-a716-446655440001",
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				CategoryID:   stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-				BoxID:        stringPtr("950e8400-e29b-41d4-a716-446655440001"),
-				PatternID:    stringPtr("750e8400-e29b-41d4-a716-446655440001"),
-				Name:         "更新された二次方程式",
-				Detail:       "更新された詳細",
-				LearnedDate:  time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-				IsFinished:   false,
-				RegisteredAt: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-			},
+			item: func() *itemDomain.Item {
+				item, _ := itemDomain.ReconstructItem(
+					"a50e8400-e29b-41d4-a716-446655440001",
+					"550e8400-e29b-41d4-a716-446655440001",
+					stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+					stringPtr("950e8400-e29b-41d4-a716-446655440001"),
+					stringPtr("750e8400-e29b-41d4-a716-446655440001"),
+					"更新された二次方程式",
+					"更新された詳細",
+					time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+					false,
+					time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+					time.Now(),
+				)
+				return item
+			}(),
+			want: func() *itemDomain.Item {
+				item, _ := itemDomain.ReconstructItem(
+					"a50e8400-e29b-41d4-a716-446655440001",
+					"550e8400-e29b-41d4-a716-446655440001",
+					stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+					stringPtr("950e8400-e29b-41d4-a716-446655440001"),
+					stringPtr("750e8400-e29b-41d4-a716-446655440001"),
+					"更新された二次方程式",
+					"更新された詳細",
+					time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+					false,
+					time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+					time.Time{}, // EditedAtは動的に設定
+				)
+				return item
+			}(),
 			wantErr: false,
 		},
 	}
@@ -485,7 +516,7 @@ func TestItemRepository_UpdateItem(t *testing.T) {
 
 			if tc.want != nil {
 				// 更新された復習物を取得して検証
-				updatedItem, err := repo.GetItemByID(ctx, tc.item.ItemID, tc.item.UserID)
+				updatedItem, err := repo.GetItemByID(ctx, tc.item.ItemID(), tc.item.UserID())
 				if err != nil {
 					t.Errorf("更新された復習物の取得に失敗: %v", err)
 					return
@@ -496,11 +527,23 @@ func TestItemRepository_UpdateItem(t *testing.T) {
 					return
 				}
 
-				// 動的に変更されるフィールドを期待値に設定
-				tc.want.EditedAt = updatedItem.EditedAt
+				// 期待値を生成し動的な値を設定
+				want, _ := itemDomain.ReconstructItem(
+					tc.want.ItemID(),
+					tc.want.UserID(),
+					tc.want.CategoryID(),
+					tc.want.BoxID(),
+					tc.want.PatternID(),
+					tc.want.Name(),
+					tc.want.Detail(),
+					tc.want.LearnedDate(),
+					tc.want.IsFinished(),
+					tc.want.RegisteredAt(),
+					updatedItem.EditedAt(), // 動的に変更された値を使用
+				)
 
 				// 期待値との比較
-				if diff := cmp.Diff(tc.want, updatedItem); diff != "" {
+				if diff := cmp.Diff(want, updatedItem, cmp.AllowUnexported(itemDomain.Item{})); diff != "" {
 					t.Errorf("UpdateItem() mismatch (-want +got):\n%s", diff)
 				}
 			}
@@ -526,31 +569,37 @@ func TestItemRepository_UpdateReviewDates(t *testing.T) {
 		{
 			name: "復習日の更新に成功する場合",
 			reviewdates: []*itemDomain.Reviewdate{
-				{
-					ReviewdateID:         "b50e8400-e29b-41d4-a716-446655440001",
-					UserID:               "550e8400-e29b-41d4-a716-446655440001",
-					CategoryID:           stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-					BoxID:                stringPtr("950e8400-e29b-41d4-a716-446655440001"),
-					ItemID:               "a50e8400-e29b-41d4-a716-446655440001",
-					StepNumber:           1,
-					InitialScheduledDate: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-					ScheduledDate:        time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC), // 更新されたスケジュール日
-					IsCompleted:          false,
-				},
+				func() *itemDomain.Reviewdate {
+					reviewdate, _ := itemDomain.ReconstructReviewdate(
+						"b50e8400-e29b-41d4-a716-446655440001",
+						"550e8400-e29b-41d4-a716-446655440001",
+						stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+						stringPtr("950e8400-e29b-41d4-a716-446655440001"),
+						"a50e8400-e29b-41d4-a716-446655440001",
+						1,
+						time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+						time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC), // 更新されたスケジュール日
+						false,
+					)
+					return reviewdate
+				}(),
 			},
 			userID: "550e8400-e29b-41d4-a716-446655440001",
 			want: []*itemDomain.Reviewdate{
-				{
-					ReviewdateID:         "b50e8400-e29b-41d4-a716-446655440001",
-					UserID:               "550e8400-e29b-41d4-a716-446655440001",
-					CategoryID:           stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-					BoxID:                stringPtr("950e8400-e29b-41d4-a716-446655440001"),
-					ItemID:               "a50e8400-e29b-41d4-a716-446655440001",
-					StepNumber:           1,
-					InitialScheduledDate: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-					ScheduledDate:        time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
-					IsCompleted:          false,
-				},
+				func() *itemDomain.Reviewdate {
+					reviewdate, _ := itemDomain.ReconstructReviewdate(
+						"b50e8400-e29b-41d4-a716-446655440001",
+						"550e8400-e29b-41d4-a716-446655440001",
+						stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+						stringPtr("950e8400-e29b-41d4-a716-446655440001"),
+						"a50e8400-e29b-41d4-a716-446655440001",
+						1,
+						time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+						time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
+						false,
+					)
+					return reviewdate
+				}(),
 			},
 			wantErr: false,
 		},
@@ -578,7 +627,7 @@ func TestItemRepository_UpdateReviewDates(t *testing.T) {
 
 			if tc.want != nil {
 				// 更新された復習日を取得して検証
-				updatedReviewDates, err := repo.GetReviewDatesByItemID(ctx, tc.reviewdates[0].ItemID, tc.userID)
+				updatedReviewDates, err := repo.GetReviewDatesByItemID(ctx, tc.reviewdates[0].ItemID(), tc.userID)
 				if err != nil {
 					t.Errorf("更新された復習日の取得に失敗: %v", err)
 					return
@@ -592,8 +641,8 @@ func TestItemRepository_UpdateReviewDates(t *testing.T) {
 				// 更新された復習日を探して比較
 				for _, updatedReviewDate := range updatedReviewDates {
 					for _, wantReviewDate := range tc.want {
-						if updatedReviewDate.ReviewdateID == wantReviewDate.ReviewdateID {
-							if diff := cmp.Diff(wantReviewDate, updatedReviewDate); diff != "" {
+						if updatedReviewDate.ReviewdateID() == wantReviewDate.ReviewdateID() {
+							if diff := cmp.Diff(wantReviewDate, updatedReviewDate, cmp.AllowUnexported(itemDomain.Reviewdate{})); diff != "" {
 								t.Errorf("UpdateReviewDates() mismatch (-want +got):\n%s", diff)
 							}
 							break
@@ -623,31 +672,37 @@ func TestItemRepository_UpdateReviewDatesBack(t *testing.T) {
 		{
 			name: "復習日の巻き戻し更新に成功する場合",
 			reviewdates: []*itemDomain.Reviewdate{
-				{
-					ReviewdateID:         "b50e8400-e29b-41d4-a716-446655440002",
-					UserID:               "550e8400-e29b-41d4-a716-446655440001",
-					CategoryID:           stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-					BoxID:                stringPtr("950e8400-e29b-41d4-a716-446655440001"),
-					ItemID:               "a50e8400-e29b-41d4-a716-446655440001",
-					StepNumber:           2,
-					InitialScheduledDate: time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
-					ScheduledDate:        time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC), // 巻き戻されたスケジュール日
-					IsCompleted:          false,
-				},
+				func() *itemDomain.Reviewdate {
+					reviewdate, _ := itemDomain.ReconstructReviewdate(
+						"b50e8400-e29b-41d4-a716-446655440002",
+						"550e8400-e29b-41d4-a716-446655440001",
+						stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+						stringPtr("950e8400-e29b-41d4-a716-446655440001"),
+						"a50e8400-e29b-41d4-a716-446655440001",
+						2,
+						time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
+						time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC), // 巻き戻されたスケジュール日
+						false,
+					)
+					return reviewdate
+				}(),
 			},
 			userID: "550e8400-e29b-41d4-a716-446655440001",
 			want: []*itemDomain.Reviewdate{
-				{
-					ReviewdateID:         "b50e8400-e29b-41d4-a716-446655440002",
-					UserID:               "550e8400-e29b-41d4-a716-446655440001",
-					CategoryID:           stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-					BoxID:                stringPtr("950e8400-e29b-41d4-a716-446655440001"),
-					ItemID:               "a50e8400-e29b-41d4-a716-446655440001",
-					StepNumber:           2,
-					InitialScheduledDate: time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
-					ScheduledDate:        time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
-					IsCompleted:          false,
-				},
+				func() *itemDomain.Reviewdate {
+					reviewdate, _ := itemDomain.ReconstructReviewdate(
+						"b50e8400-e29b-41d4-a716-446655440002",
+						"550e8400-e29b-41d4-a716-446655440001",
+						stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+						stringPtr("950e8400-e29b-41d4-a716-446655440001"),
+						"a50e8400-e29b-41d4-a716-446655440001",
+						2,
+						time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
+						time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
+						false,
+					)
+					return reviewdate
+				}(),
 			},
 			wantErr: false,
 		},
@@ -675,7 +730,7 @@ func TestItemRepository_UpdateReviewDatesBack(t *testing.T) {
 
 			if tc.want != nil {
 				// 更新された復習日を取得して検証
-				updatedReviewDates, err := repo.GetReviewDatesByItemID(ctx, tc.reviewdates[0].ItemID, tc.userID)
+				updatedReviewDates, err := repo.GetReviewDatesByItemID(ctx, tc.reviewdates[0].ItemID(), tc.userID)
 				if err != nil {
 					t.Errorf("更新された復習日の取得に失敗: %v", err)
 					return
@@ -689,8 +744,8 @@ func TestItemRepository_UpdateReviewDatesBack(t *testing.T) {
 				// 更新された復習日を探して比較
 				for _, updatedReviewDate := range updatedReviewDates {
 					for _, wantReviewDate := range tc.want {
-						if updatedReviewDate.ReviewdateID == wantReviewDate.ReviewdateID {
-							if diff := cmp.Diff(wantReviewDate, updatedReviewDate); diff != "" {
+						if updatedReviewDate.ReviewdateID() == wantReviewDate.ReviewdateID() {
+							if diff := cmp.Diff(wantReviewDate, updatedReviewDate, cmp.AllowUnexported(itemDomain.Reviewdate{})); diff != "" {
 								t.Errorf("UpdateReviewDatesBack() mismatch (-want +got):\n%s", diff)
 							}
 							break
@@ -724,19 +779,22 @@ func TestItemRepository_UpdateItemAsFinished(t *testing.T) {
 			itemID:     "a50e8400-e29b-41d4-a716-446655440001",
 			userID:     "550e8400-e29b-41d4-a716-446655440001",
 			finishedAt: finishedAt,
-			want: &itemDomain.Item{
-				ItemID:       "a50e8400-e29b-41d4-a716-446655440001",
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				CategoryID:   stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-				BoxID:        stringPtr("950e8400-e29b-41d4-a716-446655440001"),
-				PatternID:    stringPtr("750e8400-e29b-41d4-a716-446655440001"),
-				Name:         "二次方程式",
-				Detail:       "ax^2 + bx + c = 0の解の公式を覚える",
-				LearnedDate:  time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-				IsFinished:   true,
-				RegisteredAt: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-				EditedAt:     finishedAt,
-			},
+			want: func() *itemDomain.Item {
+				item, _ := itemDomain.ReconstructItem(
+					"a50e8400-e29b-41d4-a716-446655440001",
+					"550e8400-e29b-41d4-a716-446655440001",
+					stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+					stringPtr("950e8400-e29b-41d4-a716-446655440001"),
+					stringPtr("750e8400-e29b-41d4-a716-446655440001"),
+					"二次方程式",
+					"ax^2 + bx + c = 0の解の公式を覚える",
+					time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+					true,
+					time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+					finishedAt,
+				)
+				return item
+			}(),
 			wantErr: false,
 		},
 		{
@@ -785,7 +843,7 @@ func TestItemRepository_UpdateItemAsFinished(t *testing.T) {
 					return
 				}
 
-				if diff := cmp.Diff(tc.want, actualItem); diff != "" {
+				if diff := cmp.Diff(tc.want, actualItem, cmp.AllowUnexported(itemDomain.Item{})); diff != "" {
 					t.Errorf("UpdateItemAsFinished() mismatch (-want +got):\n%s", diff)
 				}
 			}
@@ -814,19 +872,22 @@ func TestItemRepository_UpdateItemAsUnFinished(t *testing.T) {
 			itemID:   "a50e8400-e29b-41d4-a716-446655440002", // フィクスチャでは完了済み
 			userID:   "550e8400-e29b-41d4-a716-446655440001",
 			editedAt: time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
-			want: &itemDomain.Item{
-				ItemID:       "a50e8400-e29b-41d4-a716-446655440002",
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				CategoryID:   stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-				BoxID:        stringPtr("950e8400-e29b-41d4-a716-446655440002"),
-				PatternID:    stringPtr("750e8400-e29b-41d4-a716-446655440002"),
-				Name:         "円の面積",
-				Detail:       "π × r^2の公式を理解する",
-				LearnedDate:  time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-				IsFinished:   false, // 未完了に更新される
-				RegisteredAt: time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-				EditedAt:     time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
-			},
+			want: func() *itemDomain.Item {
+				item, _ := itemDomain.ReconstructItem(
+					"a50e8400-e29b-41d4-a716-446655440002",
+					"550e8400-e29b-41d4-a716-446655440001",
+					stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+					stringPtr("950e8400-e29b-41d4-a716-446655440002"),
+					stringPtr("750e8400-e29b-41d4-a716-446655440002"),
+					"円の面積",
+					"π × r^2の公式を理解する",
+					time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+					false, // 未完了に更新される
+					time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+					time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
+				)
+				return item
+			}(),
 			wantErr: false,
 		},
 	}
@@ -865,7 +926,7 @@ func TestItemRepository_UpdateItemAsUnFinished(t *testing.T) {
 				}
 
 				// 期待値との比較
-				if diff := cmp.Diff(tc.want, updatedItem); diff != "" {
+				if diff := cmp.Diff(tc.want, updatedItem, cmp.AllowUnexported(itemDomain.Item{})); diff != "" {
 					t.Errorf("UpdateItemAsUnFinished() mismatch (-want +got):\n%s", diff)
 				}
 			}
@@ -892,17 +953,20 @@ func TestItemRepository_UpdateReviewDateAsCompleted(t *testing.T) {
 			name:         "復習日を完了状態に更新する場合",
 			reviewdateID: "b50e8400-e29b-41d4-a716-446655440001", // フィクスチャでは未完了
 			userID:       "550e8400-e29b-41d4-a716-446655440001",
-			want: &itemDomain.Reviewdate{
-				ReviewdateID:         "b50e8400-e29b-41d4-a716-446655440001",
-				UserID:               "550e8400-e29b-41d4-a716-446655440001",
-				CategoryID:           stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-				BoxID:                stringPtr("950e8400-e29b-41d4-a716-446655440001"),
-				ItemID:               "a50e8400-e29b-41d4-a716-446655440001",
-				StepNumber:           1,
-				InitialScheduledDate: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-				ScheduledDate:        time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-				IsCompleted:          true, // 完了状態に更新される
-			},
+			want: func() *itemDomain.Reviewdate {
+				reviewdate, _ := itemDomain.ReconstructReviewdate(
+					"b50e8400-e29b-41d4-a716-446655440001",
+					"550e8400-e29b-41d4-a716-446655440001",
+					stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+					stringPtr("950e8400-e29b-41d4-a716-446655440001"),
+					"a50e8400-e29b-41d4-a716-446655440001",
+					1,
+					time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+					true, // 完了状態に更新される
+				)
+				return reviewdate
+			}(),
 			wantErr: false,
 		},
 	}
@@ -929,7 +993,7 @@ func TestItemRepository_UpdateReviewDateAsCompleted(t *testing.T) {
 
 			if tc.want != nil {
 				// 更新された復習日を取得して検証
-				updatedReviewDates, err := repo.GetReviewDatesByItemID(ctx, tc.want.ItemID, tc.userID)
+				updatedReviewDates, err := repo.GetReviewDatesByItemID(ctx, tc.want.ItemID(), tc.userID)
 				if err != nil {
 					t.Errorf("更新された復習日の取得に失敗: %v", err)
 					return
@@ -937,7 +1001,7 @@ func TestItemRepository_UpdateReviewDateAsCompleted(t *testing.T) {
 
 				var updatedReviewDate *itemDomain.Reviewdate
 				for _, rd := range updatedReviewDates {
-					if rd.ReviewdateID == tc.reviewdateID {
+					if rd.ReviewdateID() == tc.reviewdateID {
 						updatedReviewDate = rd
 						break
 					}
@@ -949,7 +1013,7 @@ func TestItemRepository_UpdateReviewDateAsCompleted(t *testing.T) {
 				}
 
 				// 期待値との比較
-				if diff := cmp.Diff(tc.want, updatedReviewDate); diff != "" {
+				if diff := cmp.Diff(tc.want, updatedReviewDate, cmp.AllowUnexported(itemDomain.Reviewdate{})); diff != "" {
 					t.Errorf("UpdateReviewDateAsCompleted() mismatch (-want +got):\n%s", diff)
 				}
 			}
@@ -976,17 +1040,20 @@ func TestItemRepository_UpdateReviewDateAsInCompleted(t *testing.T) {
 			name:         "復習日を未完了状態に更新する場合",
 			reviewdateID: "b50e8400-e29b-41d4-a716-446655440003", // フィクスチャでは完了済み
 			userID:       "550e8400-e29b-41d4-a716-446655440001",
-			want: &itemDomain.Reviewdate{
-				ReviewdateID:         "b50e8400-e29b-41d4-a716-446655440003",
-				UserID:               "550e8400-e29b-41d4-a716-446655440001",
-				CategoryID:           stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-				BoxID:                stringPtr("950e8400-e29b-41d4-a716-446655440002"),
-				ItemID:               "a50e8400-e29b-41d4-a716-446655440002",
-				StepNumber:           1,
-				InitialScheduledDate: time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
-				ScheduledDate:        time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
-				IsCompleted:          false, // 未完了状態に更新される
-			},
+			want: func() *itemDomain.Reviewdate {
+				reviewdate, _ := itemDomain.ReconstructReviewdate(
+					"b50e8400-e29b-41d4-a716-446655440003",
+					"550e8400-e29b-41d4-a716-446655440001",
+					stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+					stringPtr("950e8400-e29b-41d4-a716-446655440002"),
+					"a50e8400-e29b-41d4-a716-446655440002",
+					1,
+					time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
+					false, // 未完了状態に更新される
+				)
+				return reviewdate
+			}(),
 			wantErr: false,
 		},
 	}
@@ -1013,7 +1080,7 @@ func TestItemRepository_UpdateReviewDateAsInCompleted(t *testing.T) {
 
 			if tc.want != nil {
 				// 更新された復習日を取得して検証
-				updatedReviewDates, err := repo.GetReviewDatesByItemID(ctx, tc.want.ItemID, tc.userID)
+				updatedReviewDates, err := repo.GetReviewDatesByItemID(ctx, tc.want.ItemID(), tc.userID)
 				if err != nil {
 					t.Errorf("更新された復習日の取得に失敗: %v", err)
 					return
@@ -1021,7 +1088,7 @@ func TestItemRepository_UpdateReviewDateAsInCompleted(t *testing.T) {
 
 				var updatedReviewDate *itemDomain.Reviewdate
 				for _, rd := range updatedReviewDates {
-					if rd.ReviewdateID == tc.reviewdateID {
+					if rd.ReviewdateID() == tc.reviewdateID {
 						updatedReviewDate = rd
 						break
 					}
@@ -1033,7 +1100,7 @@ func TestItemRepository_UpdateReviewDateAsInCompleted(t *testing.T) {
 				}
 
 				// 期待値との比較
-				if diff := cmp.Diff(tc.want, updatedReviewDate); diff != "" {
+				if diff := cmp.Diff(tc.want, updatedReviewDate, cmp.AllowUnexported(itemDomain.Reviewdate{})); diff != "" {
 					t.Errorf("UpdateReviewDateAsInCompleted() mismatch (-want +got):\n%s", diff)
 				}
 			}
@@ -1061,28 +1128,34 @@ func TestItemRepository_GetReviewDatesByItemID(t *testing.T) {
 			itemID: "a50e8400-e29b-41d4-a716-446655440001",
 			userID: "550e8400-e29b-41d4-a716-446655440001",
 			want: []*itemDomain.Reviewdate{
-				{
-					ReviewdateID:         "b50e8400-e29b-41d4-a716-446655440001",
-					UserID:               "550e8400-e29b-41d4-a716-446655440001",
-					CategoryID:           stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-					BoxID:                stringPtr("950e8400-e29b-41d4-a716-446655440001"),
-					ItemID:               "a50e8400-e29b-41d4-a716-446655440001",
-					StepNumber:           1,
-					InitialScheduledDate: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-					ScheduledDate:        time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-					IsCompleted:          false,
-				},
-				{
-					ReviewdateID:         "b50e8400-e29b-41d4-a716-446655440002",
-					UserID:               "550e8400-e29b-41d4-a716-446655440001",
-					CategoryID:           stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-					BoxID:                stringPtr("950e8400-e29b-41d4-a716-446655440001"),
-					ItemID:               "a50e8400-e29b-41d4-a716-446655440001",
-					StepNumber:           2,
-					InitialScheduledDate: time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
-					ScheduledDate:        time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
-					IsCompleted:          false,
-				},
+				func() *itemDomain.Reviewdate {
+					reviewdate, _ := itemDomain.ReconstructReviewdate(
+						"b50e8400-e29b-41d4-a716-446655440001",
+						"550e8400-e29b-41d4-a716-446655440001",
+						stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+						stringPtr("950e8400-e29b-41d4-a716-446655440001"),
+						"a50e8400-e29b-41d4-a716-446655440001",
+						1,
+						time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+						time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+						false,
+					)
+					return reviewdate
+				}(),
+				func() *itemDomain.Reviewdate {
+					reviewdate, _ := itemDomain.ReconstructReviewdate(
+						"b50e8400-e29b-41d4-a716-446655440002",
+						"550e8400-e29b-41d4-a716-446655440001",
+						stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+						stringPtr("950e8400-e29b-41d4-a716-446655440001"),
+						"a50e8400-e29b-41d4-a716-446655440001",
+						2,
+						time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
+						time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
+						false,
+					)
+					return reviewdate
+				}(),
 			},
 			wantErr: false,
 		},
@@ -1108,7 +1181,7 @@ func TestItemRepository_GetReviewDatesByItemID(t *testing.T) {
 				return
 			}
 
-			if diff := cmp.Diff(tc.want, reviewdates); diff != "" {
+			if diff := cmp.Diff(tc.want, reviewdates, cmp.AllowUnexported(itemDomain.Reviewdate{})); diff != "" {
 				t.Errorf("GetReviewDatesByItemID() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -1176,7 +1249,7 @@ func TestItemRepository_DeleteItem(t *testing.T) {
 				return
 			}
 
-			if diff := cmp.Diff(tc.want, actualItem); diff != "" {
+			if diff := cmp.Diff(tc.want, actualItem, cmp.AllowUnexported(itemDomain.Item{})); diff != "" {
 				t.Errorf("DeleteItem() 削除後の状態 mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -1235,7 +1308,7 @@ func TestItemRepository_DeleteReviewDates(t *testing.T) {
 				return
 			}
 
-			if diff := cmp.Diff(tc.want, actualReviewDates); diff != "" {
+			if diff := cmp.Diff(tc.want, actualReviewDates, cmp.AllowUnexported(itemDomain.Reviewdate{})); diff != "" {
 				t.Errorf("DeleteReviewDates() 削除後の状態 mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -1262,19 +1335,22 @@ func TestItemRepository_GetAllUnFinishedItemsByBoxID(t *testing.T) {
 			boxID:  "950e8400-e29b-41d4-a716-446655440001",
 			userID: "550e8400-e29b-41d4-a716-446655440001",
 			want: []*itemDomain.Item{
-				{
-					ItemID:       "a50e8400-e29b-41d4-a716-446655440001",
-					UserID:       "550e8400-e29b-41d4-a716-446655440001",
-					CategoryID:   stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-					BoxID:        stringPtr("950e8400-e29b-41d4-a716-446655440001"),
-					PatternID:    stringPtr("750e8400-e29b-41d4-a716-446655440001"),
-					Name:         "二次方程式",
-					Detail:       "ax^2 + bx + c = 0の解の公式を覚える",
-					LearnedDate:  time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-					IsFinished:   false,
-					RegisteredAt: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-					EditedAt:     time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-				},
+				func() *itemDomain.Item {
+					item, _ := itemDomain.ReconstructItem(
+						"a50e8400-e29b-41d4-a716-446655440001",
+						"550e8400-e29b-41d4-a716-446655440001",
+						stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+						stringPtr("950e8400-e29b-41d4-a716-446655440001"),
+						stringPtr("750e8400-e29b-41d4-a716-446655440001"),
+						"二次方程式",
+						"ax^2 + bx + c = 0の解の公式を覚える",
+						time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+						false,
+						time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+						time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+					)
+					return item
+				}(),
 			},
 			wantErr: false,
 		},
@@ -1307,7 +1383,7 @@ func TestItemRepository_GetAllUnFinishedItemsByBoxID(t *testing.T) {
 				return
 			}
 
-			if diff := cmp.Diff(tc.want, items); diff != "" {
+			if diff := cmp.Diff(tc.want, items, cmp.AllowUnexported(itemDomain.Item{})); diff != "" {
 				t.Errorf("GetAllUnFinishedItemsByBoxID() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -1334,28 +1410,34 @@ func TestItemRepository_GetAllReviewDatesByBoxID(t *testing.T) {
 			boxID:  "950e8400-e29b-41d4-a716-446655440001",
 			userID: "550e8400-e29b-41d4-a716-446655440001",
 			want: []*itemDomain.Reviewdate{
-				{
-					ReviewdateID:         "b50e8400-e29b-41d4-a716-446655440001",
-					UserID:               "550e8400-e29b-41d4-a716-446655440001",
-					CategoryID:           stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-					BoxID:                stringPtr("950e8400-e29b-41d4-a716-446655440001"),
-					ItemID:               "a50e8400-e29b-41d4-a716-446655440001",
-					StepNumber:           1,
-					InitialScheduledDate: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-					ScheduledDate:        time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-					IsCompleted:          false,
-				},
-				{
-					ReviewdateID:         "b50e8400-e29b-41d4-a716-446655440002",
-					UserID:               "550e8400-e29b-41d4-a716-446655440001",
-					CategoryID:           stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-					BoxID:                stringPtr("950e8400-e29b-41d4-a716-446655440001"),
-					ItemID:               "a50e8400-e29b-41d4-a716-446655440001",
-					StepNumber:           2,
-					InitialScheduledDate: time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
-					ScheduledDate:        time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
-					IsCompleted:          false,
-				},
+				func() *itemDomain.Reviewdate {
+					reviewdate, _ := itemDomain.ReconstructReviewdate(
+						"b50e8400-e29b-41d4-a716-446655440001",
+						"550e8400-e29b-41d4-a716-446655440001",
+						stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+						stringPtr("950e8400-e29b-41d4-a716-446655440001"),
+						"a50e8400-e29b-41d4-a716-446655440001",
+						1,
+						time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+						time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+						false,
+					)
+					return reviewdate
+				}(),
+				func() *itemDomain.Reviewdate {
+					reviewdate, _ := itemDomain.ReconstructReviewdate(
+						"b50e8400-e29b-41d4-a716-446655440002",
+						"550e8400-e29b-41d4-a716-446655440001",
+						stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+						stringPtr("950e8400-e29b-41d4-a716-446655440001"),
+						"a50e8400-e29b-41d4-a716-446655440001",
+						2,
+						time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
+						time.Date(2024, 1, 4, 0, 0, 0, 0, time.UTC),
+						false,
+					)
+					return reviewdate
+				}(),
 			},
 			wantErr: false,
 		},
@@ -1381,7 +1463,7 @@ func TestItemRepository_GetAllReviewDatesByBoxID(t *testing.T) {
 				return
 			}
 
-			if diff := cmp.Diff(tc.want, reviewdates); diff != "" {
+			if diff := cmp.Diff(tc.want, reviewdates, cmp.AllowUnexported(itemDomain.Reviewdate{})); diff != "" {
 				t.Errorf("GetAllReviewDatesByBoxID() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -1440,11 +1522,11 @@ func TestItemRepository_GetAllUnFinishedUnclassifiedItemsByUserID(t *testing.T) 
 
 			// 返された全ての復習物が指定ユーザーのものであり、ボックスがnilであることを検証
 			for _, item := range items {
-				if item.UserID != tc.userID {
-					t.Errorf("期待されるユーザーID: %s, 実際: %s", tc.userID, item.UserID)
+				if item.UserID() != tc.userID {
+					t.Errorf("期待されるユーザーID: %s, 実際: %s", tc.userID, item.UserID())
 				}
-				if item.BoxID != nil {
-					t.Errorf("復習物のBoxIDはnilであるべきですが、%sが設定されています", *item.BoxID)
+				if item.BoxID() != nil {
+					t.Errorf("復習物のBoxIDはnilであるべきですが、%sが設定されています", *item.BoxID())
 				}
 			}
 		})
@@ -1469,17 +1551,20 @@ func TestItemRepository_GetAllUnclassifiedReviewDatesByUserID(t *testing.T) {
 			name:   "未分類復習日を取得する場合",
 			userID: "550e8400-e29b-41d4-a716-446655440002",
 			want: []*itemDomain.Reviewdate{
-				{
-					ReviewdateID:         "b50e8400-e29b-41d4-a716-446655440006",
-					UserID:               "550e8400-e29b-41d4-a716-446655440002",
-					CategoryID:           nil, // 真の未分類のため nil
-					BoxID:                nil, // 未分類のため nil
-					ItemID:               "a50e8400-e29b-41d4-a716-446655440006",
-					StepNumber:           1,
-					InitialScheduledDate: time.Date(2024, 1, 7, 0, 0, 0, 0, time.UTC),
-					ScheduledDate:        time.Date(2024, 1, 7, 0, 0, 0, 0, time.UTC),
-					IsCompleted:          false,
-				},
+				func() *itemDomain.Reviewdate {
+					reviewdate, _ := itemDomain.ReconstructReviewdate(
+						"b50e8400-e29b-41d4-a716-446655440006",
+						"550e8400-e29b-41d4-a716-446655440002",
+						nil, // 真の未分類のため nil
+						nil, // 未分類のため nil
+						"a50e8400-e29b-41d4-a716-446655440006",
+						1,
+						time.Date(2024, 1, 7, 0, 0, 0, 0, time.UTC),
+						time.Date(2024, 1, 7, 0, 0, 0, 0, time.UTC),
+						false,
+					)
+					return reviewdate
+				}(),
 			},
 			wantErr: false,
 		},
@@ -1511,7 +1596,7 @@ func TestItemRepository_GetAllUnclassifiedReviewDatesByUserID(t *testing.T) {
 				return
 			}
 
-			if diff := cmp.Diff(tc.want, reviewdates); diff != "" {
+			if diff := cmp.Diff(tc.want, reviewdates, cmp.AllowUnexported(itemDomain.Reviewdate{})); diff != "" {
 				t.Errorf("GetAllUnclassifiedReviewDatesByUserID() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -1538,19 +1623,22 @@ func TestItemRepository_GetAllUnFinishedUnclassifiedItemsByCategoryID(t *testing
 			categoryID: "650e8400-e29b-41d4-a716-446655440004",
 			userID:     "550e8400-e29b-41d4-a716-446655440002",
 			want: []*itemDomain.Item{
-				{
-					ItemID:       "a50e8400-e29b-41d4-a716-446655440005",
-					UserID:       "550e8400-e29b-41d4-a716-446655440002",
-					CategoryID:   stringPtr("650e8400-e29b-41d4-a716-446655440004"),
-					BoxID:        nil, // 未分類のため nil
-					PatternID:    nil,
-					Name:         "明治維新",
-					Detail:       "1868年の政治変革について",
-					LearnedDate:  time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
-					IsFinished:   false,
-					RegisteredAt: time.Date(2024, 1, 1, 14, 0, 0, 0, time.UTC),
-					EditedAt:     time.Date(2024, 1, 1, 14, 0, 0, 0, time.UTC),
-				},
+				func() *itemDomain.Item {
+					item, _ := itemDomain.ReconstructItem(
+						"a50e8400-e29b-41d4-a716-446655440005",
+						"550e8400-e29b-41d4-a716-446655440002",
+						stringPtr("650e8400-e29b-41d4-a716-446655440004"),
+						nil, // 未分類のため nil
+						nil,
+						"明治維新",
+						"1868年の政治変革について",
+						time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
+						false,
+						time.Date(2024, 1, 1, 14, 0, 0, 0, time.UTC),
+						time.Date(2024, 1, 1, 14, 0, 0, 0, time.UTC),
+					)
+					return item
+				}(),
 			},
 			wantErr: false,
 		},
@@ -1583,7 +1671,7 @@ func TestItemRepository_GetAllUnFinishedUnclassifiedItemsByCategoryID(t *testing
 				return
 			}
 
-			if diff := cmp.Diff(tc.want, items); diff != "" {
+			if diff := cmp.Diff(tc.want, items, cmp.AllowUnexported(itemDomain.Item{})); diff != "" {
 				t.Errorf("GetAllUnFinishedUnclassifiedItemsByCategoryID() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -1610,17 +1698,20 @@ func TestItemRepository_GetAllUnclassifiedReviewDatesByCategoryID(t *testing.T) 
 			categoryID: "650e8400-e29b-41d4-a716-446655440004",
 			userID:     "550e8400-e29b-41d4-a716-446655440002",
 			want: []*itemDomain.Reviewdate{
-				{
-					ReviewdateID:         "b50e8400-e29b-41d4-a716-446655440007",
-					UserID:               "550e8400-e29b-41d4-a716-446655440002",
-					CategoryID:           stringPtr("650e8400-e29b-41d4-a716-446655440004"),
-					BoxID:                nil, // 未分類のため nil
-					ItemID:               "a50e8400-e29b-41d4-a716-446655440005",
-					StepNumber:           1,
-					InitialScheduledDate: time.Date(2024, 1, 6, 0, 0, 0, 0, time.UTC),
-					ScheduledDate:        time.Date(2024, 1, 6, 0, 0, 0, 0, time.UTC),
-					IsCompleted:          false,
-				},
+				func() *itemDomain.Reviewdate {
+					reviewdate, _ := itemDomain.ReconstructReviewdate(
+						"b50e8400-e29b-41d4-a716-446655440007",
+						"550e8400-e29b-41d4-a716-446655440002",
+						stringPtr("650e8400-e29b-41d4-a716-446655440004"),
+						nil, // 未分類のため nil
+						"a50e8400-e29b-41d4-a716-446655440005",
+						1,
+						time.Date(2024, 1, 6, 0, 0, 0, 0, time.UTC),
+						time.Date(2024, 1, 6, 0, 0, 0, 0, time.UTC),
+						false,
+					)
+					return reviewdate
+				}(),
 			},
 			wantErr: false,
 		},
@@ -1653,7 +1744,7 @@ func TestItemRepository_GetAllUnclassifiedReviewDatesByCategoryID(t *testing.T) 
 				return
 			}
 
-			if diff := cmp.Diff(tc.want, reviewdates); diff != "" {
+			if diff := cmp.Diff(tc.want, reviewdates, cmp.AllowUnexported(itemDomain.Reviewdate{})); diff != "" {
 				t.Errorf("GetAllUnclassifiedReviewDatesByCategoryID() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -1713,7 +1804,7 @@ func TestItemRepository_CountItemsGroupedByBoxByUserID(t *testing.T) {
 				return
 			}
 
-			if diff := cmp.Diff(tc.want, counts); diff != "" {
+			if diff := cmp.Diff(tc.want, counts, cmp.AllowUnexported(itemDomain.ItemCountGroupedByBox{})); diff != "" {
 				t.Errorf("CountItemsGroupedByBoxByUserID() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -1777,7 +1868,7 @@ func TestItemRepository_CountUnclassifiedItemsGroupedByCategoryByUserID(t *testi
 				return
 			}
 
-			if diff := cmp.Diff(tc.want, counts); diff != "" {
+			if diff := cmp.Diff(tc.want, counts, cmp.AllowUnexported(itemDomain.UnclassifiedItemCountGroupedByCategory{})); diff != "" {
 				t.Errorf("CountUnclassifiedItemsGroupedByCategoryByUserID() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -1888,7 +1979,7 @@ func TestItemRepository_CountDailyDatesGroupedByBoxByUserID(t *testing.T) {
 				return
 			}
 
-			if diff := cmp.Diff(tc.want, counts); diff != "" {
+			if diff := cmp.Diff(tc.want, counts, cmp.AllowUnexported(itemDomain.DailyCountGroupedByBox{})); diff != "" {
 				t.Errorf("CountDailyDatesGroupedByBoxByUserID() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -1944,7 +2035,7 @@ func TestItemRepository_CountDailyDatesUnclassifiedGroupedByCategoryByUserID(t *
 				return
 			}
 
-			if diff := cmp.Diff(tc.want, counts); diff != "" {
+			if diff := cmp.Diff(tc.want, counts, cmp.AllowUnexported(itemDomain.UnclassifiedDailyDatesCountGroupedByCategory{})); diff != "" {
 				t.Errorf("CountDailyDatesUnclassifiedGroupedByCategoryByUserID() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -2173,7 +2264,7 @@ func TestItemRepository_GetAllDailyReviewDates(t *testing.T) {
 				return
 			}
 
-			if diff := cmp.Diff(tc.want, reviewDates); diff != "" {
+			if diff := cmp.Diff(tc.want, reviewDates, cmp.AllowUnexported(itemDomain.DailyReviewDate{})); diff != "" {
 				t.Errorf("GetAllDailyReviewDates() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -2200,19 +2291,22 @@ func TestItemRepository_GetFinishedItemsByBoxID(t *testing.T) {
 			boxID:  "950e8400-e29b-41d4-a716-446655440002",
 			userID: "550e8400-e29b-41d4-a716-446655440001",
 			want: []*itemDomain.Item{
-				{
-					ItemID:       "a50e8400-e29b-41d4-a716-446655440002",
-					UserID:       "550e8400-e29b-41d4-a716-446655440001",
-					CategoryID:   stringPtr("650e8400-e29b-41d4-a716-446655440001"),
-					BoxID:        stringPtr("950e8400-e29b-41d4-a716-446655440002"),
-					PatternID:    stringPtr("750e8400-e29b-41d4-a716-446655440002"),
-					Name:         "円の面積",
-					Detail:       "π × r^2の公式を理解する",
-					LearnedDate:  time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-					IsFinished:   true,
-					RegisteredAt: time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-					EditedAt:     time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-				},
+				func() *itemDomain.Item {
+					item, _ := itemDomain.ReconstructItem(
+						"a50e8400-e29b-41d4-a716-446655440002",
+						"550e8400-e29b-41d4-a716-446655440001",
+						stringPtr("650e8400-e29b-41d4-a716-446655440001"),
+						stringPtr("950e8400-e29b-41d4-a716-446655440002"),
+						stringPtr("750e8400-e29b-41d4-a716-446655440002"),
+						"円の面積",
+						"π × r^2の公式を理解する",
+						time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+						true,
+						time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+						time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+					)
+					return item
+				}(),
 			},
 			wantErr: false,
 		},
@@ -2245,7 +2339,7 @@ func TestItemRepository_GetFinishedItemsByBoxID(t *testing.T) {
 				return
 			}
 
-			if diff := cmp.Diff(tc.want, items); diff != "" {
+			if diff := cmp.Diff(tc.want, items, cmp.AllowUnexported(itemDomain.Item{})); diff != "" {
 				t.Errorf("GetFinishedItemsByBoxID() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -2310,7 +2404,7 @@ func TestItemRepository_GetUnclassfiedFinishedItemsByCategoryID(t *testing.T) {
 				return
 			}
 
-			if diff := cmp.Diff(tc.want, items); diff != "" {
+			if diff := cmp.Diff(tc.want, items, cmp.AllowUnexported(itemDomain.Item{})); diff != "" {
 				t.Errorf("GetUnclassfiedFinishedItemsByCategoryID() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -2335,19 +2429,22 @@ func TestItemRepository_GetUnclassfiedFinishedItemsByUserID(t *testing.T) {
 			name:   "ユーザーの未分類完了済み復習物を取得する場合",
 			userID: "550e8400-e29b-41d4-a716-446655440002",
 			want: []*itemDomain.Item{
-				{
-					ItemID:       "a50e8400-e29b-41d4-a716-446655440006",
-					UserID:       "550e8400-e29b-41d4-a716-446655440002",
-					CategoryID:   nil, // 真の未分類のため nil
-					BoxID:        nil, // 未分類のため nil
-					PatternID:    nil,
-					Name:         "江戸時代",
-					Detail:       "江戸時代の政治と社会を学ぶ",
-					LearnedDate:  time.Date(2024, 1, 6, 0, 0, 0, 0, time.UTC),
-					IsFinished:   true,
-					RegisteredAt: time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
-					EditedAt:     time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
-				},
+				func() *itemDomain.Item {
+					item, _ := itemDomain.ReconstructItem(
+						"a50e8400-e29b-41d4-a716-446655440006",
+						"550e8400-e29b-41d4-a716-446655440002",
+						nil, // 真の未分類のため nil
+						nil, // 未分類のため nil
+						nil,
+						"江戸時代",
+						"江戸時代の政治と社会を学ぶ",
+						time.Date(2024, 1, 6, 0, 0, 0, 0, time.UTC),
+						true,
+						time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
+						time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
+					)
+					return item
+				}(),
 			},
 			wantErr: false,
 		},
@@ -2379,7 +2476,7 @@ func TestItemRepository_GetUnclassfiedFinishedItemsByUserID(t *testing.T) {
 				return
 			}
 
-			if diff := cmp.Diff(tc.want, items); diff != "" {
+			if diff := cmp.Diff(tc.want, items, cmp.AllowUnexported(itemDomain.Item{})); diff != "" {
 				t.Errorf("GetUnclassfiedFinishedItemsByUserID() mismatch (-want +got):\n%s", diff)
 			}
 		})

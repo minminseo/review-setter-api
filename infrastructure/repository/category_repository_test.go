@@ -25,28 +25,40 @@ func TestCategoryRepository_Create(t *testing.T) {
 	}{
 		{
 			name: "カテゴリ作成に成功する場合",
-			category: &categoryDomain.Category{
-				ID:           uuid.New().String(),
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				Name:         "新しい科目",
-				RegisteredAt: time.Now(),
-				EditedAt:     time.Now(),
-			},
-			want: &categoryDomain.Category{
-				UserID: "550e8400-e29b-41d4-a716-446655440001",
-				Name:   "新しい科目",
-			},
+			category: func() *categoryDomain.Category {
+				cat, _ := categoryDomain.ReconstructCategory(
+					uuid.New().String(),
+					"550e8400-e29b-41d4-a716-446655440001",
+					"新しい科目",
+					time.Now(),
+					time.Now(),
+				)
+				return cat
+			}(),
+			want: func() *categoryDomain.Category {
+				cat, _ := categoryDomain.ReconstructCategory(
+					"",
+					"550e8400-e29b-41d4-a716-446655440001",
+					"新しい科目",
+					time.Time{},
+					time.Time{},
+				)
+				return cat
+			}(),
 			wantErr: false,
 		},
 		{
 			name: "存在しないユーザーによる外部キー制約違反",
-			category: &categoryDomain.Category{
-				ID:           uuid.New().String(),
-				UserID:       uuid.New().String(), // Non-existing user
-				Name:         "外部キー制約違反テスト",
-				RegisteredAt: time.Now(),
-				EditedAt:     time.Now(),
-			},
+			category: func() *categoryDomain.Category {
+				cat, _ := categoryDomain.ReconstructCategory(
+					uuid.New().String(),
+					uuid.New().String(), // Non-existing user
+					"外部キー制約違反テスト",
+					time.Now(),
+					time.Now(),
+				)
+				return cat
+			}(),
 			want:    nil,
 			wantErr: true,
 		},
@@ -73,7 +85,7 @@ func TestCategoryRepository_Create(t *testing.T) {
 			}
 
 			// 作成されたカテゴリを取得して検証
-			createdCategory, err := repo.GetByID(ctx, tc.category.ID, tc.category.UserID)
+			createdCategory, err := repo.GetByID(ctx, tc.category.ID(), tc.category.UserID())
 			if err != nil {
 				t.Errorf("created category retrieval failed: %v", err)
 				return
@@ -84,13 +96,17 @@ func TestCategoryRepository_Create(t *testing.T) {
 				return
 			}
 
-			// 動的に生成されるフィールドを期待値に設定
-			tc.want.ID = createdCategory.ID
-			tc.want.RegisteredAt = createdCategory.RegisteredAt
-			tc.want.EditedAt = createdCategory.EditedAt
+			// 動的に生成されるフィールドを期待値に設定して新しい期待値を作成
+			want, _ := categoryDomain.ReconstructCategory(
+				createdCategory.ID(),
+				tc.want.UserID(),
+				tc.want.Name(),
+				createdCategory.RegisteredAt(),
+				createdCategory.EditedAt(),
+			)
 
 			// 期待値との比較
-			if diff := cmp.Diff(tc.want, createdCategory); diff != "" {
+			if diff := cmp.Diff(want, createdCategory, cmp.AllowUnexported(categoryDomain.Category{})); diff != "" {
 				t.Errorf("Create() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -115,44 +131,46 @@ func TestCategoryRepository_GetAllByUserID(t *testing.T) {
 		{
 			name:   "ユーザー1のカテゴリを取得（2件）",
 			userID: "550e8400-e29b-41d4-a716-446655440001",
-			want: []categoryDomain.Category{
-				{
-					ID:           "650e8400-e29b-41d4-a716-446655440001",
-					UserID:       "550e8400-e29b-41d4-a716-446655440001",
-					Name:         "数学",
-					RegisteredAt: time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
-					EditedAt:     time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
-				},
-				{
-					ID:           "650e8400-e29b-41d4-a716-446655440002",
-					UserID:       "550e8400-e29b-41d4-a716-446655440001",
-					Name:         "物理",
-					RegisteredAt: time.Date(2024, 1, 1, 9, 30, 0, 0, time.UTC),
-					EditedAt:     time.Date(2024, 1, 1, 9, 30, 0, 0, time.UTC),
-				},
-			},
+			want: func() []categoryDomain.Category {
+				cat1, _ := categoryDomain.ReconstructCategory(
+					"650e8400-e29b-41d4-a716-446655440001",
+					"550e8400-e29b-41d4-a716-446655440001",
+					"数学",
+					time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
+				)
+				cat2, _ := categoryDomain.ReconstructCategory(
+					"650e8400-e29b-41d4-a716-446655440002",
+					"550e8400-e29b-41d4-a716-446655440001",
+					"物理",
+					time.Date(2024, 1, 1, 9, 30, 0, 0, time.UTC),
+					time.Date(2024, 1, 1, 9, 30, 0, 0, time.UTC),
+				)
+				return []categoryDomain.Category{*cat1, *cat2}
+			}(),
 			wantErr:       false,
 			expectedCount: 2,
 		},
 		{
 			name:   "ユーザー2のカテゴリを取得（2件）",
 			userID: "550e8400-e29b-41d4-a716-446655440002",
-			want: []categoryDomain.Category{
-				{
-					ID:           "650e8400-e29b-41d4-a716-446655440003",
-					UserID:       "550e8400-e29b-41d4-a716-446655440002",
-					Name:         "英語",
-					RegisteredAt: time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
-					EditedAt:     time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
-				},
-				{
-					ID:           "650e8400-e29b-41d4-a716-446655440004",
-					UserID:       "550e8400-e29b-41d4-a716-446655440002",
-					Name:         "歴史",
-					RegisteredAt: time.Date(2024, 1, 1, 10, 30, 0, 0, time.UTC),
-					EditedAt:     time.Date(2024, 1, 1, 10, 30, 0, 0, time.UTC),
-				},
-			},
+			want: func() []categoryDomain.Category {
+				cat1, _ := categoryDomain.ReconstructCategory(
+					"650e8400-e29b-41d4-a716-446655440003",
+					"550e8400-e29b-41d4-a716-446655440002",
+					"英語",
+					time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
+				)
+				cat2, _ := categoryDomain.ReconstructCategory(
+					"650e8400-e29b-41d4-a716-446655440004",
+					"550e8400-e29b-41d4-a716-446655440002",
+					"歴史",
+					time.Date(2024, 1, 1, 10, 30, 0, 0, time.UTC),
+					time.Date(2024, 1, 1, 10, 30, 0, 0, time.UTC),
+				)
+				return []categoryDomain.Category{*cat1, *cat2}
+			}(),
 			wantErr:       false,
 			expectedCount: 2,
 		},
@@ -202,7 +220,7 @@ func TestCategoryRepository_GetAllByUserID(t *testing.T) {
 				categoriesSlice[i] = *category
 			}
 
-			if diff := cmp.Diff(tc.want, categoriesSlice); diff != "" {
+			if diff := cmp.Diff(tc.want, categoriesSlice, cmp.AllowUnexported(categoryDomain.Category{})); diff != "" {
 				t.Errorf("GetAllByUserID() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -225,30 +243,40 @@ func TestCategoryRepository_Update(t *testing.T) {
 	}{
 		{
 			name: "カテゴリ更新に成功する場合",
-			category: &categoryDomain.Category{
-				ID:           "650e8400-e29b-41d4-a716-446655440001",
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				Name:         "更新された数学",
-				RegisteredAt: time.Now().Add(-24 * time.Hour),
-				EditedAt:     time.Now(),
-			},
-			want: &categoryDomain.Category{
-				ID:           "650e8400-e29b-41d4-a716-446655440001",
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				Name:         "更新された数学",
-				RegisteredAt: time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
-			},
+			category: func() *categoryDomain.Category {
+				cat, _ := categoryDomain.ReconstructCategory(
+					"650e8400-e29b-41d4-a716-446655440001",
+					"550e8400-e29b-41d4-a716-446655440001",
+					"更新された数学",
+					time.Now().Add(-24 * time.Hour),
+					time.Now(),
+				)
+				return cat
+			}(),
+			want: func() *categoryDomain.Category {
+				cat, _ := categoryDomain.ReconstructCategory(
+					"650e8400-e29b-41d4-a716-446655440001",
+					"550e8400-e29b-41d4-a716-446655440001",
+					"更新された数学",
+					time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
+					time.Time{},
+				)
+				return cat
+			}(),
 			wantErr: false,
 		},
 		{
 			name: "存在しないカテゴリを更新する場合",
-			category: &categoryDomain.Category{
-				ID:           uuid.New().String(),
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				Name:         "存在しない科目",
-				RegisteredAt: time.Now().Add(-24 * time.Hour),
-				EditedAt:     time.Now(),
-			},
+			category: func() *categoryDomain.Category {
+				cat, _ := categoryDomain.ReconstructCategory(
+					uuid.New().String(),
+					"550e8400-e29b-41d4-a716-446655440001",
+					"存在しない科目",
+					time.Now().Add(-24 * time.Hour),
+					time.Now(),
+				)
+				return cat
+			}(),
 			want:    nil,
 			wantErr: false,
 		},
@@ -276,7 +304,7 @@ func TestCategoryRepository_Update(t *testing.T) {
 
 			if tc.want != nil {
 				// 更新されたカテゴリを取得して検証
-				updatedCategory, err := repo.GetByID(ctx, tc.category.ID, tc.category.UserID)
+				updatedCategory, err := repo.GetByID(ctx, tc.category.ID(), tc.category.UserID())
 				if err != nil {
 					t.Errorf("updated category retrieval failed: %v", err)
 					return
@@ -287,11 +315,17 @@ func TestCategoryRepository_Update(t *testing.T) {
 					return
 				}
 
-				// 動的に変更されるフィールドを期待値に設定
-				tc.want.EditedAt = updatedCategory.EditedAt
+				// 動的に変更されるフィールドを期待値に設定して新しい期待値を作成
+				want, _ := categoryDomain.ReconstructCategory(
+					tc.want.ID(),
+					tc.want.UserID(),
+					tc.want.Name(),
+					tc.want.RegisteredAt(),
+					updatedCategory.EditedAt(),
+				)
 
 				// 期待値との比較
-				if diff := cmp.Diff(tc.want, updatedCategory); diff != "" {
+				if diff := cmp.Diff(want, updatedCategory, cmp.AllowUnexported(categoryDomain.Category{})); diff != "" {
 					t.Errorf("Update() mismatch (-want +got):\n%s", diff)
 				}
 			}
@@ -348,7 +382,7 @@ func TestCategoryRepository_Delete(t *testing.T) {
 			// 削除された場合はエラーが発生するか、nilが返される
 
 			// 期待値との比較
-			if diff := cmp.Diff(tc.want, deletedCategory); diff != "" {
+			if diff := cmp.Diff(tc.want, deletedCategory, cmp.AllowUnexported(categoryDomain.Category{})); diff != "" {
 				t.Errorf("Delete() verification mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -375,13 +409,16 @@ func TestCategoryRepository_GetByID(t *testing.T) {
 			name:       "有効なIDでカテゴリを取得する場合",
 			categoryID: "650e8400-e29b-41d4-a716-446655440001",
 			userID:     "550e8400-e29b-41d4-a716-446655440001",
-			want: &categoryDomain.Category{
-				ID:           "650e8400-e29b-41d4-a716-446655440001",
-				UserID:       "550e8400-e29b-41d4-a716-446655440001",
-				Name:         "数学",
-				RegisteredAt: time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
-				EditedAt:     time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
-			},
+			want: func() *categoryDomain.Category {
+				cat, _ := categoryDomain.ReconstructCategory(
+					"650e8400-e29b-41d4-a716-446655440001",
+					"550e8400-e29b-41d4-a716-446655440001",
+					"数学",
+					time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
+					time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
+				)
+				return cat
+			}(),
 			wantErr:    false,
 			expectName: "数学",
 		},
@@ -415,7 +452,7 @@ func TestCategoryRepository_GetByID(t *testing.T) {
 			}
 
 			// 期待値との比較
-			if diff := cmp.Diff(tc.want, category); diff != "" {
+			if diff := cmp.Diff(tc.want, category, cmp.AllowUnexported(categoryDomain.Category{})); diff != "" {
 				t.Errorf("GetByID() mismatch (-want +got):\n%s", diff)
 			}
 		})

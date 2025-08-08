@@ -142,10 +142,9 @@ func TestGetBoxesByCategoryID(t *testing.T) {
 			categoryID: "test-category-id",
 			userID:     "test-user-id",
 			setupMock: func(m *boxDomain.MockIBoxRepository) {
-				boxes := []*boxDomain.Box{
-					{ID: "box1", UserID: "test-user-id", CategoryID: "test-category-id", PatternID: "pattern1", Name: "ボックス1", RegisteredAt: mockTime, EditedAt: mockTime},
-					{ID: "box2", UserID: "test-user-id", CategoryID: "test-category-id", PatternID: "pattern2", Name: "ボックス2", RegisteredAt: mockTime, EditedAt: mockTime},
-				}
+				box1, _ := boxDomain.ReconstructBox("box1", "test-user-id", "test-category-id", "pattern1", "ボックス1", mockTime, mockTime)
+				box2, _ := boxDomain.ReconstructBox("box2", "test-user-id", "test-category-id", "pattern2", "ボックス2", mockTime, mockTime)
+				boxes := []*boxDomain.Box{box1, box2}
 				gomock.InOrder(
 					m.EXPECT().
 						GetAllByCategoryID(ctx, "test-category-id", "test-user-id").
@@ -239,15 +238,15 @@ func TestUpdateBox(t *testing.T) {
 				Name:       "更新された英語学習ボックス",
 			},
 			setupMock: func(m *boxDomain.MockIBoxRepository) {
-				existing := &boxDomain.Box{
-					ID:           "44444444-4444-4444-4444-444444444444",
-					UserID:       "11111111-1111-1111-1111-111111111111",
-					CategoryID:   "22222222-2222-2222-2222-222222222222",
-					PatternID:    "33333333-3333-3333-3333-333333333333",
-					Name:         "英語学習ボックス",
-					RegisteredAt: mockTime,
-					EditedAt:     mockTime,
-				}
+				existing, _ := boxDomain.ReconstructBox(
+					"44444444-4444-4444-4444-444444444444",
+					"11111111-1111-1111-1111-111111111111",
+					"22222222-2222-2222-2222-222222222222",
+					"33333333-3333-3333-3333-333333333333",
+					"英語学習ボックス",
+					mockTime,
+					mockTime,
+				)
 				gomock.InOrder(
 					m.EXPECT().
 						GetByID(ctx, "44444444-4444-4444-4444-444444444444", "22222222-2222-2222-2222-222222222222", "11111111-1111-1111-1111-111111111111").
@@ -278,15 +277,15 @@ func TestUpdateBox(t *testing.T) {
 				Name:       "パターン変更されたボックス",
 			},
 			setupMock: func(m *boxDomain.MockIBoxRepository) {
-				existing := &boxDomain.Box{
-					ID:           "44444444-4444-4444-4444-444444444444",
-					UserID:       "11111111-1111-1111-1111-111111111111",
-					CategoryID:   "22222222-2222-2222-2222-222222222222",
-					PatternID:    "33333333-3333-3333-3333-333333333333",
-					Name:         "英語学習ボックス",
-					RegisteredAt: mockTime,
-					EditedAt:     mockTime,
-				}
+				existing, _ := boxDomain.ReconstructBox(
+					"44444444-4444-4444-4444-444444444444",
+					"11111111-1111-1111-1111-111111111111",
+					"22222222-2222-2222-2222-222222222222",
+					"33333333-3333-3333-3333-333333333333",
+					"英語学習ボックス",
+					mockTime,
+					mockTime,
+				)
 				gomock.InOrder(
 					m.EXPECT().
 						GetByID(ctx, "44444444-4444-4444-4444-444444444444", "22222222-2222-2222-2222-222222222222", "11111111-1111-1111-1111-111111111111").
@@ -337,15 +336,15 @@ func TestUpdateBox(t *testing.T) {
 				Name:       "",
 			},
 			setupMock: func(m *boxDomain.MockIBoxRepository) {
-				existingBox := &boxDomain.Box{
-					ID:           "44444444-4444-4444-4444-444444444444",
-					UserID:       "11111111-1111-1111-1111-111111111111",
-					CategoryID:   "22222222-2222-2222-2222-222222222222",
-					PatternID:    "33333333-3333-3333-3333-333333333333",
-					Name:         "英語学習ボックス",
-					RegisteredAt: mockTime,
-					EditedAt:     mockTime,
-				}
+				existingBox, _ := boxDomain.ReconstructBox(
+					"44444444-4444-4444-4444-444444444444",
+					"11111111-1111-1111-1111-111111111111",
+					"22222222-2222-2222-2222-222222222222",
+					"33333333-3333-3333-3333-333333333333",
+					"英語学習ボックス",
+					mockTime,
+					mockTime,
+				)
 				gomock.InOrder(
 					m.EXPECT().
 						GetByID(gomock.Any(), "44444444-4444-4444-4444-444444444444", "22222222-2222-2222-2222-222222222222", "11111111-1111-1111-1111-111111111111").
@@ -366,15 +365,15 @@ func TestUpdateBox(t *testing.T) {
 				Name:       "更新された英語学習ボックス",
 			},
 			setupMock: func(m *boxDomain.MockIBoxRepository) {
-				existing := &boxDomain.Box{
-					ID:           "44444444-4444-4444-4444-444444444444",
-					UserID:       "11111111-1111-1111-1111-111111111111",
-					CategoryID:   "22222222-2222-2222-2222-222222222222",
-					PatternID:    "33333333-3333-3333-3333-333333333333",
-					Name:         "英語学習ボックス",
-					RegisteredAt: mockTime,
-					EditedAt:     mockTime,
-				}
+				existing, _ := boxDomain.ReconstructBox(
+					"44444444-4444-4444-4444-444444444444",
+					"11111111-1111-1111-1111-111111111111",
+					"22222222-2222-2222-2222-222222222222",
+					"33333333-3333-3333-3333-333333333333",
+					"英語学習ボックス",
+					mockTime,
+					mockTime,
+				)
 				gomock.InOrder(
 					m.EXPECT().
 						GetByID(ctx, "44444444-4444-4444-4444-444444444444", "22222222-2222-2222-2222-222222222222", "11111111-1111-1111-1111-111111111111").
@@ -399,15 +398,15 @@ func TestUpdateBox(t *testing.T) {
 				Name:       "パターン変更されたボックス",
 			},
 			setupMock: func(m *boxDomain.MockIBoxRepository) {
-				existing := &boxDomain.Box{
-					ID:           "44444444-4444-4444-4444-444444444444",
-					UserID:       "11111111-1111-1111-1111-111111111111",
-					CategoryID:   "22222222-2222-2222-2222-222222222222",
-					PatternID:    "33333333-3333-3333-3333-333333333333",
-					Name:         "英語学習ボックス",
-					RegisteredAt: mockTime,
-					EditedAt:     mockTime,
-				}
+				existing, _ := boxDomain.ReconstructBox(
+					"44444444-4444-4444-4444-444444444444",
+					"11111111-1111-1111-1111-111111111111",
+					"22222222-2222-2222-2222-222222222222",
+					"33333333-3333-3333-3333-333333333333",
+					"英語学習ボックス",
+					mockTime,
+					mockTime,
+				)
 				gomock.InOrder(
 					m.EXPECT().
 						GetByID(ctx, "44444444-4444-4444-4444-444444444444", "22222222-2222-2222-2222-222222222222", "11111111-1111-1111-1111-111111111111").
@@ -432,15 +431,15 @@ func TestUpdateBox(t *testing.T) {
 				Name:       "パターン変更されたボックス",
 			},
 			setupMock: func(m *boxDomain.MockIBoxRepository) {
-				existing := &boxDomain.Box{
-					ID:           "44444444-4444-4444-4444-444444444444",
-					UserID:       "11111111-1111-1111-1111-111111111111",
-					CategoryID:   "22222222-2222-2222-2222-222222222222",
-					PatternID:    "33333333-3333-3333-3333-333333333333",
-					Name:         "英語学習ボックス",
-					RegisteredAt: mockTime,
-					EditedAt:     mockTime,
-				}
+				existing, _ := boxDomain.ReconstructBox(
+					"44444444-4444-4444-4444-444444444444",
+					"11111111-1111-1111-1111-111111111111",
+					"22222222-2222-2222-2222-222222222222",
+					"33333333-3333-3333-3333-333333333333",
+					"英語学習ボックス",
+					mockTime,
+					mockTime,
+				)
 				gomock.InOrder(
 					m.EXPECT().
 						GetByID(ctx, "44444444-4444-4444-4444-444444444444", "22222222-2222-2222-2222-222222222222", "11111111-1111-1111-1111-111111111111").

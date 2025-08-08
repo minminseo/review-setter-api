@@ -26,8 +26,14 @@ func TestFormatWithOverdueMarkedCompleted(t *testing.T) {
 		{
 			name: "正常なパターンステップで復習日が今日より前（完了扱い）",
 			targetPatternSteps: []*PatternDomain.PatternStep{
-				{StepNumber: 1, IntervalDays: 1},
-				{StepNumber: 2, IntervalDays: 3},
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step1", "user1", "pattern1", 1, 1)
+					return step
+				}(),
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step2", "user1", "pattern1", 2, 3)
+					return step
+				}(),
 			},
 			userID:             "user123",
 			categoryID:         stringPtr("cat123"),
@@ -42,8 +48,14 @@ func TestFormatWithOverdueMarkedCompleted(t *testing.T) {
 		{
 			name: "正常なパターンステップで復習日が今日以降（未完了扱い）",
 			targetPatternSteps: []*PatternDomain.PatternStep{
-				{StepNumber: 1, IntervalDays: 5},
-				{StepNumber: 2, IntervalDays: 10},
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step1", "user1", "pattern1", 1, 5)
+					return step
+				}(),
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step2", "user1", "pattern1", 2, 10)
+					return step
+				}(),
 			},
 			userID:             "user123",
 			categoryID:         nil,
@@ -58,7 +70,10 @@ func TestFormatWithOverdueMarkedCompleted(t *testing.T) {
 		{
 			name: "単一ステップでの処理",
 			targetPatternSteps: []*PatternDomain.PatternStep{
-				{StepNumber: 1, IntervalDays: 1},
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step1", "user1", "pattern1", 1, 1)
+					return step
+				}(),
 			},
 			userID:             "user123",
 			categoryID:         stringPtr("cat123"),
@@ -115,27 +130,27 @@ func TestFormatWithOverdueMarkedCompleted(t *testing.T) {
 			}
 
 			for i, rd := range gotReviewdates {
-				if rd.UserID != tt.userID {
-					t.Errorf("FormatWithOverdueMarkedCompleted() reviewdate[%d].UserID = %v, want %v", i, rd.UserID, tt.userID)
+				if rd.UserID() != tt.userID {
+					t.Errorf("FormatWithOverdueMarkedCompleted() reviewdate[%d].UserID = %v, want %v", i, rd.UserID(), tt.userID)
 				}
-				if rd.ItemID != tt.itemID {
-					t.Errorf("FormatWithOverdueMarkedCompleted() reviewdate[%d].ItemID = %v, want %v", i, rd.ItemID, tt.itemID)
+				if rd.ItemID() != tt.itemID {
+					t.Errorf("FormatWithOverdueMarkedCompleted() reviewdate[%d].ItemID = %v, want %v", i, rd.ItemID(), tt.itemID)
 				}
-				if !reflect.DeepEqual(rd.CategoryID, tt.categoryID) {
-					t.Errorf("FormatWithOverdueMarkedCompleted() reviewdate[%d].CategoryID = %v, want %v", i, rd.CategoryID, tt.categoryID)
+				if !reflect.DeepEqual(rd.CategoryID(), tt.categoryID) {
+					t.Errorf("FormatWithOverdueMarkedCompleted() reviewdate[%d].CategoryID = %v, want %v", i, rd.CategoryID(), tt.categoryID)
 				}
-				if !reflect.DeepEqual(rd.BoxID, tt.boxID) {
-					t.Errorf("FormatWithOverdueMarkedCompleted() reviewdate[%d].BoxID = %v, want %v", i, rd.BoxID, tt.boxID)
+				if !reflect.DeepEqual(rd.BoxID(), tt.boxID) {
+					t.Errorf("FormatWithOverdueMarkedCompleted() reviewdate[%d].BoxID = %v, want %v", i, rd.BoxID(), tt.boxID)
 				}
 
-				expectedScheduledDate := tt.parsedLearnedDate.AddDate(0, 0, tt.targetPatternSteps[i].IntervalDays)
-				if !rd.ScheduledDate.Equal(expectedScheduledDate) {
-					t.Errorf("FormatWithOverdueMarkedCompleted() reviewdate[%d].ScheduledDate = %v, want %v", i, rd.ScheduledDate, expectedScheduledDate)
+				expectedScheduledDate := tt.parsedLearnedDate.AddDate(0, 0, tt.targetPatternSteps[i].IntervalDays())
+				if !rd.ScheduledDate().Equal(expectedScheduledDate) {
+					t.Errorf("FormatWithOverdueMarkedCompleted() reviewdate[%d].ScheduledDate = %v, want %v", i, rd.ScheduledDate(), expectedScheduledDate)
 				}
 
 				expectedIsCompleted := expectedScheduledDate.Before(tt.parsedToday)
-				if rd.IsCompleted != expectedIsCompleted {
-					t.Errorf("FormatWithOverdueMarkedCompleted() reviewdate[%d].IsCompleted = %v, want %v", i, rd.IsCompleted, expectedIsCompleted)
+				if rd.IsCompleted() != expectedIsCompleted {
+					t.Errorf("FormatWithOverdueMarkedCompleted() reviewdate[%d].IsCompleted = %v, want %v", i, rd.IsCompleted(), expectedIsCompleted)
 				}
 			}
 		})
@@ -160,8 +175,14 @@ func TestFormatWithOverdueMarkedInCompleted(t *testing.T) {
 		{
 			name: "最初のステップが今日より前の場合",
 			targetPatternSteps: []*PatternDomain.PatternStep{
-				{StepNumber: 1, IntervalDays: 1},
-				{StepNumber: 2, IntervalDays: 3},
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step2", "user1", "pattern1", 1, 1)
+					return step
+				}(),
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step3", "user1", "pattern1", 2, 3)
+					return step
+				}(),
 			},
 			userID:             "user123",
 			categoryID:         stringPtr("cat123"),
@@ -175,8 +196,14 @@ func TestFormatWithOverdueMarkedInCompleted(t *testing.T) {
 		{
 			name: "最初のステップが今日以降の場合",
 			targetPatternSteps: []*PatternDomain.PatternStep{
-				{StepNumber: 1, IntervalDays: 10},
-				{StepNumber: 2, IntervalDays: 15},
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step4", "user1", "pattern1", 1, 10)
+					return step
+				}(),
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step5", "user1", "pattern1", 2, 15)
+					return step
+				}(),
 			},
 			userID:             "user123",
 			categoryID:         nil,
@@ -190,7 +217,10 @@ func TestFormatWithOverdueMarkedInCompleted(t *testing.T) {
 		{
 			name: "単一ステップでの処理",
 			targetPatternSteps: []*PatternDomain.PatternStep{
-				{StepNumber: 1, IntervalDays: 1},
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step6", "user1", "pattern1", 1, 1)
+					return step
+				}(),
 			},
 			userID:             "user123",
 			categoryID:         stringPtr("cat123"),
@@ -242,7 +272,7 @@ func TestFormatWithOverdueMarkedInCompleted(t *testing.T) {
 
 			var expectedAddDuration int
 			if len(tt.targetPatternSteps) > 0 {
-				firstScheduled := tt.parsedLearnedDate.AddDate(0, 0, tt.targetPatternSteps[0].IntervalDays)
+				firstScheduled := tt.parsedLearnedDate.AddDate(0, 0, tt.targetPatternSteps[0].IntervalDays())
 				if firstScheduled.Before(tt.parsedToday) {
 					expectedAddDuration = int(tt.parsedToday.Sub(firstScheduled).Hours() / 24)
 				} else {
@@ -251,26 +281,26 @@ func TestFormatWithOverdueMarkedInCompleted(t *testing.T) {
 			}
 
 			for i, rd := range gotReviewdates {
-				if rd.UserID != tt.userID {
-					t.Errorf("FormatWithOverdueMarkedInCompleted() reviewdate[%d].UserID = %v, want %v", i, rd.UserID, tt.userID)
+				if rd.UserID() != tt.userID {
+					t.Errorf("FormatWithOverdueMarkedInCompleted() reviewdate[%d].UserID = %v, want %v", i, rd.UserID(), tt.userID)
 				}
-				if rd.ItemID != tt.itemID {
-					t.Errorf("FormatWithOverdueMarkedInCompleted() reviewdate[%d].ItemID = %v, want %v", i, rd.ItemID, tt.itemID)
+				if rd.ItemID() != tt.itemID {
+					t.Errorf("FormatWithOverdueMarkedInCompleted() reviewdate[%d].ItemID = %v, want %v", i, rd.ItemID(), tt.itemID)
 				}
-				if !reflect.DeepEqual(rd.CategoryID, tt.categoryID) {
-					t.Errorf("FormatWithOverdueMarkedInCompleted() reviewdate[%d].CategoryID = %v, want %v", i, rd.CategoryID, tt.categoryID)
+				if !reflect.DeepEqual(rd.CategoryID(), tt.categoryID) {
+					t.Errorf("FormatWithOverdueMarkedInCompleted() reviewdate[%d].CategoryID = %v, want %v", i, rd.CategoryID(), tt.categoryID)
 				}
-				if !reflect.DeepEqual(rd.BoxID, tt.boxID) {
-					t.Errorf("FormatWithOverdueMarkedInCompleted() reviewdate[%d].BoxID = %v, want %v", i, rd.BoxID, tt.boxID)
-				}
-
-				expectedScheduledDate := tt.parsedLearnedDate.AddDate(0, 0, tt.targetPatternSteps[i].IntervalDays+expectedAddDuration)
-				if !rd.ScheduledDate.Equal(expectedScheduledDate) {
-					t.Errorf("FormatWithOverdueMarkedInCompleted() reviewdate[%d].ScheduledDate = %v, want %v", i, rd.ScheduledDate, expectedScheduledDate)
+				if !reflect.DeepEqual(rd.BoxID(), tt.boxID) {
+					t.Errorf("FormatWithOverdueMarkedInCompleted() reviewdate[%d].BoxID = %v, want %v", i, rd.BoxID(), tt.boxID)
 				}
 
-				if rd.IsCompleted != false {
-					t.Errorf("FormatWithOverdueMarkedInCompleted() reviewdate[%d].IsCompleted = %v, want %v", i, rd.IsCompleted, false)
+				expectedScheduledDate := tt.parsedLearnedDate.AddDate(0, 0, tt.targetPatternSteps[i].IntervalDays()+expectedAddDuration)
+				if !rd.ScheduledDate().Equal(expectedScheduledDate) {
+					t.Errorf("FormatWithOverdueMarkedInCompleted() reviewdate[%d].ScheduledDate = %v, want %v", i, rd.ScheduledDate(), expectedScheduledDate)
+				}
+
+				if rd.IsCompleted() != false {
+					t.Errorf("FormatWithOverdueMarkedInCompleted() reviewdate[%d].IsCompleted = %v, want %v", i, rd.IsCompleted(), false)
 				}
 			}
 		})
@@ -297,8 +327,14 @@ func TestFormatWithOverdueMarkedCompletedWithIDs(t *testing.T) {
 		{
 			name: "正常なID付きパターンステップでの処理",
 			targetPatternSteps: []*PatternDomain.PatternStep{
-				{StepNumber: 1, IntervalDays: 1},
-				{StepNumber: 2, IntervalDays: 3},
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step7", "user1", "pattern1", 1, 1)
+					return step
+				}(),
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step8", "user1", "pattern1", 2, 3)
+					return step
+				}(),
 			},
 			reviewDateIDs:      []string{"rd1", "rd2"},
 			userID:             "user123",
@@ -314,8 +350,14 @@ func TestFormatWithOverdueMarkedCompletedWithIDs(t *testing.T) {
 		{
 			name: "IDとステップ数の不一致エラー",
 			targetPatternSteps: []*PatternDomain.PatternStep{
-				{StepNumber: 1, IntervalDays: 1},
-				{StepNumber: 2, IntervalDays: 3},
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step9", "user1", "pattern1", 1, 1)
+					return step
+				}(),
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step10", "user1", "pattern1", 2, 3)
+					return step
+				}(),
 			},
 			reviewDateIDs:      []string{"rd1"},
 			userID:             "user123",
@@ -332,8 +374,14 @@ func TestFormatWithOverdueMarkedCompletedWithIDs(t *testing.T) {
 		{
 			name: "今日以降の最終ステップ（未完了扱い）",
 			targetPatternSteps: []*PatternDomain.PatternStep{
-				{StepNumber: 1, IntervalDays: 1},
-				{StepNumber: 2, IntervalDays: 10},
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step11", "user1", "pattern1", 1, 1)
+					return step
+				}(),
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step12", "user1", "pattern1", 2, 10)
+					return step
+				}(),
 			},
 			reviewDateIDs:      []string{"rd1", "rd2"},
 			userID:             "user123",
@@ -386,24 +434,24 @@ func TestFormatWithOverdueMarkedCompletedWithIDs(t *testing.T) {
 			}
 
 			for i, rd := range gotReviewdates {
-				if rd.ReviewdateID != tt.reviewDateIDs[i] {
-					t.Errorf("FormatWithOverdueMarkedCompletedWithIDs() reviewdate[%d].ReviewdateID = %v, want %v", i, rd.ReviewdateID, tt.reviewDateIDs[i])
+				if rd.ReviewdateID() != tt.reviewDateIDs[i] {
+					t.Errorf("FormatWithOverdueMarkedCompletedWithIDs() reviewdate[%d].ReviewdateID = %v, want %v", i, rd.ReviewdateID(), tt.reviewDateIDs[i])
 				}
-				if rd.UserID != tt.userID {
-					t.Errorf("FormatWithOverdueMarkedCompletedWithIDs() reviewdate[%d].UserID = %v, want %v", i, rd.UserID, tt.userID)
+				if rd.UserID() != tt.userID {
+					t.Errorf("FormatWithOverdueMarkedCompletedWithIDs() reviewdate[%d].UserID = %v, want %v", i, rd.UserID(), tt.userID)
 				}
-				if rd.ItemID != tt.itemID {
-					t.Errorf("FormatWithOverdueMarkedCompletedWithIDs() reviewdate[%d].ItemID = %v, want %v", i, rd.ItemID, tt.itemID)
+				if rd.ItemID() != tt.itemID {
+					t.Errorf("FormatWithOverdueMarkedCompletedWithIDs() reviewdate[%d].ItemID = %v, want %v", i, rd.ItemID(), tt.itemID)
 				}
 
-				expectedScheduledDate := tt.parsedLearnedDate.AddDate(0, 0, tt.targetPatternSteps[i].IntervalDays)
-				if !rd.ScheduledDate.Equal(expectedScheduledDate) {
-					t.Errorf("FormatWithOverdueMarkedCompletedWithIDs() reviewdate[%d].ScheduledDate = %v, want %v", i, rd.ScheduledDate, expectedScheduledDate)
+				expectedScheduledDate := tt.parsedLearnedDate.AddDate(0, 0, tt.targetPatternSteps[i].IntervalDays())
+				if !rd.ScheduledDate().Equal(expectedScheduledDate) {
+					t.Errorf("FormatWithOverdueMarkedCompletedWithIDs() reviewdate[%d].ScheduledDate = %v, want %v", i, rd.ScheduledDate(), expectedScheduledDate)
 				}
 
 				expectedIsCompleted := expectedScheduledDate.Before(tt.parsedToday)
-				if rd.IsCompleted != expectedIsCompleted {
-					t.Errorf("FormatWithOverdueMarkedCompletedWithIDs() reviewdate[%d].IsCompleted = %v, want %v", i, rd.IsCompleted, expectedIsCompleted)
+				if rd.IsCompleted() != expectedIsCompleted {
+					t.Errorf("FormatWithOverdueMarkedCompletedWithIDs() reviewdate[%d].IsCompleted = %v, want %v", i, rd.IsCompleted(), expectedIsCompleted)
 				}
 			}
 		})
@@ -429,8 +477,14 @@ func TestFormatWithOverdueMarkedInCompletedWithIDs(t *testing.T) {
 		{
 			name: "正常なID付きパターンステップでの処理",
 			targetPatternSteps: []*PatternDomain.PatternStep{
-				{StepNumber: 1, IntervalDays: 1},
-				{StepNumber: 2, IntervalDays: 3},
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step13", "user1", "pattern1", 1, 1)
+					return step
+				}(),
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step14", "user1", "pattern1", 2, 3)
+					return step
+				}(),
 			},
 			reviewDateIDs:      []string{"rd1", "rd2"},
 			userID:             "user123",
@@ -445,8 +499,14 @@ func TestFormatWithOverdueMarkedInCompletedWithIDs(t *testing.T) {
 		{
 			name: "IDとステップ数の不一致エラー",
 			targetPatternSteps: []*PatternDomain.PatternStep{
-				{StepNumber: 1, IntervalDays: 1},
-				{StepNumber: 2, IntervalDays: 3},
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step15", "user1", "pattern1", 1, 1)
+					return step
+				}(),
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step16", "user1", "pattern1", 2, 3)
+					return step
+				}(),
 			},
 			reviewDateIDs:      []string{"rd1"},
 			userID:             "user123",
@@ -509,7 +569,7 @@ func TestFormatWithOverdueMarkedInCompletedWithIDs(t *testing.T) {
 
 			var expectedAddDuration int
 			if len(tt.targetPatternSteps) > 0 {
-				firstScheduled := tt.parsedLearnedDate.AddDate(0, 0, tt.targetPatternSteps[0].IntervalDays)
+				firstScheduled := tt.parsedLearnedDate.AddDate(0, 0, tt.targetPatternSteps[0].IntervalDays())
 				if firstScheduled.Before(tt.parsedToday) {
 					expectedAddDuration = int(tt.parsedToday.Sub(firstScheduled).Hours() / 24)
 				} else {
@@ -518,23 +578,23 @@ func TestFormatWithOverdueMarkedInCompletedWithIDs(t *testing.T) {
 			}
 
 			for i, rd := range gotReviewdates {
-				if rd.ReviewdateID != tt.reviewDateIDs[i] {
-					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDs() reviewdate[%d].ReviewdateID = %v, want %v", i, rd.ReviewdateID, tt.reviewDateIDs[i])
+				if rd.ReviewdateID() != tt.reviewDateIDs[i] {
+					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDs() reviewdate[%d].ReviewdateID = %v, want %v", i, rd.ReviewdateID(), tt.reviewDateIDs[i])
 				}
-				if rd.UserID != tt.userID {
-					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDs() reviewdate[%d].UserID = %v, want %v", i, rd.UserID, tt.userID)
+				if rd.UserID() != tt.userID {
+					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDs() reviewdate[%d].UserID = %v, want %v", i, rd.UserID(), tt.userID)
 				}
-				if rd.ItemID != tt.itemID {
-					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDs() reviewdate[%d].ItemID = %v, want %v", i, rd.ItemID, tt.itemID)
-				}
-
-				expectedScheduledDate := tt.parsedLearnedDate.AddDate(0, 0, tt.targetPatternSteps[i].IntervalDays+expectedAddDuration)
-				if !rd.ScheduledDate.Equal(expectedScheduledDate) {
-					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDs() reviewdate[%d].ScheduledDate = %v, want %v", i, rd.ScheduledDate, expectedScheduledDate)
+				if rd.ItemID() != tt.itemID {
+					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDs() reviewdate[%d].ItemID = %v, want %v", i, rd.ItemID(), tt.itemID)
 				}
 
-				if rd.IsCompleted != false {
-					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDs() reviewdate[%d].IsCompleted = %v, want %v", i, rd.IsCompleted, false)
+				expectedScheduledDate := tt.parsedLearnedDate.AddDate(0, 0, tt.targetPatternSteps[i].IntervalDays()+expectedAddDuration)
+				if !rd.ScheduledDate().Equal(expectedScheduledDate) {
+					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDs() reviewdate[%d].ScheduledDate = %v, want %v", i, rd.ScheduledDate(), expectedScheduledDate)
+				}
+
+				if rd.IsCompleted() != false {
+					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDs() reviewdate[%d].IsCompleted = %v, want %v", i, rd.IsCompleted(), false)
 				}
 			}
 		})
@@ -560,8 +620,14 @@ func TestFormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(t *testing.
 		{
 			name: "正常なバック復習日処理",
 			targetPatternSteps: []*PatternDomain.PatternStep{
-				{StepNumber: 1, IntervalDays: 1},
-				{StepNumber: 2, IntervalDays: 3},
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step17", "user1", "pattern1", 1, 1)
+					return step
+				}(),
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step18", "user1", "pattern1", 2, 3)
+					return step
+				}(),
 			},
 			reviewDateIDs:      []string{"rd1", "rd2"},
 			userID:             "user123",
@@ -576,8 +642,14 @@ func TestFormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(t *testing.
 		{
 			name: "diffが設定されている場合",
 			targetPatternSteps: []*PatternDomain.PatternStep{
-				{StepNumber: 1, IntervalDays: 1},
-				{StepNumber: 2, IntervalDays: 3},
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step19", "user1", "pattern1", 1, 1)
+					return step
+				}(),
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step20", "user1", "pattern1", 2, 3)
+					return step
+				}(),
 			},
 			reviewDateIDs:      []string{"rd1", "rd2"},
 			userID:             "user123",
@@ -592,8 +664,14 @@ func TestFormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(t *testing.
 		{
 			name: "IDとステップ数の不一致エラー",
 			targetPatternSteps: []*PatternDomain.PatternStep{
-				{StepNumber: 1, IntervalDays: 1},
-				{StepNumber: 2, IntervalDays: 3},
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step21", "user1", "pattern1", 1, 1)
+					return step
+				}(),
+				func() *PatternDomain.PatternStep {
+					step, _ := PatternDomain.ReconstructPatternStep("step22", "user1", "pattern1", 2, 3)
+					return step
+				}(),
 			},
 			reviewDateIDs:      []string{"rd1"},
 			userID:             "user123",
@@ -655,23 +733,23 @@ func TestFormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates(t *testing.
 			}
 
 			for i, rd := range gotReviewdates {
-				if rd.ReviewdateID != tt.reviewDateIDs[i] {
-					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates() reviewdate[%d].ReviewdateID = %v, want %v", i, rd.ReviewdateID, tt.reviewDateIDs[i])
+				if rd.ReviewdateID() != tt.reviewDateIDs[i] {
+					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates() reviewdate[%d].ReviewdateID = %v, want %v", i, rd.ReviewdateID(), tt.reviewDateIDs[i])
 				}
-				if rd.UserID != tt.userID {
-					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates() reviewdate[%d].UserID = %v, want %v", i, rd.UserID, tt.userID)
+				if rd.UserID() != tt.userID {
+					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates() reviewdate[%d].UserID = %v, want %v", i, rd.UserID(), tt.userID)
 				}
-				if rd.ItemID != tt.itemID {
-					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates() reviewdate[%d].ItemID = %v, want %v", i, rd.ItemID, tt.itemID)
-				}
-
-				expectedScheduledDate := tt.parsedLearnedDate.AddDate(0, 0, tt.targetPatternSteps[i].IntervalDays).Add(-tt.diff)
-				if !rd.InitialScheduledDate.Equal(expectedScheduledDate) {
-					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates() reviewdate[%d].InitialScheduledDate = %v, want %v", i, rd.InitialScheduledDate, expectedScheduledDate)
+				if rd.ItemID() != tt.itemID {
+					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates() reviewdate[%d].ItemID = %v, want %v", i, rd.ItemID(), tt.itemID)
 				}
 
-				if rd.IsCompleted != false {
-					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates() reviewdate[%d].IsCompleted = %v, want %v", i, rd.IsCompleted, false)
+				expectedScheduledDate := tt.parsedLearnedDate.AddDate(0, 0, tt.targetPatternSteps[i].IntervalDays()).Add(-tt.diff)
+				if !rd.InitialScheduledDate().Equal(expectedScheduledDate) {
+					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates() reviewdate[%d].InitialScheduledDate = %v, want %v", i, rd.InitialScheduledDate(), expectedScheduledDate)
+				}
+
+				if rd.IsCompleted() != false {
+					t.Errorf("FormatWithOverdueMarkedInCompletedWithIDsForBackReviewDates() reviewdate[%d].IsCompleted = %v, want %v", i, rd.IsCompleted(), false)
 				}
 			}
 		})

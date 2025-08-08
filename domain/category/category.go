@@ -7,11 +7,11 @@ import (
 )
 
 type Category struct {
-	ID           string
-	UserID       string
-	Name         string
-	RegisteredAt time.Time
-	EditedAt     time.Time
+	id           string
+	userID       string
+	name         string
+	registeredAt time.Time
+	editedAt     time.Time
 }
 
 func NewCategory(
@@ -27,11 +27,11 @@ func NewCategory(
 	}
 
 	c := &Category{
-		ID:           id,
-		UserID:       userID,
-		Name:         name,
-		RegisteredAt: registeredAt,
-		EditedAt:     editedAt,
+		id:           id,
+		userID:       userID,
+		name:         name,
+		registeredAt: registeredAt,
+		editedAt:     editedAt,
 	}
 
 	return c, nil
@@ -45,11 +45,11 @@ func ReconstructCategory(
 	editedAt time.Time,
 ) (*Category, error) {
 	c := &Category{
-		ID:           id,
-		UserID:       userID,
-		Name:         name,
-		RegisteredAt: registeredAt,
-		EditedAt:     editedAt,
+		id:           id,
+		userID:       userID,
+		name:         name,
+		registeredAt: registeredAt,
+		editedAt:     editedAt,
 	}
 	return c, nil
 }
@@ -61,12 +61,32 @@ func validateName(name string) error {
 	)
 }
 
-func (c *Category) Set(name string, editedAt time.Time) error {
+func (c *Category) ID() string {
+	return c.id
+}
+
+func (c *Category) UserID() string {
+	return c.userID
+}
+
+func (c *Category) Name() string {
+	return c.name
+}
+
+func (c *Category) RegisteredAt() time.Time {
+	return c.registeredAt
+}
+
+func (c *Category) EditedAt() time.Time {
+	return c.editedAt
+}
+
+func (c *Category) UpdateCategory(name string, editedAt time.Time) error {
 	if err := validateName(name); err != nil {
 		return err
 	}
 
-	c.Name = name
-	c.EditedAt = editedAt
+	c.name = name
+	c.editedAt = editedAt
 	return nil
 }

@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	userDomain "github.com/minminseo/recall-setter/domain/user"
@@ -51,7 +52,7 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 		}
 
 		// 未認証なら認証コードを再送信
-		newUser, err := userDomain.NewUser(existingUser.ID, dto.Email, dto.Password, dto.Timezone, dto.ThemeColor, dto.Language, uu.cryptoService, searchKey)
+		newUser, err := userDomain.NewUser(existingUser.ID(), dto.Email, dto.Password, dto.Timezone, dto.ThemeColor, dto.Language, uu.cryptoService, searchKey)
 		if err != nil {
 			return nil, err
 		}
@@ -59,17 +60,17 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 			if err := uu.userRepo.Update(ctx, newUser); err != nil {
 				return err
 			}
-			if err := uu.userRepo.UpdatePassword(ctx, newUser.ID, newUser.EncryptedPassword); err != nil {
+			if err := uu.userRepo.UpdatePassword(ctx, newUser.ID(), newUser.EncryptedPassword()); err != nil {
 				return err
 			}
 
 			// 古い認証コードを削除
-			if err := uu.emailVerificationRepo.DeleteByUserID(ctx, newUser.ID); err != nil {
+			if err := uu.emailVerificationRepo.DeleteByUserID(ctx, newUser.ID()); err != nil {
 				return err
 			}
 
 			verificationID := uuid.NewString()
-			verification, code, err := userDomain.NewEmailVerification(verificationID, newUser.ID)
+			verification, code, err := userDomain.NewEmailVerification(verificationID, newUser.ID())
 			if err != nil {
 				return err
 			}
@@ -79,7 +80,7 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 			}
 
 			// メール送信処理
-			if err := uu.emailSender.SendVerificationEmail(newUser.Language, dto.Email, code); err != nil {
+			if err := uu.emailSender.SendVerificationEmail(newUser.Language(), dto.Email, code); err != nil {
 				return err
 			}
 			return nil
@@ -89,7 +90,7 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 		}
 
 		result := &CreateUserOutput{
-			ID:    newUser.ID,
+			ID:    newUser.ID(),
 			Email: dto.Email,
 		}
 		return result, nil
@@ -106,7 +107,7 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 		}
 
 		verificationID := uuid.NewString()
-		verification, code, err := userDomain.NewEmailVerification(verificationID, newUser.ID)
+		verification, code, err := userDomain.NewEmailVerification(verificationID, newUser.ID())
 		if err != nil {
 			return err
 		}
@@ -114,7 +115,7 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 			return err
 		}
 
-		if err := uu.emailSender.SendVerificationEmail(newUser.Language, dto.Email, code); err != nil {
+		if err := uu.emailSender.SendVerificationEmail(newUser.Language(), dto.Email, code); err != nil {
 			return err
 		}
 
@@ -130,7 +131,7 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 		return nil, err
 	}
 	resUser := &CreateUserOutput{
-		ID:    newUser.ID,
+		ID:    newUser.ID(),
 		Email: decryptedEmail,
 	}
 
@@ -149,7 +150,7 @@ func (uu *userUsecase) VerifyEmail(ctx context.Context, dto VerifyEmailInput) (*
 		return nil, errors.New("既に認証済みです")
 	}
 
-	verification, err := uu.emailVerificationRepo.FindByUserID(ctx, user.ID)
+	verification, err := uu.emailVerificationRepo.FindByUserID(ctx, user.ID())
 	if err != nil {
 		return nil, errors.New("認証情報が見つかりません")
 	}
@@ -164,11 +165,11 @@ func (uu *userUsecase) VerifyEmail(ctx context.Context, dto VerifyEmailInput) (*
 
 	// ユーザーを認証済みに更新し、認証情報を削除
 	err = uu.transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
-		user.SetVerified()
-		if err := uu.userRepo.UpdateVerifiedAt(ctx, user.VerifiedAt, user.ID); err != nil {
+		verifiedTime := time.Now()
+		if err := uu.userRepo.UpdateVerifiedAt(ctx, &verifiedTime, user.ID()); err != nil {
 			return err
 		}
-		if err := uu.emailVerificationRepo.DeleteByUserID(ctx, user.ID); err != nil {
+		if err := uu.emailVerificationRepo.DeleteByUserID(ctx, user.ID()); err != nil {
 			return err
 		}
 		return nil
@@ -178,14 +179,14 @@ func (uu *userUsecase) VerifyEmail(ctx context.Context, dto VerifyEmailInput) (*
 	}
 
 	// 認証成功後、JWTを発行してログインさせる
-	tokenString, err := uu.tokenGenerator.GenerateToken(user.ID)
+	tokenString, err := uu.tokenGenerator.GenerateToken(user.ID())
 	if err != nil {
 		return nil, errors.New("トークンの生成に失敗しました")
 	}
 	result := &LoginUserOutput{
 		Token:      tokenString,
-		ThemeColor: user.ThemeColor,
-		Language:   user.Language,
+		ThemeColor: user.ThemeColor(),
+		Language:   user.Language(),
 	}
 	return result, nil
 }
@@ -206,15 +207,15 @@ func (uu *userUsecase) LogIn(ctx context.Context, dto LoginUserInput) (*LoginUse
 		return nil, err
 	}
 
-	tokenString, err := uu.tokenGenerator.GenerateToken(user.ID)
+	tokenString, err := uu.tokenGenerator.GenerateToken(user.ID())
 	if err != nil {
 		return nil, errors.New("トークンの生成に失敗しました")
 	}
 
 	result := &LoginUserOutput{
 		Token:      tokenString,
-		ThemeColor: user.ThemeColor,
-		Language:   user.Language,
+		ThemeColor: user.ThemeColor(),
+		Language:   user.Language(),
 	}
 	return result, nil
 }
@@ -232,9 +233,9 @@ func (uu *userUsecase) GetUserSetting(ctx context.Context, userID string) (*GetU
 
 	resUser := &GetUserOutput{
 		Email:      email,
-		Timezone:   user.Timezone,
-		ThemeColor: user.ThemeColor,
-		Language:   user.Language,
+		Timezone:   user.Timezone(),
+		ThemeColor: user.ThemeColor(),
+		Language:   user.Language(),
 	}
 	return resUser, nil
 }
@@ -247,7 +248,7 @@ func (uu *userUsecase) UpdateSetting(ctx context.Context, user UpdateUserInput) 
 
 	searchKey := uu.hasher.GenerateSearchKey(user.Email)
 
-	err = targetUser.Set(user.Email, user.Timezone, user.ThemeColor, user.Language, uu.cryptoService, searchKey)
+	err = targetUser.UpdateSetting(user.Email, user.Timezone, user.ThemeColor, user.Language, uu.cryptoService, searchKey)
 	if err != nil {
 		return nil, err
 	}
@@ -264,9 +265,9 @@ func (uu *userUsecase) UpdateSetting(ctx context.Context, user UpdateUserInput) 
 
 	resUser := &UpdateUserOutput{
 		Email:      decryptedEmail,
-		Timezone:   targetUser.Timezone,
-		ThemeColor: targetUser.ThemeColor,
-		Language:   targetUser.Language,
+		Timezone:   targetUser.Timezone(),
+		ThemeColor: targetUser.ThemeColor(),
+		Language:   targetUser.Language(),
 	}
 
 	return resUser, nil
@@ -277,11 +278,11 @@ func (uu *userUsecase) UpdatePassword(ctx context.Context, userID, password stri
 	if err != nil {
 		return err
 	}
-	err = user.SetPassword(password)
+	err = user.UpdatePassword(password)
 	if err != nil {
 		return err
 	}
-	err = uu.userRepo.UpdatePassword(ctx, userID, user.EncryptedPassword)
+	err = uu.userRepo.UpdatePassword(ctx, userID, user.EncryptedPassword())
 	if err != nil {
 		return err
 	}

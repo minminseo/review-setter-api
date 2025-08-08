@@ -7,13 +7,13 @@ import (
 )
 
 type Box struct {
-	ID           string
-	UserID       string
-	CategoryID   string
-	PatternID    string
-	Name         string
-	RegisteredAt time.Time
-	EditedAt     time.Time
+	id           string
+	userID       string
+	categoryID   string
+	patternID    string
+	name         string
+	registeredAt time.Time
+	editedAt     time.Time
 }
 
 func NewBox(
@@ -30,13 +30,13 @@ func NewBox(
 	}
 
 	b := &Box{
-		ID:           id,
-		UserID:       userID,
-		CategoryID:   categoryID,
-		PatternID:    patternID,
-		Name:         name,
-		RegisteredAt: registeredAt,
-		EditedAt:     editedAt,
+		id:           id,
+		userID:       userID,
+		categoryID:   categoryID,
+		patternID:    patternID,
+		name:         name,
+		registeredAt: registeredAt,
+		editedAt:     editedAt,
 	}
 
 	return b, nil
@@ -52,13 +52,13 @@ func ReconstructBox(
 	editedAt time.Time,
 ) (*Box, error) {
 	b := &Box{
-		ID:           id,
-		UserID:       userID,
-		CategoryID:   categoryID,
-		PatternID:    patternID,
-		Name:         name,
-		RegisteredAt: registeredAt,
-		EditedAt:     editedAt,
+		id:           id,
+		userID:       userID,
+		categoryID:   categoryID,
+		patternID:    patternID,
+		name:         name,
+		registeredAt: registeredAt,
+		editedAt:     editedAt,
 	}
 	return b, nil
 }
@@ -70,13 +70,41 @@ func validateName(name string) error {
 	)
 }
 
-func (b *Box) Set(
+func (b *Box) ID() string {
+	return b.id
+}
+
+func (b *Box) UserID() string {
+	return b.userID
+}
+
+func (b *Box) CategoryID() string {
+	return b.categoryID
+}
+
+func (b *Box) PatternID() string {
+	return b.patternID
+}
+
+func (b *Box) Name() string {
+	return b.name
+}
+
+func (b *Box) RegisteredAt() time.Time {
+	return b.registeredAt
+}
+
+func (b *Box) EditedAt() time.Time {
+	return b.editedAt
+}
+
+func (b *Box) UpdateBox(
 	patternID string,
 	name string,
 	editedAt time.Time,
 ) (bool, error) {
 	var isSamePattern bool
-	if b.PatternID == patternID {
+	if b.patternID == patternID {
 		isSamePattern = true
 	} else {
 		isSamePattern = false
@@ -86,9 +114,9 @@ func (b *Box) Set(
 		return isSamePattern, err
 	}
 
-	b.PatternID = patternID
-	b.Name = name
-	b.EditedAt = editedAt
+	b.patternID = patternID
+	b.name = name
+	b.editedAt = editedAt
 
 	return isSamePattern, nil
 }

@@ -77,10 +77,15 @@ func TestUserUsecase_SignUp_StrictOrderAndCount(t *testing.T) {
 			name: "既存ユーザー（認証済み）でエラー",
 			dto:  dto,
 			mockFunc: func(mockUserRepo *userDomain.MockUserRepository, mockEmailVerificationRepo *userDomain.MockEmailVerificationRepository, mockTransactionManager *transaction.MockITransactionManager, mockHasher *userDomain.MockIHasher, mockEmailSender *MockiEmailSender, mockTokenGenerator *MockiTokenGenerator) {
-				existingUser := &userDomain.User{
-					ID:         testID,
-					VerifiedAt: &time.Time{},
-				}
+				existingUser, _ := userDomain.ReconstructUserForAuth(
+					testID,
+					testSearchKey,
+					"encrypted_email",
+					"encrypted_password",
+					"black",
+					"ja",
+					&time.Time{},
+				)
 				gomock.InOrder(
 					mockHasher.EXPECT().
 						GenerateSearchKey(testEmail).
@@ -99,10 +104,15 @@ func TestUserUsecase_SignUp_StrictOrderAndCount(t *testing.T) {
 			name: "既存ユーザー（未認証）で認証コード再送信成功",
 			dto:  dto,
 			mockFunc: func(mockUserRepo *userDomain.MockUserRepository, mockEmailVerificationRepo *userDomain.MockEmailVerificationRepository, mockTransactionManager *transaction.MockITransactionManager, mockHasher *userDomain.MockIHasher, mockEmailSender *MockiEmailSender, mockTokenGenerator *MockiTokenGenerator) {
-				existingUser := &userDomain.User{
-					ID:         testID,
-					VerifiedAt: nil,
-				}
+				existingUser, _ := userDomain.ReconstructUserForAuth(
+					testID,
+					testSearchKey,
+					"encrypted_email",
+					"encrypted_password",
+					"black",
+					"ja",
+					nil,
+				)
 				gomock.InOrder(
 					mockHasher.EXPECT().
 						GenerateSearchKey(testEmail).
@@ -242,17 +252,30 @@ func TestUserUsecase_VerifyEmail(t *testing.T) {
 
 					mockUserRepo.EXPECT().
 						FindByEmailSearchKey(gomock.Any(), testSearchKey).
-						Return(&userDomain.User{ID: testID, ThemeColor: "dark", Language: "ja"}, nil).
+						Return(func() *userDomain.User {
+							user, _ := userDomain.ReconstructUserForAuth(
+								testID,
+								testSearchKey,
+								"encrypted_email",
+								"encrypted_password",
+								"dark",
+								"ja",
+								nil)
+							return user
+						}(), nil).
 						Times(1),
 
 					mockEmailVerificationRepo.EXPECT().
 						FindByUserID(gomock.Any(), testID).
-						Return(&userDomain.EmailVerification{
-							ID:        "verification-id",
-							UserID:    testID,
-							CodeHash:  userDomain.HashVerificationCodeForTest(testCode),
-							ExpiresAt: time.Now().Add(10 * time.Minute),
-						}, nil).
+						Return(func() *userDomain.EmailVerification {
+							verification, _ := userDomain.ReconstructEmailVerification(
+								"verification-id",
+								testID,
+								userDomain.HashVerificationCodeForTest(testCode),
+								time.Now().Add(10*time.Minute),
+							)
+							return verification
+						}(), nil).
 						Times(1),
 
 					mockTransactionManager.EXPECT().
@@ -310,7 +333,17 @@ func TestUserUsecase_VerifyEmail(t *testing.T) {
 
 					mockUserRepo.EXPECT().
 						FindByEmailSearchKey(gomock.Any(), testSearchKey).
-						Return(&userDomain.User{ID: testID, VerifiedAt: &time.Time{}}, nil).
+						Return(func() *userDomain.User {
+							user, _ := userDomain.ReconstructUserForAuth(
+								testID,
+								testSearchKey,
+								"encrypted_email",
+								"encrypted_password",
+								"dark",
+								"ja",
+								&time.Time{})
+							return user
+						}(), nil).
 						Times(1),
 				)
 			},
@@ -328,7 +361,17 @@ func TestUserUsecase_VerifyEmail(t *testing.T) {
 
 					mockUserRepo.EXPECT().
 						FindByEmailSearchKey(gomock.Any(), testSearchKey).
-						Return(&userDomain.User{ID: testID}, nil).
+						Return(func() *userDomain.User {
+							user, _ := userDomain.ReconstructUserForAuth(
+								testID,
+								testSearchKey,
+								"encrypted_email",
+								"encrypted_password",
+								"dark",
+								"ja",
+								nil)
+							return user
+						}(), nil).
 						Times(1),
 
 					mockEmailVerificationRepo.EXPECT().
@@ -351,16 +394,30 @@ func TestUserUsecase_VerifyEmail(t *testing.T) {
 
 					mockUserRepo.EXPECT().
 						FindByEmailSearchKey(gomock.Any(), testSearchKey).
-						Return(&userDomain.User{ID: testID}, nil).
+						Return(func() *userDomain.User {
+							user, _ := userDomain.ReconstructUserForAuth(
+								testID,
+								testSearchKey,
+								"encrypted_email",
+								"encrypted_password",
+								"dark",
+								"ja",
+								nil)
+							return user
+						}(), nil).
 						Times(1),
 
 					mockEmailVerificationRepo.EXPECT().
 						FindByUserID(gomock.Any(), testID).
-						Return(&userDomain.EmailVerification{
-							ID:        "verification-id",
-							CodeHash:  userDomain.HashVerificationCodeForTest(testCode),
-							ExpiresAt: time.Now().Add(10 * time.Minute),
-						}, nil).
+						Return(func() *userDomain.EmailVerification {
+							verification, _ := userDomain.ReconstructEmailVerification(
+								"verification-id",
+								testID,
+								userDomain.HashVerificationCodeForTest(testCode),
+								time.Now().Add(10*time.Minute),
+							)
+							return verification
+						}(), nil).
 						Times(1),
 
 					mockTransactionManager.EXPECT().
@@ -434,13 +491,15 @@ func TestUserUsecase_LogIn(t *testing.T) {
 			dto:  dto,
 			mockFunc: func(mockUserRepo *userDomain.MockUserRepository, mockEmailVerificationRepo *userDomain.MockEmailVerificationRepository, mockTransactionManager *transaction.MockITransactionManager, mockHasher *userDomain.MockIHasher, mockEmailSender *MockiEmailSender, mockTokenGenerator *MockiTokenGenerator) {
 				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(testPassword), bcrypt.DefaultCost)
-				user := &userDomain.User{
-					ID:                testID,
-					VerifiedAt:        &time.Time{},
-					ThemeColor:        "dark",
-					Language:          "ja",
-					EncryptedPassword: string(hashedPassword),
-				}
+				user, _ := userDomain.ReconstructUserForAuth(
+					testID,
+					testSearchKey,
+					"encrypted_email",
+					string(hashedPassword),
+					"dark",
+					"ja",
+					&time.Time{},
+				)
 
 				gomock.InOrder(
 					mockHasher.EXPECT().
@@ -483,10 +542,15 @@ func TestUserUsecase_LogIn(t *testing.T) {
 			name: "メールアドレスが認証されていない",
 			dto:  dto,
 			mockFunc: func(mockUserRepo *userDomain.MockUserRepository, mockEmailVerificationRepo *userDomain.MockEmailVerificationRepository, mockTransactionManager *transaction.MockITransactionManager, mockHasher *userDomain.MockIHasher, mockEmailSender *MockiEmailSender, mockTokenGenerator *MockiTokenGenerator) {
-				user := &userDomain.User{
-					ID:         testID,
-					VerifiedAt: nil,
-				}
+				user, _ := userDomain.ReconstructUserForAuth(
+					testID,
+					testSearchKey,
+					"encrypted_email",
+					"encrypted_password",
+					"dark",
+					"ja",
+					nil,
+				)
 				gomock.InOrder(
 					mockHasher.EXPECT().
 						GenerateSearchKey(testEmail).
@@ -506,11 +570,15 @@ func TestUserUsecase_LogIn(t *testing.T) {
 			dto:  dto,
 			mockFunc: func(mockUserRepo *userDomain.MockUserRepository, mockEmailVerificationRepo *userDomain.MockEmailVerificationRepository, mockTransactionManager *transaction.MockITransactionManager, mockHasher *userDomain.MockIHasher, mockEmailSender *MockiEmailSender, mockTokenGenerator *MockiTokenGenerator) {
 				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(testPassword), bcrypt.DefaultCost)
-				user := &userDomain.User{
-					ID:                testID,
-					VerifiedAt:        &time.Time{},
-					EncryptedPassword: string(hashedPassword),
-				}
+				user, _ := userDomain.ReconstructUserForAuth(
+					testID,
+					testSearchKey,
+					"encrypted_email",
+					string(hashedPassword),
+					"dark",
+					"ja",
+					&time.Time{},
+				)
 				gomock.InOrder(
 					mockHasher.EXPECT().
 						GenerateSearchKey(testEmail).
@@ -586,13 +654,14 @@ func TestUserUsecase_GetUserSetting(t *testing.T) {
 			userID: testID,
 			mockFunc: func(mockUserRepo *userDomain.MockUserRepository, mockEmailVerificationRepo *userDomain.MockEmailVerificationRepository, mockTransactionManager *transaction.MockITransactionManager, mockHasher *userDomain.MockIHasher, mockEmailSender *MockiEmailSender, mockTokenGenerator *MockiTokenGenerator, mockCryptoService *userDomain.CryptoService) {
 				encryptedEmail, _ := mockCryptoService.Encrypt(testEmail)
-				user := &userDomain.User{
-					ID:             testID,
-					Timezone:       "Asia/Tokyo",
-					ThemeColor:     "dark",
-					Language:       "ja",
-					EncryptedEmail: encryptedEmail,
-				}
+				user, _ := userDomain.ReconstructUserForSettings(
+					testID,
+					encryptedEmail,
+					"Asia/Tokyo",
+					"dark",
+					"ja",
+					nil,
+				)
 
 				gomock.InOrder(
 					mockUserRepo.EXPECT().
@@ -686,13 +755,14 @@ func TestUserUsecase_UpdateSetting(t *testing.T) {
 			dto:  dto,
 			mockFunc: func(mockUserRepo *userDomain.MockUserRepository, mockEmailVerificationRepo *userDomain.MockEmailVerificationRepository, mockTransactionManager *transaction.MockITransactionManager, mockHasher *userDomain.MockIHasher, mockEmailSender *MockiEmailSender, mockTokenGenerator *MockiTokenGenerator, mockCryptoService *userDomain.CryptoService) {
 				encryptedEmail, _ := mockCryptoService.Encrypt("old@example.com")
-				user := &userDomain.User{
-					ID:             testID,
-					Timezone:       "Asia/Tokyo",
-					ThemeColor:     "dark",
-					Language:       "ja",
-					EncryptedEmail: encryptedEmail,
-				}
+				user, _ := userDomain.ReconstructUserForSettings(
+					testID,
+					encryptedEmail,
+					"Asia/Tokyo",
+					"dark",
+					"ja",
+					nil,
+				)
 
 				gomock.InOrder(
 					mockUserRepo.EXPECT().
@@ -731,13 +801,14 @@ func TestUserUsecase_UpdateSetting(t *testing.T) {
 			dto:  dto,
 			mockFunc: func(mockUserRepo *userDomain.MockUserRepository, mockEmailVerificationRepo *userDomain.MockEmailVerificationRepository, mockTransactionManager *transaction.MockITransactionManager, mockHasher *userDomain.MockIHasher, mockEmailSender *MockiEmailSender, mockTokenGenerator *MockiTokenGenerator, mockCryptoService *userDomain.CryptoService) {
 				encryptedEmail, _ := mockCryptoService.Encrypt("old@example.com")
-				user := &userDomain.User{
-					ID:             testID,
-					Timezone:       "Asia/Tokyo",
-					ThemeColor:     "dark",
-					Language:       "ja",
-					EncryptedEmail: encryptedEmail,
-				}
+				user, _ := userDomain.ReconstructUserForSettings(
+					testID,
+					encryptedEmail,
+					"Asia/Tokyo",
+					"dark",
+					"ja",
+					nil,
+				)
 
 				gomock.InOrder(
 					mockUserRepo.EXPECT().
@@ -814,7 +885,13 @@ func TestUserUsecase_UpdatePassword(t *testing.T) {
 			userID:   testID,
 			password: testPassword,
 			mockFunc: func(mockUserRepo *userDomain.MockUserRepository, mockEmailVerificationRepo *userDomain.MockEmailVerificationRepository, mockTransactionManager *transaction.MockITransactionManager, mockHasher *userDomain.MockIHasher, mockEmailSender *MockiEmailSender, mockTokenGenerator *MockiTokenGenerator) {
-				user := &userDomain.User{ID: testID}
+				user, _ := userDomain.ReconstructUserForSettings(
+					testID,
+					"encrypted_email",
+					"Asia/Tokyo",
+					"dark",
+					"ja",
+					nil)
 				gomock.InOrder(
 					mockUserRepo.EXPECT().
 						GetSettingByID(gomock.Any(), testID).
@@ -848,7 +925,13 @@ func TestUserUsecase_UpdatePassword(t *testing.T) {
 			userID:   testID,
 			password: testPassword,
 			mockFunc: func(mockUserRepo *userDomain.MockUserRepository, mockEmailVerificationRepo *userDomain.MockEmailVerificationRepository, mockTransactionManager *transaction.MockITransactionManager, mockHasher *userDomain.MockIHasher, mockEmailSender *MockiEmailSender, mockTokenGenerator *MockiTokenGenerator) {
-				user := &userDomain.User{ID: testID}
+				user, _ := userDomain.ReconstructUserForSettings(
+					testID,
+					"encrypted_email",
+					"Asia/Tokyo",
+					"dark",
+					"ja",
+					nil)
 				gomock.InOrder(
 					mockUserRepo.EXPECT().
 						GetSettingByID(gomock.Any(), testID).

@@ -39,14 +39,17 @@ func TestNewPattern(t *testing.T) {
 			targetWeight: TargetWeightNormal,
 			registeredAt: now,
 			editedAt:     now,
-			want: &Pattern{
-				PatternID:    testPatternID,
-				UserID:       testUserID,
-				Name:         "Standard Review",
-				TargetWeight: TargetWeightNormal,
-				RegisteredAt: now,
-				EditedAt:     now,
-			},
+			want: func() *Pattern {
+				pattern, _ := ReconstructPattern(
+					testPatternID,
+					testUserID,
+					"Standard Review",
+					TargetWeightNormal,
+					now,
+					now,
+				)
+				return pattern
+			}(),
 			wantErr: false,
 		},
 		{
@@ -81,14 +84,17 @@ func TestNewPattern(t *testing.T) {
 			targetWeight: TargetWeightHeavy,
 			registeredAt: now,
 			editedAt:     now,
-			want: &Pattern{
-				PatternID:    "pattern4",
-				UserID:       testUserID,
-				Name:         "Heavy Pattern",
-				TargetWeight: TargetWeightHeavy,
-				RegisteredAt: now,
-				EditedAt:     now,
-			},
+			want: func() *Pattern {
+				pattern, _ := ReconstructPattern(
+					"pattern4",
+					testUserID,
+					"Heavy Pattern",
+					TargetWeightHeavy,
+					now,
+					now,
+				)
+				return pattern
+			}(),
 			wantErr: false,
 		},
 		{
@@ -99,14 +105,17 @@ func TestNewPattern(t *testing.T) {
 			targetWeight: TargetWeightLight,
 			registeredAt: now,
 			editedAt:     now,
-			want: &Pattern{
-				PatternID:    "pattern5",
-				UserID:       testUserID,
-				Name:         "Light Pattern",
-				TargetWeight: TargetWeightLight,
-				RegisteredAt: now,
-				EditedAt:     now,
-			},
+			want: func() *Pattern {
+				pattern, _ := ReconstructPattern(
+					"pattern5",
+					testUserID,
+					"Light Pattern",
+					TargetWeightLight,
+					now,
+					now,
+				)
+				return pattern
+			}(),
 			wantErr: false,
 		},
 		{
@@ -117,14 +126,17 @@ func TestNewPattern(t *testing.T) {
 			targetWeight: TargetWeightUnset,
 			registeredAt: now,
 			editedAt:     now,
-			want: &Pattern{
-				PatternID:    "pattern6",
-				UserID:       testUserID,
-				Name:         "Unset Pattern",
-				TargetWeight: TargetWeightUnset,
-				RegisteredAt: now,
-				EditedAt:     now,
-			},
+			want: func() *Pattern {
+				pattern, _ := ReconstructPattern(
+					"pattern6",
+					testUserID,
+					"Unset Pattern",
+					TargetWeightUnset,
+					now,
+					now,
+				)
+				return pattern
+			}(),
 			wantErr: false,
 		},
 	}
@@ -150,14 +162,30 @@ func TestNewPattern(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
-			if diff := cmp.Diff(tc.want, pattern); diff != "" {
-				t.Errorf("Pattern mismatch (-want +got):\n%s", diff)
+			// フィールドごとの比較
+			if pattern.PatternID() != tc.want.PatternID() {
+				t.Errorf("PatternID: got %v, want %v", pattern.PatternID(), tc.want.PatternID())
+			}
+			if pattern.UserID() != tc.want.UserID() {
+				t.Errorf("UserID: got %v, want %v", pattern.UserID(), tc.want.UserID())
+			}
+			if pattern.Name() != tc.want.Name() {
+				t.Errorf("Name: got %v, want %v", pattern.Name(), tc.want.Name())
+			}
+			if pattern.TargetWeight() != tc.want.TargetWeight() {
+				t.Errorf("TargetWeight: got %v, want %v", pattern.TargetWeight(), tc.want.TargetWeight())
+			}
+			if !pattern.RegisteredAt().Equal(tc.want.RegisteredAt()) {
+				t.Errorf("RegisteredAt: got %v, want %v", pattern.RegisteredAt(), tc.want.RegisteredAt())
+			}
+			if !pattern.EditedAt().Equal(tc.want.EditedAt()) {
+				t.Errorf("EditedAt: got %v, want %v", pattern.EditedAt(), tc.want.EditedAt())
 			}
 		})
 	}
 }
 
-func TestPattern_Set(t *testing.T) {
+func TestPattern_UpdatePattern(t *testing.T) {
 	now := time.Now()
 	pattern, err := NewPattern(testPatternID, testUserID, "Original", TargetWeightNormal, now, now)
 	if err != nil {
@@ -180,14 +208,17 @@ func TestPattern_Set(t *testing.T) {
 			newName:      "Updated Pattern",
 			targetWeight: TargetWeightHeavy,
 			editedAt:     newTime,
-			wantPattern: &Pattern{
-				PatternID:    testPatternID,
-				UserID:       testUserID,
-				Name:         "Updated Pattern",
-				TargetWeight: TargetWeightHeavy,
-				RegisteredAt: now,
-				EditedAt:     newTime,
-			},
+			wantPattern: func() *Pattern {
+				pattern, _ := ReconstructPattern(
+					testPatternID,
+					testUserID,
+					"Updated Pattern",
+					TargetWeightHeavy,
+					now,
+					newTime,
+				)
+				return pattern
+			}(),
 			wantErr: false,
 		},
 		{
@@ -195,14 +226,17 @@ func TestPattern_Set(t *testing.T) {
 			newName:      "",
 			targetWeight: TargetWeightNormal,
 			editedAt:     newTime,
-			wantPattern: &Pattern{
-				PatternID:    testPatternID,
-				UserID:       testUserID,
-				Name:         "Original",
-				TargetWeight: TargetWeightNormal,
-				RegisteredAt: now,
-				EditedAt:     now,
-			},
+			wantPattern: func() *Pattern {
+				pattern, _ := ReconstructPattern(
+					testPatternID,
+					testUserID,
+					"Original",
+					TargetWeightNormal,
+					now,
+					now,
+				)
+				return pattern
+			}(),
 			wantErr: true,
 			errMsg:  "名前は必須です",
 		},
@@ -211,14 +245,17 @@ func TestPattern_Set(t *testing.T) {
 			newName:      "Valid Name",
 			targetWeight: "invalid",
 			editedAt:     newTime,
-			wantPattern: &Pattern{
-				PatternID:    testPatternID,
-				UserID:       testUserID,
-				Name:         "Original",
-				TargetWeight: TargetWeightNormal,
-				RegisteredAt: now,
-				EditedAt:     now,
-			},
+			wantPattern: func() *Pattern {
+				pattern, _ := ReconstructPattern(
+					testPatternID,
+					testUserID,
+					"Original",
+					TargetWeightNormal,
+					now,
+					now,
+				)
+				return pattern
+			}(),
 			wantErr: true,
 			errMsg:  "重みの値が不正です",
 		},
@@ -230,7 +267,7 @@ func TestPattern_Set(t *testing.T) {
 			// パターンをコピー
 			testPattern := *pattern
 
-			err := testPattern.Set(tc.newName, tc.targetWeight, tc.editedAt)
+			err := testPattern.UpdatePattern(tc.newName, tc.targetWeight, tc.editedAt)
 
 			if tc.wantErr {
 				if err == nil {
@@ -239,7 +276,7 @@ func TestPattern_Set(t *testing.T) {
 				if err.Error() != tc.errMsg {
 					t.Errorf("unexpected error message: got %q, want %q", err.Error(), tc.errMsg)
 				}
-				if diff := cmp.Diff(tc.wantPattern, &testPattern); diff != "" {
+				if diff := cmp.Diff(tc.wantPattern, &testPattern, cmp.AllowUnexported(Pattern{})); diff != "" {
 					t.Errorf("Pattern mismatch (-want +got):\n%s", diff)
 				}
 				return
@@ -249,7 +286,7 @@ func TestPattern_Set(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
-			if diff := cmp.Diff(tc.wantPattern, &testPattern); diff != "" {
+			if diff := cmp.Diff(tc.wantPattern, &testPattern, cmp.AllowUnexported(Pattern{})); diff != "" {
 				t.Errorf("Pattern mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -275,13 +312,16 @@ func TestNewPatternStep(t *testing.T) {
 			patternID:     testPatternID,
 			stepNumber:    1,
 			intervalDays:  1,
-			want: &PatternStep{
-				PatternStepID: "step1",
-				UserID:        testUserID,
-				PatternID:     testPatternID,
-				StepNumber:    1,
-				IntervalDays:  1,
-			},
+			want: func() *PatternStep {
+				step, _ := ReconstructPatternStep(
+					"step1",
+					testUserID,
+					testPatternID,
+					1,
+					1,
+				)
+				return step
+			}(),
 			wantErr: false,
 		},
 		{
@@ -351,7 +391,7 @@ func TestNewPatternStep(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
-			if diff := cmp.Diff(tc.want, step); diff != "" {
+			if diff := cmp.Diff(tc.want, step, cmp.AllowUnexported(PatternStep{})); diff != "" {
 				t.Errorf("PatternStep mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -363,10 +403,10 @@ func TestValidateSteps(t *testing.T) {
 		t.Skip("スキップさせる")
 	}
 
-	s1 := &PatternStep{PatternStepID: "1", UserID: "u1", PatternID: "p1", StepNumber: 1, IntervalDays: 1}
-	s2 := &PatternStep{PatternStepID: "2", UserID: "u1", PatternID: "p1", StepNumber: 2, IntervalDays: 2}
-	s3 := &PatternStep{PatternStepID: "3", UserID: "u1", PatternID: "p1", StepNumber: 1, IntervalDays: 3} // StepNumber 重複
-	s4 := &PatternStep{PatternStepID: "4", UserID: "u1", PatternID: "p1", StepNumber: 3, IntervalDays: 2} // IntervalDays 重複
+	s1, _ := ReconstructPatternStep("1", "u1", "p1", 1, 1)
+	s2, _ := ReconstructPatternStep("2", "u1", "p1", 2, 2)
+	s3, _ := ReconstructPatternStep("3", "u1", "p1", 1, 3) // StepNumber 重複
+	s4, _ := ReconstructPatternStep("4", "u1", "p1", 3, 2) // IntervalDays 重複
 
 	tests := []struct {
 		name    string

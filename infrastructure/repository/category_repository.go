@@ -20,25 +20,25 @@ func NewCategoryRepository() categoryDomain.ICategoryRepository {
 func (r *categoryRepository) Create(ctx context.Context, category *categoryDomain.Category) error {
 	q := db.GetQuery(ctx)
 
-	parsedID, err := uuid.Parse(category.ID)
+	parsedID, err := uuid.Parse(category.ID())
 	if err != nil {
 		return err
 	}
 	pgID := pgtype.UUID{Bytes: parsedID, Valid: true}
 
-	parsedUserID, err := uuid.Parse(category.UserID)
+	parsedUserID, err := uuid.Parse(category.UserID())
 	if err != nil {
 		return err
 	}
 	pgUserID := pgtype.UUID{Bytes: parsedUserID, Valid: true}
 
-	pgRegisteredAt := pgtype.Timestamptz{Time: category.RegisteredAt, Valid: true}
-	pgEditedAt := pgtype.Timestamptz{Time: category.EditedAt, Valid: true}
+	pgRegisteredAt := pgtype.Timestamptz{Time: category.RegisteredAt(), Valid: true}
+	pgEditedAt := pgtype.Timestamptz{Time: category.EditedAt(), Valid: true}
 
 	params := dbgen.CreateCategoryParams{
 		ID:           pgID,
 		UserID:       pgUserID,
-		Name:         category.Name,
+		Name:         category.Name(),
 		RegisteredAt: pgRegisteredAt,
 		EditedAt:     pgEditedAt,
 	}
@@ -120,22 +120,22 @@ func (r *categoryRepository) GetByID(ctx context.Context, categoryID string, use
 func (r *categoryRepository) Update(ctx context.Context, category *categoryDomain.Category) error {
 	q := db.GetQuery(ctx)
 
-	parsedID, err := uuid.Parse(category.ID)
+	parsedID, err := uuid.Parse(category.ID())
 	if err != nil {
 		return err
 	}
 	pgID := pgtype.UUID{Bytes: parsedID, Valid: true}
 
-	parsedUserID, err := uuid.Parse(category.UserID)
+	parsedUserID, err := uuid.Parse(category.UserID())
 	if err != nil {
 		return err
 	}
 	pgUserID := pgtype.UUID{Bytes: parsedUserID, Valid: true}
 
-	pgEditedAt := pgtype.Timestamptz{Time: category.EditedAt, Valid: true}
+	pgEditedAt := pgtype.Timestamptz{Time: category.EditedAt(), Valid: true}
 
 	params := dbgen.UpdateCategoryParams{
-		Name:     category.Name,
+		Name:     category.Name(),
 		EditedAt: pgEditedAt,
 		ID:       pgID,
 		UserID:   pgUserID,

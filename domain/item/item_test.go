@@ -44,19 +44,22 @@ func TestNewItem(t *testing.T) {
 			isFinished:   false,
 			registeredAt: now,
 			editedAt:     now,
-			want: &Item{
-				ItemID:       "item1",
-				UserID:       "user1",
-				CategoryID:   &categoryID,
-				BoxID:        &boxID,
-				PatternID:    &patternID,
-				Name:         "Apple",
-				Detail:       "Apple - りんご",
-				LearnedDate:  learnedDate,
-				IsFinished:   false,
-				RegisteredAt: now,
-				EditedAt:     now,
-			},
+			want: func() *Item {
+				item, _ := ReconstructItem(
+					"item1",
+					"user1",
+					&categoryID,
+					&boxID,
+					&patternID,
+					"Apple",
+					"Apple - りんご",
+					learnedDate,
+					false,
+					now,
+					now,
+				)
+				return item
+			}(),
 			wantErr: false,
 		},
 		{
@@ -72,19 +75,22 @@ func TestNewItem(t *testing.T) {
 			isFinished:   true,
 			registeredAt: now,
 			editedAt:     now,
-			want: &Item{
-				ItemID:       "item2",
-				UserID:       "user1",
-				CategoryID:   nil,
-				BoxID:        nil,
-				PatternID:    nil,
-				Name:         "Apple",
-				Detail:       "Apple - りんご",
-				LearnedDate:  learnedDate,
-				IsFinished:   true,
-				RegisteredAt: now,
-				EditedAt:     now,
-			},
+			want: func() *Item {
+				item, _ := ReconstructItem(
+					"item2",
+					"user1",
+					nil,
+					nil,
+					nil,
+					"Apple",
+					"Apple - りんご",
+					learnedDate,
+					true,
+					now,
+					now,
+				)
+				return item
+			}(),
 			wantErr: false,
 		},
 		{
@@ -134,19 +140,22 @@ func TestNewItem(t *testing.T) {
 			isFinished:   false,
 			registeredAt: now,
 			editedAt:     now,
-			want: &Item{
-				ItemID:       "item4",
-				UserID:       "user1",
-				CategoryID:   &categoryID,
-				BoxID:        &boxID,
-				PatternID:    &patternID,
-				Name:         "Apple",
-				Detail:       "",
-				LearnedDate:  learnedDate,
-				IsFinished:   false,
-				RegisteredAt: now,
-				EditedAt:     now,
-			},
+			want: func() *Item {
+				item, _ := ReconstructItem(
+					"item4",
+					"user1",
+					&categoryID,
+					&boxID,
+					&patternID,
+					"Apple",
+					"",
+					learnedDate,
+					false,
+					now,
+					now,
+				)
+				return item
+			}(),
 			wantErr: false,
 		},
 	}
@@ -184,14 +193,14 @@ func TestNewItem(t *testing.T) {
 				t.Fatalf("予期しないエラー: %v", err)
 			}
 
-			if diff := cmp.Diff(tc.want, item); diff != "" {
+			if diff := cmp.Diff(tc.want, item, cmp.AllowUnexported(Item{})); diff != "" {
 				t.Errorf("Item mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
 }
 
-func TestItem_Set(t *testing.T) {
+func TestItem_UpdateItem(t *testing.T) {
 	now := time.Now()
 	learnedDate := now.Add(-24 * time.Hour)
 	categoryID := "category1"
@@ -231,19 +240,22 @@ func TestItem_Set(t *testing.T) {
 			newDetail:      "更新後詳細",
 			newLearnedDate: newLearnedDate,
 			editedAt:       newTime,
-			wantItem: &Item{
-				ItemID:       "item1",
-				UserID:       "user1",
-				CategoryID:   &newCategoryID,
-				BoxID:        &newBoxID,
-				PatternID:    &newPatternID,
-				Name:         "更新後復習物",
-				Detail:       "更新後詳細",
-				LearnedDate:  newLearnedDate,
-				IsFinished:   false,
-				RegisteredAt: now,
-				EditedAt:     newTime,
-			},
+			wantItem: func() *Item {
+				item, _ := ReconstructItem(
+					"item1",
+					"user1",
+					&newCategoryID,
+					&newBoxID,
+					&newPatternID,
+					"更新後復習物",
+					"更新後詳細",
+					newLearnedDate,
+					false,
+					now,
+					newTime,
+				)
+				return item
+			}(),
 			wantErr: false,
 		},
 		{
@@ -255,19 +267,22 @@ func TestItem_Set(t *testing.T) {
 			newDetail:      "更新後詳細",
 			newLearnedDate: newLearnedDate,
 			editedAt:       newTime,
-			wantItem: &Item{
-				ItemID:       "item1",
-				UserID:       "user1",
-				CategoryID:   nil,
-				BoxID:        nil,
-				PatternID:    nil,
-				Name:         "nil項目で更新",
-				Detail:       "更新後詳細",
-				LearnedDate:  newLearnedDate,
-				IsFinished:   false,
-				RegisteredAt: now,
-				EditedAt:     newTime,
-			},
+			wantItem: func() *Item {
+				item, _ := ReconstructItem(
+					"item1",
+					"user1",
+					nil,
+					nil,
+					nil,
+					"nil項目で更新",
+					"更新後詳細",
+					newLearnedDate,
+					false,
+					now,
+					newTime,
+				)
+				return item
+			}(),
 			wantErr: false,
 		},
 		{
@@ -279,19 +294,22 @@ func TestItem_Set(t *testing.T) {
 			newDetail:      "詳細",
 			newLearnedDate: newLearnedDate,
 			editedAt:       newTime,
-			wantItem: &Item{
-				ItemID:       "item1",
-				UserID:       "user1",
-				CategoryID:   &categoryID,
-				BoxID:        &boxID,
-				PatternID:    &patternID,
-				Name:         "Original Item",
-				Detail:       "Original detail",
-				LearnedDate:  learnedDate,
-				IsFinished:   false,
-				RegisteredAt: now,
-				EditedAt:     now,
-			},
+			wantItem: func() *Item {
+				item, _ := ReconstructItem(
+					"item1",
+					"user1",
+					&categoryID,
+					&boxID,
+					&patternID,
+					"Original Item",
+					"Original detail",
+					learnedDate,
+					false,
+					now,
+					now,
+				)
+				return item
+			}(),
 			wantErr: true,
 			errMsg:  "復習物名は必須です",
 		},
@@ -304,19 +322,22 @@ func TestItem_Set(t *testing.T) {
 			newDetail:      "有効な詳細",
 			newLearnedDate: time.Time{},
 			editedAt:       newTime,
-			wantItem: &Item{
-				ItemID:       "item1",
-				UserID:       "user1",
-				CategoryID:   &categoryID,
-				BoxID:        &boxID,
-				PatternID:    &patternID,
-				Name:         "Original Item",
-				Detail:       "Original detail",
-				LearnedDate:  learnedDate,
-				IsFinished:   false,
-				RegisteredAt: now,
-				EditedAt:     now,
-			},
+			wantItem: func() *Item {
+				item, _ := ReconstructItem(
+					"item1",
+					"user1",
+					&categoryID,
+					&boxID,
+					&patternID,
+					"Original Item",
+					"Original detail",
+					learnedDate,
+					false,
+					now,
+					now,
+				)
+				return item
+			}(),
 			wantErr: true,
 			errMsg:  "学習日は必須です",
 		},
@@ -328,7 +349,7 @@ func TestItem_Set(t *testing.T) {
 			// 復習物をコピー
 			testItem := *item
 
-			err := testItem.Set(tc.categoryID, tc.boxID, tc.patternID, tc.newName, tc.newDetail, tc.newLearnedDate, tc.editedAt)
+			err := testItem.UpdateItem(tc.categoryID, tc.boxID, tc.patternID, tc.newName, tc.newDetail, tc.newLearnedDate, tc.editedAt)
 
 			if tc.wantErr {
 				if err == nil {
@@ -337,7 +358,7 @@ func TestItem_Set(t *testing.T) {
 				if err.Error() != tc.errMsg {
 					t.Errorf("エラーメッセージが一致しません: got %q, want %q", err.Error(), tc.errMsg)
 				}
-				if diff := cmp.Diff(tc.wantItem, &testItem); diff != "" {
+				if diff := cmp.Diff(tc.wantItem, &testItem, cmp.AllowUnexported(Item{})); diff != "" {
 					t.Errorf("Item mismatch (-want +got):\n%s", diff)
 				}
 				return
@@ -347,7 +368,7 @@ func TestItem_Set(t *testing.T) {
 				t.Fatalf("予期しないエラー: %v", err)
 			}
 
-			if diff := cmp.Diff(tc.wantItem, &testItem); diff != "" {
+			if diff := cmp.Diff(tc.wantItem, &testItem, cmp.AllowUnexported(Item{})); diff != "" {
 				t.Errorf("Item mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -387,17 +408,20 @@ func TestNewReviewdate(t *testing.T) {
 			initialScheduledDate: initialDate,
 			scheduledDate:        scheduledDate,
 			isCompleted:          false,
-			want: &Reviewdate{
-				ReviewdateID:         "review1",
-				UserID:               "user1",
-				CategoryID:           &categoryID,
-				BoxID:                &boxID,
-				ItemID:               "item1",
-				StepNumber:           1,
-				InitialScheduledDate: initialDate,
-				ScheduledDate:        scheduledDate,
-				IsCompleted:          false,
-			},
+			want: func() *Reviewdate {
+				reviewdate, _ := ReconstructReviewdate(
+					"review1",
+					"user1",
+					&categoryID,
+					&boxID,
+					"item1",
+					1,
+					initialDate,
+					scheduledDate,
+					false,
+				)
+				return reviewdate
+			}(),
 			wantErr: false,
 		},
 		{
@@ -411,17 +435,20 @@ func TestNewReviewdate(t *testing.T) {
 			initialScheduledDate: initialDate,
 			scheduledDate:        scheduledDate,
 			isCompleted:          true,
-			want: &Reviewdate{
-				ReviewdateID:         "review2",
-				UserID:               "user1",
-				CategoryID:           nil,
-				BoxID:                nil,
-				ItemID:               "item1",
-				StepNumber:           1,
-				InitialScheduledDate: initialDate,
-				ScheduledDate:        scheduledDate,
-				IsCompleted:          true,
-			},
+			want: func() *Reviewdate {
+				reviewdate, _ := ReconstructReviewdate(
+					"review2",
+					"user1",
+					nil,
+					nil,
+					"item1",
+					1,
+					initialDate,
+					scheduledDate,
+					true,
+				)
+				return reviewdate
+			}(),
 			wantErr: false,
 		},
 		{
@@ -437,7 +464,7 @@ func TestNewReviewdate(t *testing.T) {
 			isCompleted:          false,
 			want:                 nil,
 			wantErr:              true,
-			errMsg:               "StepNumber: ステップ番号は必須です.",
+			errMsg:               "stepNumber: ステップ番号は必須です.",
 		},
 		{
 			name:                 "ステップ番号が負数（異常系）",
@@ -452,7 +479,7 @@ func TestNewReviewdate(t *testing.T) {
 			isCompleted:          false,
 			want:                 nil,
 			wantErr:              true,
-			errMsg:               "StepNumber: ステップ番号の値が不正です.",
+			errMsg:               "stepNumber: ステップ番号の値が不正です.",
 		},
 		{
 			name:                 "ステップ番号が32768以上（異常系）",
@@ -467,7 +494,7 @@ func TestNewReviewdate(t *testing.T) {
 			isCompleted:          false,
 			want:                 nil,
 			wantErr:              true,
-			errMsg:               "StepNumber: ステップは32768回以上は指定できません.",
+			errMsg:               "stepNumber: ステップは32768回以上は指定できません.",
 		},
 		{
 			name:                 "スケジュール日がゼロ値（異常系）",
@@ -482,7 +509,7 @@ func TestNewReviewdate(t *testing.T) {
 			isCompleted:          false,
 			want:                 nil,
 			wantErr:              true,
-			errMsg:               "ScheduledDate: スケジュール日は必須です.",
+			errMsg:               "scheduledDate: スケジュール日は必須です.",
 		},
 	}
 
@@ -517,7 +544,7 @@ func TestNewReviewdate(t *testing.T) {
 				t.Fatalf("予期しないエラー: %v", err)
 			}
 
-			if diff := cmp.Diff(tc.want, reviewdate); diff != "" {
+			if diff := cmp.Diff(tc.want, reviewdate, cmp.AllowUnexported(Reviewdate{})); diff != "" {
 				t.Errorf("Reviewdate mismatch (-want +got):\n%s", diff)
 			}
 		})

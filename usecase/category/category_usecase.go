@@ -39,11 +39,11 @@ func (cu *categoryUsecase) CreateCategory(ctx context.Context, input CreateCateg
 	}
 
 	resCategory := &CreateCategoryOutput{
-		ID:           newCategory.ID,
-		UserID:       newCategory.UserID,
-		Name:         newCategory.Name,
-		RegisteredAt: newCategory.RegisteredAt,
-		EditedAt:     newCategory.EditedAt,
+		ID:           newCategory.ID(),
+		UserID:       newCategory.UserID(),
+		Name:         newCategory.Name(),
+		RegisteredAt: newCategory.RegisteredAt(),
+		EditedAt:     newCategory.EditedAt(),
 	}
 	return resCategory, nil
 }
@@ -57,11 +57,11 @@ func (cu *categoryUsecase) GetCategoriesByUserID(ctx context.Context, userID str
 	outputCategories := make([]*GetCategoryOutput, len(categories))
 	for i, c := range categories {
 		outputCategories[i] = &GetCategoryOutput{
-			ID:           c.ID,
-			UserID:       c.UserID,
-			Name:         c.Name,
-			RegisteredAt: c.RegisteredAt,
-			EditedAt:     c.EditedAt,
+			ID:           c.ID(),
+			UserID:       c.UserID(),
+			Name:         c.Name(),
+			RegisteredAt: c.RegisteredAt(),
+			EditedAt:     c.EditedAt(),
 		}
 	}
 	return outputCategories, nil
@@ -75,7 +75,7 @@ func (cu *categoryUsecase) UpdateCategory(ctx context.Context, input UpdateCateg
 
 	EditedAt := time.Now().UTC()
 
-	err = targetCategory.Set(input.Name, EditedAt)
+	err = targetCategory.UpdateCategory(input.Name, EditedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -86,10 +86,10 @@ func (cu *categoryUsecase) UpdateCategory(ctx context.Context, input UpdateCateg
 	}
 
 	resCategory := &UpdateCategoryOutput{
-		ID:       targetCategory.ID,
-		UserID:   targetCategory.UserID,
-		Name:     targetCategory.Name,
-		EditedAt: targetCategory.EditedAt,
+		ID:       targetCategory.ID(),
+		UserID:   targetCategory.UserID(),
+		Name:     targetCategory.Name(),
+		EditedAt: targetCategory.EditedAt(),
 	}
 	return resCategory, nil
 }

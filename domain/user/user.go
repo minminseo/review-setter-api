@@ -10,14 +10,14 @@ import (
 )
 
 type User struct {
-	ID                string
-	EmailSearchKey    string
-	EncryptedEmail    string
-	EncryptedPassword string
-	Timezone          string
-	ThemeColor        string
-	Language          string
-	VerifiedAt        *time.Time
+	id                string
+	emailSearchKey    string
+	encryptedEmail    string
+	encryptedPassword string
+	timezone          string
+	themeColor        string
+	language          string
+	verifiedAt        *time.Time
 }
 
 func NewUser(
@@ -55,21 +55,45 @@ func NewUser(
 	encryptedPassword := encrypt(password)
 
 	u := &User{
-		ID:                id,
-		EmailSearchKey:    searchKey,
-		EncryptedEmail:    encryptedEmail,
-		EncryptedPassword: encryptedPassword,
-		Timezone:          timezone,
-		ThemeColor:        themeColor,
-		Language:          language,
-		VerifiedAt:        nil, // 初期値は未認証
+		id:                id,
+		emailSearchKey:    searchKey,
+		encryptedEmail:    encryptedEmail,
+		encryptedPassword: encryptedPassword,
+		timezone:          timezone,
+		themeColor:        themeColor,
+		language:          language,
+		verifiedAt:        nil, // 初期値は未認証
 
 	}
 
 	return u, nil
 }
 
-func ReconstructUser(
+// 認証用（認証に必要なフィールドのみ）
+func ReconstructUserForAuth(
+	id string,
+	emailSearchKey string,
+	encryptedEmail string,
+	encryptedPassword string,
+	themeColor string,
+	language string,
+	verifiedAt *time.Time,
+) (*User, error) {
+	u := &User{
+		id:                id,
+		emailSearchKey:    emailSearchKey,
+		encryptedEmail:    encryptedEmail,
+		encryptedPassword: encryptedPassword,
+		timezone:          "", // 認証時は不要
+		themeColor:        themeColor,
+		language:          language,
+		verifiedAt:        verifiedAt,
+	}
+	return u, nil
+}
+
+// 設定取得用（パスワード不要）
+func ReconstructUserForSettings(
 	id string,
 	encryptedEmail string,
 	timezone string,
@@ -78,17 +102,49 @@ func ReconstructUser(
 	verifiedAt *time.Time,
 ) (*User, error) {
 	u := &User{
-		ID:             id,
-		EncryptedEmail: encryptedEmail,
-		Timezone:       timezone,
-		ThemeColor:     themeColor,
-		Language:       language,
-		VerifiedAt:     verifiedAt,
+		id:             id,
+		encryptedEmail: encryptedEmail,
+		timezone:       timezone,
+		themeColor:     themeColor,
+		language:       language,
+		verifiedAt:     verifiedAt,
 	}
 	return u, nil
 }
 
-func (u *User) Set(
+func (u *User) ID() string {
+	return u.id
+}
+
+func (u *User) EmailSearchKey() string {
+	return u.emailSearchKey
+}
+
+func (u *User) EncryptedEmail() string {
+	return u.encryptedEmail
+}
+
+func (u *User) EncryptedPassword() string {
+	return u.encryptedPassword
+}
+
+func (u *User) Timezone() string {
+	return u.timezone
+}
+
+func (u *User) ThemeColor() string {
+	return u.themeColor
+}
+
+func (u *User) Language() string {
+	return u.language
+}
+
+func (u *User) VerifiedAt() *time.Time {
+	return u.verifiedAt
+}
+
+func (u *User) UpdateSetting(
 	email string,
 	timezone string,
 	themeColor string,
@@ -114,27 +170,26 @@ func (u *User) Set(
 		return err
 	}
 
-	u.EmailSearchKey = searchKey
-	u.EncryptedEmail = encryptedEmail
-	u.Timezone = timezone
-	u.ThemeColor = themeColor
-	u.Language = language
+	u.emailSearchKey = searchKey
+	u.encryptedEmail = encryptedEmail
+	u.timezone = timezone
+	u.themeColor = themeColor
+	u.language = language
 
 	return nil
 }
 
-// 複合
 func (u *User) GetEmail(cryptoService *CryptoService) (string, error) {
-	return cryptoService.Decrypt(u.EncryptedEmail)
+	return cryptoService.Decrypt(u.encryptedEmail)
 }
 
-func (u *User) SetPassword(password string) error {
+func (u *User) UpdatePassword(password string) error {
 	if err := validatePassword(password); err != nil {
 		return err
 	}
 
 	encryptedPassword := encrypt(password)
-	u.EncryptedPassword = encryptedPassword
+	u.encryptedPassword = encryptedPassword
 
 	return nil
 }
@@ -207,7 +262,7 @@ func encrypt(plainText string) string {
 
 // パスワード検証
 func (user *User) IsValidPassword(password string) error {
-	err := bcrypt.CompareHashAndPassword([]byte(user.EncryptedPassword), []byte(password))
+	err := bcrypt.CompareHashAndPassword([]byte(user.encryptedPassword), []byte(password))
 	if err != nil {
 		return errors.New("パスワードが一致しません")
 	}
@@ -277,12 +332,7 @@ func validateLanguage(language string) error {
 
 // 認証済みかを確認
 func (u *User) IsVerified() bool {
-	return u.VerifiedAt != nil
-}
-
-func (u *User) SetVerified() {
-	now := time.Now()
-	u.VerifiedAt = &now
+	return u.verifiedAt != nil
 }
 
 type IHasher interface {

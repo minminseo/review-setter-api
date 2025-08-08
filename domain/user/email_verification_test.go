@@ -56,11 +56,11 @@ func TestNewEmailVerification(t *testing.T) {
 			}
 
 			// 基本フィールドの検証
-			if verification.ID != tc.verificationID {
-				t.Errorf("認証IDが一致しません: got %q, want %q", verification.ID, tc.verificationID)
+			if verification.ID() != tc.verificationID {
+				t.Errorf("認証IDが一致しません: got %q, want %q", verification.ID(), tc.verificationID)
 			}
-			if verification.UserID != tc.userID {
-				t.Errorf("ユーザーIDが一致しません: got %q, want %q", verification.UserID, tc.userID)
+			if verification.UserID() != tc.userID {
+				t.Errorf("ユーザーIDが一致しません: got %q, want %q", verification.UserID(), tc.userID)
 			}
 
 			// コード長の検証
@@ -77,15 +77,15 @@ func TestNewEmailVerification(t *testing.T) {
 
 			// コードハッシュの検証
 			expectedHash := hashVerificationCode(code)
-			if verification.CodeHash != expectedHash {
-				t.Errorf("コードハッシュが一致しません: got %q, want %q", verification.CodeHash, expectedHash)
+			if verification.CodeHash() != expectedHash {
+				t.Errorf("コードハッシュが一致しません: got %q, want %q", verification.CodeHash(), expectedHash)
 			}
 
 			// 有効期限の検証
 			beforeExpectedExpiry := before.Add(VerificationExpiry)
 			afterExpectedExpiry := after.Add(VerificationExpiry)
-			if verification.ExpiresAt.Before(beforeExpectedExpiry) || verification.ExpiresAt.After(afterExpectedExpiry) {
-				t.Errorf("有効期限が範囲外です: got %v, expected between %v and %v", verification.ExpiresAt, beforeExpectedExpiry, afterExpectedExpiry)
+			if verification.ExpiresAt().Before(beforeExpectedExpiry) || verification.ExpiresAt().After(afterExpectedExpiry) {
+				t.Errorf("有効期限が範囲外です: got %v, expected between %v and %v", verification.ExpiresAt(), beforeExpectedExpiry, afterExpectedExpiry)
 			}
 
 			// コード検証の確認
@@ -117,12 +117,12 @@ func TestEmailVerification_IsExpired(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			verification := &EmailVerification{
-				ID:        "verification1",
-				UserID:    "user1",
-				CodeHash:  "hash",
-				ExpiresAt: tc.expiresAt,
-			}
+			verification, _ := ReconstructEmailVerification(
+				"verification1",
+				"user1",
+				"hash",
+				tc.expiresAt,
+			)
 
 			got := verification.IsExpired()
 			if got != tc.want {
