@@ -202,7 +202,7 @@ openssl rand -hex 32
 openssl rand -hex 32
 ```
 
-.envファイルで、アカウント新規作成時の認証メール送信先として**SMTP_USER**と**SMTP_PASS**をそれぞれ設定。
+.envファイルで、アカウント新規作成時の認証メール送信先としてGmailの**SMTP_USER**と**SMTP_PASS**をそれぞれ設定。
 
 ```bash
 docker-compose up -d --build
