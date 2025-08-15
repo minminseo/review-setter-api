@@ -29,10 +29,12 @@
 
 #### 作ったサービス
 https://reviewsetter.dpdns.org
+
 ※現在レスポンシブ対応していません(今後対応)。
 
 #### フロントエンド
 フロントエンドは別リポジトリです。
+
 https://github.com/minminseo/review-setter-client
 
 # 開発の背景
