@@ -213,4 +213,4 @@ GO_ENV=dev go run cmd/api/main.go
 ```
 <br>
 
-[フロントエンドのリポジトリ](https://www.furomuda.com/about)をセットアップ。
+[フロントエンドのリポジトリ](https://github.com/minminseo/review-setter-client)をセットアップ。
