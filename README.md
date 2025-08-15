@@ -27,10 +27,13 @@
 
 また復習管理の労力を最小限にするために、ユーザーが主に記録するのは復習した内容の概要となっていて、あくまで"**今日テストするのは何かを辞書的に確認する**"という使い方を想定しているため、勉強した内容を詳細に記録しそれを見て復習する用途には向いていません（オプションとしてそういった詳細を記録する機能も用意し、自由度を確保しています）。
 
-
 #### 作ったサービス
 https://reviewsetter.dpdns.org
 ※現在レスポンシブ対応していません(今後対応)。
+
+#### フロントエンド
+フロントエンドは別リポジトリです。
+https://github.com/minminseo/review-setter-client
 
 # 開発の背景
 復習スケジュールは適切に組めばとても効果的です。しかし、スケジュールを組む以上それを管理する労力が少なからず発生します。
@@ -39,7 +42,6 @@ https://reviewsetter.dpdns.org
 同様のサービスはすでに多く存在しますが、人それぞれ使いやすいと感じる管理方法は異なります。当然自分に完璧にピッタリ合うサービスというのは中々存在しないためある程度の妥協は必要ですが、復習はこだわりたいなと思い当初はスプレッドシートで管理していました。
 
 ただ、徐々に管理が大変になりGASで改良しないといけなくなったり、もう少し復習に特化したUIで復習したくなったこともあり、復習スケジュール管理に割かれる労力をできるだけ減らすことを目標に個人で開発することにしました。
-
 
 # 解決したい課題
 
@@ -107,7 +109,7 @@ https://reviewsetter.dpdns.org
 ### バッチ処理関連
 - 復習日が未完了の状態でユーザー設定のタイムゾーンで日付けを跨いだ時、自動的にその復習日をプラス1日する機能。
 
-###　その他機能
+### その他機能
 - カテゴリー、ボックス、復習物の並び替え機能
 - ボックス内部画面での復習物絞り込み機能
 
@@ -180,3 +182,35 @@ https://reviewsetter.dpdns.org
 - 復習物の一括完了/削除/移動機能の追加
 - パスワードを忘れた時用のパスワード変更機能の追加
 - レスポンシブ対応
+
+# セットアップ
+
+### 必要なもの
+- Docker
+- Git
+- Goの実行環境
+- Gmailメール送信用のSMTPサーバーアカウント
+
+### 手順
+```bash
+git clone https://github.com/minminseo/review-setter-api.git
+cd review-setter-api
+cp .env.example .env
+
+# 下記のように32バイトの乱数の16進数文字列を2つ生成し、.envファイルのENCRYPTION_KEYとHMAC_SECRET_KEYに設定
+openssl rand -hex 32
+openssl rand -hex 32
+```
+
+.envファイルで、アカウント新規作成時の認証メール送信先として**SMTP_USER**と**SMTP_PASS**をそれぞれ設定。
+
+```bash
+docker-compose up -d --build
+
+migrate -path migrations -database "postgres://review-setter:review-setter@localhost:5435/review-setter?sslmode=disable" -verbose up
+
+GO_ENV=dev go run cmd/api/main.go
+```
+<br>
+
+[フロントエンドのリポジトリ](https://www.furomuda.com/about)をセットアップ。
