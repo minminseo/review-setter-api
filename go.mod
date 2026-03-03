@@ -14,6 +14,7 @@ require (
 	github.com/labstack/echo-jwt/v4 v4.3.1
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/ory/dockertest/v3 v3.12.0
+	github.com/resend/resend-go/v3 v3.1.1
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/mock v0.5.2
 	golang.org/x/crypto v0.38.0

@@ -66,7 +66,7 @@ func main() {
 	transactionManager := repository.NewTransactionManager(pool)
 
 	// メール送信
-	emailSender := mailer.NewSMTPEmailSender()
+	emailSender := mailer.NewResendEmailSender()
 
 	// JWTトークン生成のためのサービス
 	tokenGenerator := auth.NewJWTGenerator()
