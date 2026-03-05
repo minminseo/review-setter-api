@@ -227,3 +227,29 @@ func (uc *userController) UpdatePassword(c echo.Context) error {
 	}
 	return c.NoContent(http.StatusOK)
 }
+
+func (uc *userController) RequestPasswordReset(c echo.Context) error {
+	ctx := c.Request().Context()
+	var request requestPasswordResetRequest
+	if err := c.Bind(&request); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	if err := uc.uu.RequestPasswordReset(ctx, request.Email); err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	return c.NoContent(http.StatusOK)
+}
+
+func (uc *userController) ResetPassword(c echo.Context) error {
+	ctx := c.Request().Context()
+	var Request resetPasswordRequest
+	if err := c.Bind(&Request); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	if err := uc.uu.ResetPassword(ctx, Request.Email, Request.Code, Request.Password); err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	return c.NoContent(http.StatusOK)
+}
