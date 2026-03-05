@@ -9,6 +9,8 @@ type IUserUsecase interface {
 	UpdateSetting(ctx context.Context, user UpdateUserInput) (*UpdateUserOutput, error)
 	UpdatePassword(ctx context.Context, userID, password string) error
 	VerifyEmail(ctx context.Context, input VerifyEmailInput) (*LoginUserOutput, error)
+	RequestPasswordReset(ctx context.Context, email string) error
+	ResetPassword(ctx context.Context, email, code, newPassword string) error
 }
 
 type iEmailSender interface {

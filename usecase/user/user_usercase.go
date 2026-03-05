@@ -288,3 +288,85 @@ func (uu *userUsecase) UpdatePassword(ctx context.Context, userID, password stri
 	}
 	return nil
 }
+
+func (uu *userUsecase) RequestPasswordReset(ctx context.Context, email string) error {
+	// 検索キーを生成して既存ユーザーかチェック
+	searchKey := uu.hasher.GenerateSearchKey(email)
+	existingUser, err := uu.userRepo.FindByEmailSearchKey(ctx, searchKey)
+	if err != nil {
+		return nil // ユーザーが存在しない場合はエラーを返さずに処理を終了（メアド使用バレ防止）
+	}
+
+	verificationID := uuid.NewString()
+	verification, code, err := userDomain.NewEmailVerification(verificationID, existingUser.ID())
+	if err != nil {
+		return err
+	}
+
+	// email_verificationsテーブルにリクエストしたユーザーのuserIDのレコードが既に存在するか確認。
+	existingVerification, _ := uu.emailVerificationRepo.FindByUserID(ctx, existingUser.ID())
+
+	err = uu.transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
+		if existingVerification != nil {
+			// 存在する場合は既存のレコードを削除
+			if err := uu.emailVerificationRepo.DeleteByUserID(ctx, existingUser.ID()); err != nil {
+				return err
+			}
+		}
+
+		if err := uu.emailVerificationRepo.Create(ctx, verification); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	if err := uu.emailSender.SendVerificationEmail(existingUser.Language(), email, code); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (uu *userUsecase) ResetPassword(ctx context.Context, email, code, newPassword string) error {
+	searchKey := uu.hasher.GenerateSearchKey(email)
+	user, err := uu.userRepo.FindByEmailSearchKey(ctx, searchKey)
+	if err != nil {
+		return errors.New("メールアドレスか認証番号が正しくありません")
+	}
+
+	verification, err := uu.emailVerificationRepo.FindByUserID(ctx, user.ID())
+	if err != nil {
+		return errors.New("メールアドレスか認証番号が正しくありません")
+	}
+
+	if verification.IsExpired() {
+		return errors.New("認証コードの有効期限が切れています")
+	}
+
+	if !verification.ValidateCode(code) {
+		return errors.New("認証コードが正しくありません")
+	}
+
+	err = user.UpdatePassword(newPassword)
+	if err != nil {
+		return err
+	}
+	err = uu.transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
+		if err := uu.userRepo.UpdatePassword(ctx, user.ID(), user.EncryptedPassword()); err != nil {
+			return err
+		}
+
+		if err := uu.emailVerificationRepo.DeleteByUserID(ctx, user.ID()); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

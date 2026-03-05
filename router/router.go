@@ -52,6 +52,8 @@ func NewRouter(
 	e.POST("/logout", uc.LogOut)
 	e.POST("/verify-email", uc.VerifyEmail)
 	e.GET("/csrf", uc.CsrfToken)
+	e.POST("/password-reset/request", uc.RequestPasswordReset)
+	e.POST("/password-reset/reset", uc.ResetPassword)
 
 	// JWT認証ミドルウェア共通化
 	authMiddleware := echojwt.WithConfig(echojwt.Config{
