@@ -125,11 +125,11 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 
 		return nil
 	})
-	if err := uu.emailSender.SendVerificationEmail(newUser.Language(), dto.Email, code); err != nil {
+	if err != nil {
 		return nil, err
 	}
 
-	if err != nil {
+	if err := uu.emailSender.SendVerificationEmail(newUser.Language(), dto.Email, code); err != nil {
 		return nil, err
 	}
 
