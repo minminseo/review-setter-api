@@ -56,6 +56,8 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 		if err != nil {
 			return nil, err
 		}
+
+		var code string
 		err = uu.transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
 			if err := uu.userRepo.Update(ctx, newUser); err != nil {
 				return err
@@ -70,22 +72,24 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 			}
 
 			verificationID := uuid.NewString()
-			verification, code, err := userDomain.NewEmailVerification(verificationID, newUser.ID())
+			verification, c, err := userDomain.NewEmailVerification(verificationID, newUser.ID())
 			if err != nil {
 				return err
 			}
+			code = c
 
 			if err := uu.emailVerificationRepo.Create(ctx, verification); err != nil {
 				return err
 			}
 
-			// メール送信処理
-			if err := uu.emailSender.SendVerificationEmail(newUser.Language(), dto.Email, code); err != nil {
-				return err
-			}
 			return nil
 		})
 		if err != nil {
+			return nil, err
+		}
+
+		// メール送信処理
+		if err := uu.emailSender.SendVerificationEmail(newUser.Language(), dto.Email, code); err != nil {
 			return nil, err
 		}
 
@@ -101,26 +105,29 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 	if err != nil {
 		return nil, err
 	}
+
+	var code string
 	err = uu.transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
 		if err := uu.userRepo.Create(ctx, newUser); err != nil {
 			return err
 		}
 
 		verificationID := uuid.NewString()
-		verification, code, err := userDomain.NewEmailVerification(verificationID, newUser.ID())
+		verification, c, err := userDomain.NewEmailVerification(verificationID, newUser.ID())
 		if err != nil {
 			return err
 		}
-		if err := uu.emailVerificationRepo.Create(ctx, verification); err != nil {
-			return err
-		}
+		code = c
 
-		if err := uu.emailSender.SendVerificationEmail(newUser.Language(), dto.Email, code); err != nil {
+		if err := uu.emailVerificationRepo.Create(ctx, verification); err != nil {
 			return err
 		}
 
 		return nil
 	})
+	if err := uu.emailSender.SendVerificationEmail(newUser.Language(), dto.Email, code); err != nil {
+		return nil, err
+	}
 
 	if err != nil {
 		return nil, err
