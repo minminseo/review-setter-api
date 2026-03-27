@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
@@ -88,10 +89,14 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 			return nil, err
 		}
 
-		// メール送信処理
-		if err := uu.emailSender.SendVerificationEmail(newUser.Language(), dto.Email, code); err != nil {
-			return nil, err
-		}
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+
+			if err := uu.emailSender.SendVerificationEmail(ctx, newUser.Language(), dto.Email, code); err != nil {
+				slog.Error("認証コードの送信に失敗しました", "error", err)
+			}
+		}()
 
 		result := &CreateUserOutput{
 			ID:    newUser.ID(),
@@ -129,9 +134,14 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 		return nil, err
 	}
 
-	if err := uu.emailSender.SendVerificationEmail(newUser.Language(), dto.Email, code); err != nil {
-		return nil, err
-	}
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		if err := uu.emailSender.SendVerificationEmail(ctx, newUser.Language(), dto.Email, code); err != nil {
+			slog.Error("認証コードの送信に失敗しました", "error", err)
+		}
+	}()
 
 	decryptedEmail, err := newUser.GetEmail(uu.cryptoService)
 	if err != nil {
@@ -330,9 +340,14 @@ func (uu *userUsecase) RequestPasswordReset(ctx context.Context, email string) e
 		return err
 	}
 
-	if err := uu.emailSender.SendVerificationEmail(existingUser.Language(), email, code); err != nil {
-		return err
-	}
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		if err := uu.emailSender.SendVerificationEmail(ctx, existingUser.Language(), email, code); err != nil {
+			slog.Error("認証コードの送信に失敗しました", "error", err)
+		}
+	}()
 
 	return nil
 }

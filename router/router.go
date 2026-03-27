@@ -26,6 +26,7 @@ func NewRouter(
 	e := echo.New()
 	e.Use(middleware.RequestID())
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogRequestID:     true,
 		LogMethod:        true,

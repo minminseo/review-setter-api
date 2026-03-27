@@ -30,13 +30,13 @@ func TestUserUsecase_SignUp_StrictOrderAndCount(t *testing.T) {
 	tests := []struct {
 		name     string
 		dto      CreateUserInput
-		mockFunc func(*userDomain.MockUserRepository, *userDomain.MockEmailVerificationRepository, *transaction.MockITransactionManager, *userDomain.MockIHasher, *MockiEmailSender, *MockiTokenGenerator)
+		mockFunc func(*userDomain.MockUserRepository, *userDomain.MockEmailVerificationRepository, *transaction.MockITransactionManager, *userDomain.MockIHasher, *MockiEmailSender, *MockiTokenGenerator, chan struct{})
 		wantErr  bool
 	}{
 		{
 			name: "新規ユーザー作成成功",
 			dto:  dto,
-			mockFunc: func(mockUserRepo *userDomain.MockUserRepository, mockEmailVerificationRepo *userDomain.MockEmailVerificationRepository, mockTransactionManager *transaction.MockITransactionManager, mockHasher *userDomain.MockIHasher, mockEmailSender *MockiEmailSender, mockTokenGenerator *MockiTokenGenerator) {
+			mockFunc: func(mockUserRepo *userDomain.MockUserRepository, mockEmailVerificationRepo *userDomain.MockEmailVerificationRepository, mockTransactionManager *transaction.MockITransactionManager, mockHasher *userDomain.MockIHasher, mockEmailSender *MockiEmailSender, mockTokenGenerator *MockiTokenGenerator, done chan struct{}) {
 				gomock.InOrder(
 					mockHasher.EXPECT().
 						GenerateSearchKey(testEmail).
@@ -66,8 +66,11 @@ func TestUserUsecase_SignUp_StrictOrderAndCount(t *testing.T) {
 						Times(1),
 
 					mockEmailSender.EXPECT().
-						SendVerificationEmail(dto.Language, testEmail, gomock.Any()).
-						Return(nil).
+						SendVerificationEmail(gomock.Any(), dto.Language, testEmail, gomock.Any()).
+						DoAndReturn(func(ctx context.Context, lang, email, code string) error {
+							done <- struct{}{}
+							return nil
+						}).
 						Times(1),
 				)
 			},
@@ -76,7 +79,7 @@ func TestUserUsecase_SignUp_StrictOrderAndCount(t *testing.T) {
 		{
 			name: "既存ユーザー（認証済み）でエラー",
 			dto:  dto,
-			mockFunc: func(mockUserRepo *userDomain.MockUserRepository, mockEmailVerificationRepo *userDomain.MockEmailVerificationRepository, mockTransactionManager *transaction.MockITransactionManager, mockHasher *userDomain.MockIHasher, mockEmailSender *MockiEmailSender, mockTokenGenerator *MockiTokenGenerator) {
+			mockFunc: func(mockUserRepo *userDomain.MockUserRepository, mockEmailVerificationRepo *userDomain.MockEmailVerificationRepository, mockTransactionManager *transaction.MockITransactionManager, mockHasher *userDomain.MockIHasher, mockEmailSender *MockiEmailSender, mockTokenGenerator *MockiTokenGenerator, done chan struct{}) {
 				existingUser, _ := userDomain.ReconstructUserForAuth(
 					testID,
 					testSearchKey,
@@ -103,7 +106,7 @@ func TestUserUsecase_SignUp_StrictOrderAndCount(t *testing.T) {
 		{
 			name: "既存ユーザー（未認証）で認証コード再送信成功",
 			dto:  dto,
-			mockFunc: func(mockUserRepo *userDomain.MockUserRepository, mockEmailVerificationRepo *userDomain.MockEmailVerificationRepository, mockTransactionManager *transaction.MockITransactionManager, mockHasher *userDomain.MockIHasher, mockEmailSender *MockiEmailSender, mockTokenGenerator *MockiTokenGenerator) {
+			mockFunc: func(mockUserRepo *userDomain.MockUserRepository, mockEmailVerificationRepo *userDomain.MockEmailVerificationRepository, mockTransactionManager *transaction.MockITransactionManager, mockHasher *userDomain.MockIHasher, mockEmailSender *MockiEmailSender, mockTokenGenerator *MockiTokenGenerator, done chan struct{}) {
 				existingUser, _ := userDomain.ReconstructUserForAuth(
 					testID,
 					testSearchKey,
@@ -152,8 +155,11 @@ func TestUserUsecase_SignUp_StrictOrderAndCount(t *testing.T) {
 						Times(1),
 
 					mockEmailSender.EXPECT().
-						SendVerificationEmail(dto.Language, testEmail, gomock.Any()).
-						Return(nil).
+						SendVerificationEmail(gomock.Any(), dto.Language, testEmail, gomock.Any()).
+						DoAndReturn(func(ctx context.Context, lang, email, code string) error {
+							done <- struct{}{}
+							return nil
+						}).
 						Times(1),
 				)
 			},
@@ -162,7 +168,7 @@ func TestUserUsecase_SignUp_StrictOrderAndCount(t *testing.T) {
 		{
 			name: "トランザクション失敗",
 			dto:  dto,
-			mockFunc: func(mockUserRepo *userDomain.MockUserRepository, mockEmailVerificationRepo *userDomain.MockEmailVerificationRepository, mockTransactionManager *transaction.MockITransactionManager, mockHasher *userDomain.MockIHasher, mockEmailSender *MockiEmailSender, mockTokenGenerator *MockiTokenGenerator) {
+			mockFunc: func(mockUserRepo *userDomain.MockUserRepository, mockEmailVerificationRepo *userDomain.MockEmailVerificationRepository, mockTransactionManager *transaction.MockITransactionManager, mockHasher *userDomain.MockIHasher, mockEmailSender *MockiEmailSender, mockTokenGenerator *MockiTokenGenerator, done chan struct{}) {
 				gomock.InOrder(
 					mockHasher.EXPECT().
 						GenerateSearchKey(testEmail).
@@ -187,6 +193,7 @@ func TestUserUsecase_SignUp_StrictOrderAndCount(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			done := make(chan struct{}, 1)
 			t.Parallel()
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -209,7 +216,7 @@ func TestUserUsecase_SignUp_StrictOrderAndCount(t *testing.T) {
 				mockTokenGenerator,
 			)
 
-			tt.mockFunc(mockUserRepo, mockEmailVerificationRepo, mockTransactionManager, mockHasher, mockEmailSender, mockTokenGenerator)
+			tt.mockFunc(mockUserRepo, mockEmailVerificationRepo, mockTransactionManager, mockHasher, mockEmailSender, mockTokenGenerator, done)
 			result, err := usecase.SignUp(context.Background(), tt.dto)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SignUp() error = %v, wantErr %v", err, tt.wantErr)
@@ -218,6 +225,15 @@ func TestUserUsecase_SignUp_StrictOrderAndCount(t *testing.T) {
 			if !tt.wantErr && result == nil {
 				t.Error("SignUp() result should not be nil when no error expected")
 			}
+			if !tt.wantErr && (tt.name == "新規ユーザー作成成功" || tt.name == "既存ユーザー（未認証）で認証コード再送信成功") {
+				select {
+				case <-done:
+					// メール送信が呼ばれたのでOK
+				case <-time.After(1 * time.Second):
+					t.Fatal("email sending timed out")
+				}
+			}
+
 		})
 	}
 }

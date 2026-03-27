@@ -14,7 +14,7 @@ type IUserUsecase interface {
 }
 
 type iEmailSender interface {
-	SendVerificationEmail(language, toEmail, code string) error
+	SendVerificationEmail(ctx context.Context, language, toEmail, code string) error
 }
 
 type iTokenGenerator interface {
