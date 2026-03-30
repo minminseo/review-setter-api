@@ -1,6 +1,7 @@
 package mailer
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -24,7 +25,7 @@ func NewResendEmailSender() *ResendEmailSender {
 	}
 }
 
-func (s *ResendEmailSender) SendVerificationEmail(language, toEmail, code string) error {
+func (s *ResendEmailSender) SendVerificationEmail(ctx context.Context, language, toEmail, code string) error {
 	var subject, htmlBody string
 
 	switch language {
@@ -42,7 +43,7 @@ func (s *ResendEmailSender) SendVerificationEmail(language, toEmail, code string
 		Html:    htmlBody,
 		Subject: subject,
 	}
-	_, err := s.client.Emails.Send(params)
+	_, err := s.client.Emails.SendWithContext(ctx, params)
 	if err != nil {
 		return fmt.Errorf("メールの送信に失敗しました: %w", err)
 	}
