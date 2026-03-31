@@ -70,7 +70,7 @@ resource "render_web_service" "backend" {
   name           = var.render_service_name
   plan           = "free"
   region         = "singapore"
-  maintenance_mode = false
+  maintenance_mode = {enabled = false}
 
   # 起動コマンド: マイグレーション実行後にバッチ処理とAPIサーバーをバックグラウンドで同時起動
   start_command  = "./migrate -path ./migrations -database \"$DATABASE_URL\" -verbose up && ./batch_app & ./app"
