@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
@@ -56,6 +57,8 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 		if err != nil {
 			return nil, err
 		}
+
+		var code string
 		err = uu.transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
 			if err := uu.userRepo.Update(ctx, newUser); err != nil {
 				return err
@@ -70,24 +73,30 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 			}
 
 			verificationID := uuid.NewString()
-			verification, code, err := userDomain.NewEmailVerification(verificationID, newUser.ID())
+			verification, c, err := userDomain.NewEmailVerification(verificationID, newUser.ID())
 			if err != nil {
 				return err
 			}
+			code = c
 
 			if err := uu.emailVerificationRepo.Create(ctx, verification); err != nil {
 				return err
 			}
 
-			// メール送信処理
-			if err := uu.emailSender.SendVerificationEmail(newUser.Language(), dto.Email, code); err != nil {
-				return err
-			}
 			return nil
 		})
 		if err != nil {
 			return nil, err
 		}
+
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+
+			if err := uu.emailSender.SendVerificationEmail(ctx, newUser.Language(), dto.Email, code); err != nil {
+				slog.Error("認証コードの送信に失敗しました", "error", err)
+			}
+		}()
 
 		result := &CreateUserOutput{
 			ID:    newUser.ID(),
@@ -101,30 +110,38 @@ func (uu *userUsecase) SignUp(ctx context.Context, dto CreateUserInput) (*Create
 	if err != nil {
 		return nil, err
 	}
+
+	var code string
 	err = uu.transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
 		if err := uu.userRepo.Create(ctx, newUser); err != nil {
 			return err
 		}
 
 		verificationID := uuid.NewString()
-		verification, code, err := userDomain.NewEmailVerification(verificationID, newUser.ID())
+		verification, c, err := userDomain.NewEmailVerification(verificationID, newUser.ID())
 		if err != nil {
 			return err
 		}
-		if err := uu.emailVerificationRepo.Create(ctx, verification); err != nil {
-			return err
-		}
+		code = c
 
-		if err := uu.emailSender.SendVerificationEmail(newUser.Language(), dto.Email, code); err != nil {
+		if err := uu.emailVerificationRepo.Create(ctx, verification); err != nil {
 			return err
 		}
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
+
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		if err := uu.emailSender.SendVerificationEmail(ctx, newUser.Language(), dto.Email, code); err != nil {
+			slog.Error("認証コードの送信に失敗しました", "error", err)
+		}
+	}()
 
 	decryptedEmail, err := newUser.GetEmail(uu.cryptoService)
 	if err != nil {
@@ -286,5 +303,92 @@ func (uu *userUsecase) UpdatePassword(ctx context.Context, userID, password stri
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (uu *userUsecase) RequestPasswordReset(ctx context.Context, email string) error {
+	// 検索キーを生成して既存ユーザーかチェック
+	searchKey := uu.hasher.GenerateSearchKey(email)
+	existingUser, err := uu.userRepo.FindByEmailSearchKey(ctx, searchKey)
+	if err != nil {
+		return nil // ユーザーが存在しない場合はエラーを返さずに処理を終了（メアド使用バレ防止）
+	}
+
+	verificationID := uuid.NewString()
+	verification, code, err := userDomain.NewEmailVerification(verificationID, existingUser.ID())
+	if err != nil {
+		return err
+	}
+
+	// email_verificationsテーブルにリクエストしたユーザーのuserIDのレコードが既に存在するか確認。
+	existingVerification, _ := uu.emailVerificationRepo.FindByUserID(ctx, existingUser.ID())
+
+	err = uu.transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
+		if existingVerification != nil {
+			// 存在する場合は既存のレコードを削除
+			if err := uu.emailVerificationRepo.DeleteByUserID(ctx, existingUser.ID()); err != nil {
+				return err
+			}
+		}
+
+		if err := uu.emailVerificationRepo.Create(ctx, verification); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		if err := uu.emailSender.SendVerificationEmail(ctx, existingUser.Language(), email, code); err != nil {
+			slog.Error("認証コードの送信に失敗しました", "error", err)
+		}
+	}()
+
+	return nil
+}
+
+func (uu *userUsecase) ResetPassword(ctx context.Context, email, code, newPassword string) error {
+	searchKey := uu.hasher.GenerateSearchKey(email)
+	user, err := uu.userRepo.FindByEmailSearchKey(ctx, searchKey)
+	if err != nil {
+		return errors.New("メールアドレスか認証番号が正しくありません")
+	}
+
+	verification, err := uu.emailVerificationRepo.FindByUserID(ctx, user.ID())
+	if err != nil {
+		return errors.New("メールアドレスか認証番号が正しくありません")
+	}
+
+	if verification.IsExpired() {
+		return errors.New("認証コードの有効期限が切れています")
+	}
+
+	if !verification.ValidateCode(code) {
+		return errors.New("認証コードが正しくありません")
+	}
+
+	err = user.UpdatePassword(newPassword)
+	if err != nil {
+		return err
+	}
+	err = uu.transactionManager.RunInTransaction(ctx, func(ctx context.Context) error {
+		if err := uu.userRepo.UpdatePassword(ctx, user.ID(), user.EncryptedPassword()); err != nil {
+			return err
+		}
+
+		if err := uu.emailVerificationRepo.DeleteByUserID(ctx, user.ID()); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
